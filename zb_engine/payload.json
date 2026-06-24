@@ -1,0 +1,66 @@
+{
+  "misc": {
+    "size": { "width": 296, "height": 128 },
+    "format": "png",
+    "name": "ZerryBit Demo"
+  },
+  "features": {},
+  "sources": [],
+  "elements": [
+    {
+      "type": "text",
+      "pos": { "x": 10, "y": 8 }, "sizeX": 276, "sizeY": 30,
+      "text": "ZerryBit Engine",
+      "fontFamily": "Sora", "fontSize": 20, "fontWeight": 600, "textAlign": "left",
+      "enableFill": true, "fill": 100
+    },
+    {
+      "type": "line",
+      "pos": { "x": 10, "y": 36 },
+      "points": [[0, 0], [276, 0]],
+      "enableStroke": true, "strokeWidth": 1, "strokeDither": 100
+    },
+    {
+      "type": "text",
+      "pos": { "x": 10, "y": 44 }, "sizeX": 276, "sizeY": 20,
+      "text": "E-Ink Display Ready",
+      "fontFamily": "Sora", "fontSize": 12, "fontWeight": 300, "textAlign": "left",
+      "enableFill": true, "fill": 100
+    },
+    {
+      "type": "rect",
+      "pos": { "x": 10, "y": 72 }, "sizeX": 130, "sizeY": 46,
+      "enableFill": true, "fill": 100,
+      "strokeRadius": 4
+    },
+    {
+      "type": "text",
+      "pos": { "x": 14, "y": 78 }, "sizeX": 122, "sizeY": 16,
+      "text": "296 x 128",
+      "fontFamily": "Sora", "fontSize": 16, "fontWeight": 600, "textAlign": "center",
+      "enableFill": true, "fill": 0
+    },
+    {
+      "type": "text",
+      "pos": { "x": 14, "y": 98 }, "sizeX": 122, "sizeY": 14,
+      "text": "1-bit output",
+      "fontFamily": "Sora", "fontSize": 12, "fontWeight": 300, "textAlign": "center",
+      "enableFill": true, "fill": 0
+    },
+    {
+      "type": "circle",
+      "pos": { "x": 220, "y": 95 }, "sizeX": 44, "sizeY": 44,
+      "enableFill": true, "fill": 100
+    },
+    {
+      "type": "circle",
+      "pos": { "x": 220, "y": 95 }, "sizeX": 36, "sizeY": 36,
+      "enableFill": true, "fill": 0
+    },
+    {
+      "type": "circle",
+      "pos": { "x": 220, "y": 95 }, "sizeX": 16, "sizeY": 16,
+      "enableFill": true, "fill": 100
+    }
+  ]
+}

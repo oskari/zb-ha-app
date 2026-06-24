@@ -1,0 +1,328 @@
+/* =========================================================
+   ZB Builder Theme — Dark, with a red brand accent
+   =========================================================
+   Loaded AFTER index.css (see main.jsx) so these tokens + rules win.
+
+   The builder is DARK ONLY (no light mode / no theme switch).
+   • Brand red (#D42D32) is reserved for: the TOP BAR + the TOOL PALETTE,
+     and interactive accents (active tab, focus ring, selected items,
+     primary buttons). White text/icons on red.
+   • Panels & the canvas are dark grey, separated by thin lines + soft
+     shadows. The widget artboard + .png preview keep a thin line + light
+     shadow; the artboard fill itself stays white (the e-ink surface).
+   ========================================================= */
+
+:root {
+  --red:       #D42D32;
+  --red-hover: #e0454a;
+
+  /* ---------- Dark theme tokens ---------- */
+  --c-bg:               #161618;   /* canvas backdrop / page */
+  --c-surface:          #1f1f22;   /* panels, cards, inputs, menus */
+  --c-bg-subtle:        #2a2a2e;
+  --c-text:             #e6e6e8;
+  --c-text-muted:       #9b9ba3;
+  --c-fg-muted:         #9b9ba3;
+  --c-border:           #3a3a40;   /* control borders */
+  --c-line:             #4a4a52;   /* thin separators: panels / artboard / preview */
+  --c-grid-dot:         rgba(255, 255, 255, 0.05);
+
+  --c-accent:           var(--red);
+  --c-accent-hover:     var(--red-hover);
+  --c-accent-contrast:  #ffffff;
+  --c-accent-subtle:    rgba(212, 45, 50, 0.24);
+
+  --c-danger:           #f87171;
+  --c-bg-danger-subtle: rgba(248, 113, 113, 0.15);
+  --c-danger-bg:        rgba(248, 113, 113, 0.15);
+
+  --c-warning:           #e0a83c;
+  --c-bg-warning-subtle: rgba(240, 165, 0, 0.15);
+  --c-warning-text:      #f0c674;
+
+  --shadow:      0 2px 12px rgba(0, 0, 0, 0.5);
+  --shadow-pop:  0 12px 34px rgba(0, 0, 0, 0.6);
+  --panel-shadow: 0 0 16px rgba(0, 0, 0, 0.45);
+}
+
+/* =========================================================
+   RED REGIONS — top bar + tool palette
+   ========================================================= */
+.topbar {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  box-shadow: var(--shadow);
+}
+
+/* Pop-up menus inside the bar must NOT inherit the bar's white text. */
+.topbar-dropdown {
+  color: var(--c-text);
+}
+
+.topbar-dropdown-btn,
+.topbar-name-input {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.topbar-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.topbar-name-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  outline: none;
+}
+
+.topbar-endpoint {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.topbar-btn {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.topbar-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Deploy = inverted white chip with red text so it pops on the red bar. */
+.topbar-btn-accent {
+  color: var(--red);
+  background: #fff;
+  border-color: #fff;
+}
+
+.topbar-btn-accent:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.topbar-error {
+  color: #fff;
+}
+
+.topbar-autosave-time { color: rgba(255, 255, 255, 0.7); }
+.topbar-autosave-label { color: rgba(255, 255, 255, 0.78); }
+.topbar-autosave-slider { background: rgba(255, 255, 255, 0.3); }
+.topbar-autosave-slider::after { background: #fff; }
+.topbar-autosave-toggle input:checked + .topbar-autosave-slider { background: #fff; }
+.topbar-autosave-toggle input:checked + .topbar-autosave-slider::after { background: var(--red); }
+
+/* ---------- Tool palette (floating, on the canvas) ---------- */
+.canvas-toolbox {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  box-shadow: var(--shadow);
+}
+
+.toolbox-btn {
+  color: #fff;
+}
+
+.toolbox-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Active tool = white chip; the icon (currentColor) flips to red. */
+.toolbox-btn.active {
+  background: #fff;
+  color: var(--red);
+}
+
+.toolbox-divider {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.toolbox-select {
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.toolbox-select:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.toolbox-label {
+  color: #fff;
+}
+
+/* The native grid-step dropdown options render on a normal surface. */
+.toolbox-select option {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+/* =========================================================
+   NEUTRAL CHROME — panels, canvas, separators & shadows
+   ========================================================= */
+.panel {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.panel-left {
+  border-right: 1px solid var(--c-line);
+  box-shadow: var(--panel-shadow);
+}
+
+.panel-right {
+  border-left: 1px solid var(--c-line);
+  box-shadow: var(--panel-shadow);
+}
+
+/* Always-visible left-panel brand label */
+.panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+
+.panel-beta-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Canvas backdrop */
+.canvas-area {
+  background-color: var(--c-bg);
+  background-image: radial-gradient(circle, var(--c-grid-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.panel-collapse-btn {
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  border: 1px solid var(--c-line);
+}
+
+/* =========================================================
+   INTERACTIVE ACCENTS — red
+   ========================================================= */
+.input,
+.select,
+.textarea {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--c-accent);
+  outline: none;
+}
+
+.select option {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.custom-select-list {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  box-shadow: var(--shadow-pop);
+}
+
+.custom-select-option {
+  color: var(--c-text);
+}
+
+.custom-select-option.focused,
+.custom-select-option:hover {
+  background: var(--c-accent);
+  color: var(--c-accent-contrast);
+}
+
+.custom-select-option.active {
+  color: var(--c-accent);
+}
+
+.tab.active {
+  color: var(--c-accent);
+  background: var(--c-accent-subtle);
+}
+
+.layer-item.selected {
+  background: var(--c-accent-subtle);
+}
+
+.grid-selector-option:hover {
+  border-color: var(--c-accent);
+  background: var(--c-accent-subtle);
+}
+
+.grid-selector-option.selected {
+  border-color: var(--c-accent);
+  background: var(--c-accent-subtle);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+.grid-selector-preview-cell.selected {
+  background: var(--c-accent);
+}
+
+/* Welcome / grid overlays: neutral dark scrim */
+.welcome-overlay,
+.grid-selector-overlay {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Modals can be mounted inside the red top bar (e.g. ConfirmModal) — pin their
+   text to the themed colour so they don't inherit the bar's white text. */
+.modal-overlay,
+.modal-content,
+.confirm-modal {
+  color: var(--c-text);
+}
+
+/* =========================================================
+   Base backgrounds that index.css hardcodes as dark-on-light tints —
+   flipped to light-alpha so they lighten (not darken) the dark surfaces.
+   ========================================================= */
+.tab:hover { background: rgba(255, 255, 255, 0.06); }
+.layer-item:hover { background: rgba(255, 255, 255, 0.05); }
+.topbar-dropdown-item-btn:hover { background: rgba(255, 255, 255, 0.06); }
+.settings-hint { background: rgba(255, 255, 255, 0.04); }
+.welcome-widget-item { background: rgba(255, 255, 255, 0.04); }
+.welcome-widget-item:hover { background: rgba(255, 255, 255, 0.07); }
+
+/* =========================================================
+   WELCOME SCREEN — Beta badge
+   ========================================================= */
+.welcome-beta-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 0.42em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}

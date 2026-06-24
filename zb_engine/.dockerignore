@@ -1,0 +1,36 @@
+# ── Build artifacts & caches ───────────────────────────────────
+# Use **/ prefix so nested directories are also excluded (e.g. builder/node_modules/)
+# Critical: without this, COPY builder/ . would overwrite the Alpine-native
+# binaries (esbuild, sharp, etc.) with glibc binaries from the host, crashing the build.
+**/node_modules/
+dist/
+builder/dist/
+*.tsbuildinfo
+
+# ── Source (compiled in Dockerfile Stage 1) ────────────────────
+# src/ is COPIED explicitly in the build stage; exclude from context
+# to avoid double-sending. tsconfig.json is also copied explicitly.
+# NOTE: Do NOT ignore src/ or tsconfig.json — they are needed by the builder stage.
+
+# ── Planning / docs (not needed in image) ─────────────────────
+# License & attribution texts MUST reach the build context so the runtime image
+# can ship them (see the Dockerfile runner stage). LICENSE has no extension so
+# *.md never matched it, but the negations are kept explicit and defensive.
+*.md
+!README.md
+!LICENSE
+!THIRD-PARTY-NOTICES.md
+
+# ── OS / editor junk ──────────────────────────────────────────
+.git/
+.gitignore
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── Archives ──────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.tgz

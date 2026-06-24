@@ -1,0 +1,65 @@
+# AppArmor profile — ZerryBit Engine add-on
+#
+# Home Assistant auto-loads this profile when the file is named `apparmor.txt`
+# and the profile name equals the add-on slug (`zb_engine`). It confines the
+# container to the capabilities and operations the runtime actually needs:
+# the root entrypoint chowns the persistent /data volume and drops to the
+# unprivileged `app` user via su-exec, then execs the Node server. Everything
+# else — raw/packet sockets, ptrace of other processes, mount / pivot_root,
+# kernel module loading, writing kernel tunables — is denied at the MAC layer
+# regardless of the container's Linux capability set.
+#
+# Set `apparmor: false` in config.yaml to opt out (not recommended).
+
+#include <tunables/global>
+
+profile zb_engine flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # ── Network ──────────────────────────────────────────────────
+  # TCP for the two listening ports (8099 Ingress, 8000 image) and outbound
+  # HTTP(S) source/asset fetches; UDP + netlink for DNS resolution during
+  # SSRF URL validation. No raw/packet sockets — cannot sniff or forge frames.
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  # ── Capabilities (entrypoint.sh only; Node runs unprivileged) ─
+  # chown -R app:app /data
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  capability fsetid,
+  # su-exec app … — drop privileges before exec'ing Node
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  # deliver signals to the supervised Node process
+  capability kill,
+
+  signal (send,receive),
+
+  # ── Filesystem ───────────────────────────────────────────────
+  # The container image is itself an isolation boundary, so general file
+  # access and execution of the runtime binaries are allowed; the meaningful
+  # hardening comes from the capability set above and the denials below.
+  file,
+
+  # Persistent data volume: widgets, assets, payloads, cached images.
+  /data/** rwk,
+
+  # ── Hardening denials ────────────────────────────────────────
+  deny mount,
+  deny umount,
+  deny remount,
+  deny pivot_root,
+  deny ptrace (trace, read),
+  deny /proc/sysrq-trigger rwklx,
+  deny /proc/kcore rwklx,
+  deny @{PROC}/kmem rwklx,
+  deny /sys/kernel/security/** rwklx,
+  deny /sys/firmware/** rwklx,
+}

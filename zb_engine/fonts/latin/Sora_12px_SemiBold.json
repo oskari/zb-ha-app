@@ -1,0 +1,2251 @@
+{
+  "font": "Sora",
+  "familyName": "Sora",
+  "variant": "12px SemiBold",
+  "fontSize": 12,
+  "lineHeight": 1.2,
+  "letterSpacing": 0,
+  "glyphCount": 224,
+  "glyphs": {
+    "0": {
+      "codePoint": 48,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAOAB8AO4AxgDGAMYA7gB8ADgAAAAAAAAAAAAAA"
+    },
+    "1": {
+      "codePoint": 49,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAHh4GBgYGBgYGAAAAAAA"
+    },
+    "2": {
+      "codePoint": 50,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeAD8AMwADAA4AHAA4AD8APwAAAAAAAAAAAAAA"
+    },
+    "3": {
+      "codePoint": 51,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD8ABgAcAB4AAwAzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "4": {
+      "codePoint": 52,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAMABwAGAA7ADMAf4B/gAMAAwAAAAAAAAAAAAAA"
+    },
+    "5": {
+      "codePoint": 53,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD8AMAA+AD8AAwAzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "6": {
+      "codePoint": 54,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPAD8AMAA+AD8AMYA5gD+AHwAAAAAAAAAAAAAA"
+    },
+    "7": {
+      "codePoint": 55,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAB/AH8AZwAGAAYADAAMABgAGAAAAAAAAAAAAAAA"
+    },
+    "8": {
+      "codePoint": 56,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeAD8AMwAzAB4AMwAzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "9": {
+      "codePoint": 57,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeAD8AMwAzAD8AHwADAB4AHAAAAAAAAAAAAAAA"
+    },
+    " ": {
+      "codePoint": 32,
+      "width": 5,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 3,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "!": {
+      "codePoint": 33,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAADAwMDAwMAAwMAAAAAAA"
+    },
+    "\"": {
+      "codePoint": 34,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAGxsbGwAAAAAAAAAAAAA"
+    },
+    "#": {
+      "codePoint": 35,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAbABsAP4A/gBsAf4B/gDYANgAAAAAAAAAAAAAA"
+    },
+    "$": {
+      "codePoint": 36,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAADAAeAD8AMwAwABwADgADADMAPwAeAAwAAAAAAAAA"
+    },
+    "%": {
+      "codePoint": 37,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA5gCmAKwA7AAYABuAMoAygDOAAAAAAAAAAAAAA"
+    },
+    "&": {
+      "codePoint": 38,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeAD4AMAAzgDkAbQBnAHcAPYAAAAAAAAAAAAAA"
+    },
+    "'": {
+      "codePoint": 39,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAADAwMDAAAAAAAAAAAAAA"
+    },
+    "(": {
+      "codePoint": 40,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAAAgYMDAwMDAwMBgIAAAA"
+    },
+    ")": {
+      "codePoint": 41,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAACAwGBgYGBgYGDAgAAAA"
+    },
+    "*": {
+      "codePoint": 42,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAACAAqAD4AFAA+ACoACAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "+": {
+      "codePoint": 43,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAADAAMAD8APwAMAAwAAAAAAAAAAAAAAAAA"
+    },
+    ",": {
+      "codePoint": 44,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAwMGBgAAAA"
+    },
+    "-": {
+      "codePoint": 45,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAAAAAfgB+AAAAAAAAAAAAAAAAAAAA"
+    },
+    ".": {
+      "codePoint": 46,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAwMAAAAAAA"
+    },
+    "/": {
+      "codePoint": 47,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAABgYGBgwMDAwYGAAAAAA"
+    },
+    ":": {
+      "codePoint": 58,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAADAwAAAwMAAAAAAA"
+    },
+    ";": {
+      "codePoint": 59,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAADAwAAAwMGBgAAAA"
+    },
+    "<": {
+      "codePoint": 60,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAABgAeAHgAeAAeAAYAAAAAAAAAAAAAAAAA"
+    },
+    "=": {
+      "codePoint": 61,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAPgA+AAAAPgA+AAAAAAAAAAAAAAAAAAAA"
+    },
+    ">": {
+      "codePoint": 62,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAMAA8AA8ADwA8ADAAAAAAAAAAAAAAAAAA"
+    },
+    "?": {
+      "codePoint": 63,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA8AH4AZgAGABwAGAAAABgAGAAAAAAAAAAAAAAA"
+    },
+    "@": {
+      "codePoint": 64,
+      "width": 16,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 14,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAH4B/wOBgzrGfsbGxsbGb4M7A4AB+AB4AAAAAA"
+    },
+    "A": {
+      "codePoint": 65,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPAA8AGYAZgBmAP8A/wDDAMMAAAAAAAAAAAAAA"
+    },
+    "B": {
+      "codePoint": 66,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA+AD8AMwAzAD4AMwAzAD8APgAAAAAAAAAAAAAA"
+    },
+    "C": {
+      "codePoint": 67,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPgB/AOMAwADAAMAA4wB/AD4AAAAAAAAAAAAAA"
+    },
+    "D": {
+      "codePoint": 68,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD+AMcAwwDDAMMAxwD+APwAAAAAAAAAAAAAA"
+    },
+    "E": {
+      "codePoint": 69,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD8AMAAwAD4AMAAwAD8APwAAAAAAAAAAAAAA"
+    },
+    "F": {
+      "codePoint": 70,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA+AD4AMAAwAD4APgAwADAAMAAAAAAAAAAAAAAA"
+    },
+    "G": {
+      "codePoint": 71,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAfgD/AcMBgAGPgY+BwwD/AH4AAAAAAAAAAAAAA"
+    },
+    "H": {
+      "codePoint": 72,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwwDDAMMAwwD/AP8AwwDDAMMAAAAAAAAAAAAAA"
+    },
+    "I": {
+      "codePoint": 73,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAADAwMDAwMDAwMAAAAAAA"
+    },
+    "J": {
+      "codePoint": 74,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD8AAwADAAMAYwBnAH4APAAAAAAAAAAAAAAA"
+    },
+    "K": {
+      "codePoint": 75,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAxgDOANwA+ADwAPgA3ADOAMYAAAAAAAAAAAAAA"
+    },
+    "L": {
+      "codePoint": 76,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADAAMAAwADAAMAAwAD4APgAAAAAAAAAAAAAA"
+    },
+    "M": {
+      "codePoint": 77,
+      "width": 14,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 12,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwMDhwPPA/8DewMzAwMDAwMDAAAAAAAAAAAAAA"
+    },
+    "N": {
+      "codePoint": 78,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA4YDxgPGA2YDZgM2AzYDHgMeAAAAAAAAAAAAAA"
+    },
+    "O": {
+      "codePoint": 79,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPgB/AOOAwYDBgMGA44B/AD4AAAAAAAAAAAAAA"
+    },
+    "P": {
+      "codePoint": 80,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA+AD8AM4AxgDOAPwA+ADAAMAAAAAAAAAAAAAAA"
+    },
+    "Q": {
+      "codePoint": 81,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPgB/AOOAwYDBgMGA44B/AD4AGAAeAA4AAAAAA"
+    },
+    "R": {
+      "codePoint": 82,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD+AMYAxgDMAPgA/ADOAMYAAAAAAAAAAAAAA"
+    },
+    "S": {
+      "codePoint": 83,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAfAD+AMYA4AB8AA4AxgD+AHwAAAAAAAAAAAAAA"
+    },
+    "T": {
+      "codePoint": 84,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAB/AH8ADAAMAAwADAAMAAwADAAAAAAAAAAAAAAA"
+    },
+    "U": {
+      "codePoint": 85,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwwDDAMMAwwDDAMMA5wB+ADwAAAAAAAAAAAAAA"
+    },
+    "V": {
+      "codePoint": 86,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAxgDGAMYAxgDsAGwAbAB8ADgAAAAAAAAAAAAAA"
+    },
+    "W": {
+      "codePoint": 87,
+      "width": 15,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 13,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwGDEYM5gzmDOYPvAe8B7wDGAAAAAAAAAAAAAA"
+    },
+    "X": {
+      "codePoint": 88,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAxgDGAGwAfAA4AHwAbADGAMYAAAAAAAAAAAAAA"
+    },
+    "Y": {
+      "codePoint": 89,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAzADMAMwAzAB4AHgAMAAwADAAAAAAAAAAAAAAA"
+    },
+    "Z": {
+      "codePoint": 90,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAB/gH+AAwAGAAwAGAAwAH+Af4AAAAAAAAAAAAAA"
+    },
+    "[": {
+      "codePoint": 91,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAADg4MDAwMDAwMDg4AAAA"
+    },
+    "\\": {
+      "codePoint": 92,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAAGAgIDAwEBgYCAwAAAAA"
+    },
+    "]": {
+      "codePoint": 93,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAAHh4GBgYGBgYGHh4AAAA"
+    },
+    "^": {
+      "codePoint": 94,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAIABwAFAA2ACIAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "_": {
+      "codePoint": 95,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/AH8AAAAAAAAA"
+    },
+    "`": {
+      "codePoint": 96,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAYHAwAAAAAAAAAAAAAAAA"
+    },
+    "a": {
+      "codePoint": 97,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAPAA+AAYAPgBmAH4AOgAAAAAAAAAAAAAA"
+    },
+    "b": {
+      "codePoint": 98,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADAANwA/gDmAMYAxgD+ANwAAAAAAAAAAAAAA"
+    },
+    "c": {
+      "codePoint": 99,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHgA/AHMAYABzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "d": {
+      "codePoint": 100,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAABgAGAHYA/gHOAYYBzgD+AHYAAAAAAAAAAAAAA"
+    },
+    "e": {
+      "codePoint": 101,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHgA/AHMAfwBwAD8AHgAAAAAAAAAAAAAA"
+    },
+    "f": {
+      "codePoint": 102,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAABw4MHgwMDAwMAAAAAAA"
+    },
+    "g": {
+      "codePoint": 103,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHQA/AHcAYwB3AD8AHwADAD8AHgAAAAAA"
+    },
+    "h": {
+      "codePoint": 104,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADAANgA/ADsAMwAzADMAMwAAAAAAAAAAAAAA"
+    },
+    "i": {
+      "codePoint": 105,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAMDAAcHAwMDAwMAAAAAAA"
+    },
+    "j": {
+      "codePoint": 106,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAMDAAcHAwMDAwMDBwYAAA"
+    },
+    "k": {
+      "codePoint": 107,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADAAMwA3AD4APAA2ADcAMwAAAAAAAAAAAAAA"
+    },
+    "l": {
+      "codePoint": 108,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAHBwMDAwMDAwMAAAAAAA"
+    },
+    "m": {
+      "codePoint": 109,
+      "width": 14,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 12,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAALuA/8DMwMzAzMDMwMzAAAAAAAAAAAAAA"
+    },
+    "n": {
+      "codePoint": 110,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAALgA/ADMAMwAzADMAMwAAAAAAAAAAAAAA"
+    },
+    "o": {
+      "codePoint": 111,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHgA/ADMAMwAzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "p": {
+      "codePoint": 112,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAANwA/gDmAMYA5gD+ANwAwADAAMAAAAAAA"
+    },
+    "q": {
+      "codePoint": 113,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHYA/gDOAMYAzgD+AHYABgAGAAYAAAAAA"
+    },
+    "r": {
+      "codePoint": 114,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAAAALDwwMDAwMAAAAAAA"
+    },
+    "s": {
+      "codePoint": 115,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHAA+ADAAHAAGAD4AHAAAAAAAAAAAAAAA"
+    },
+    "t": {
+      "codePoint": 116,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAAAwfHwwMDA8HAAAAAAA"
+    },
+    "u": {
+      "codePoint": 117,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAMwAzADMAMwA3AD8AGwAAAAAAAAAAAAAA"
+    },
+    "v": {
+      "codePoint": 118,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAYwBjADYANgA+ABwACAAAAAAAAAAAAAAA"
+    },
+    "w": {
+      "codePoint": 119,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAMGAyYDdgN2A3YD3gGMAAAAAAAAAAAAAA"
+    },
+    "x": {
+      "codePoint": 120,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAANgA2ABwAHAAcADYANgAAAAAAAAAAAAAA"
+    },
+    "y": {
+      "codePoint": 121,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAANgA2ADYANgA+AB4ADAAMADwAOAAAAAAA"
+    },
+    "z": {
+      "codePoint": 122,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAfn4MGDB+fgAAAAAA"
+    },
+    "{": {
+      "codePoint": 123,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAABgwMDAwcDAwMDgYAAAA"
+    },
+    "|": {
+      "codePoint": 124,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAADAwMDAwMDAwMDAwEAAA"
+    },
+    "}": {
+      "codePoint": 125,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAAHAwMDAYGDgwMDBwAAAA"
+    },
+    "~": {
+      "codePoint": 126,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAADoAfgAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 127,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 128,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 129,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 130,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 131,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 132,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 133,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 134,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 135,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 136,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 137,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 138,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 139,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 140,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 141,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 142,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 143,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 144,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 145,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 146,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 147,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 148,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 149,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 150,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 151,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 152,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 153,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 154,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 155,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 156,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 157,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 158,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    "": {
+      "codePoint": 159,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAP8AgYCZgL2ApYCdgJmAgYCZgIGA/wAAAAAAAAAAA"
+    },
+    " ": {
+      "codePoint": 160,
+      "width": 5,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 3,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "¡": {
+      "codePoint": 161,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAMDAAMDAwMDAwAAAA"
+    },
+    "¢": {
+      "codePoint": 162,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAMABwAPwBzAGAAcwA/AB4ADAAAAAAAAAAAAAAA"
+    },
+    "£": {
+      "codePoint": 163,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPAB8AMAAwAH4AMAAxADMAfwAAAAAAAAAAAAAA"
+    },
+    "¤": {
+      "codePoint": 164,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAACEAPwAzADMAMwA/ACGAAAAAAAAAAAAAAAAA"
+    },
+    "¥": {
+      "codePoint": 165,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAABhgDMAMwAeAD8APwA/AAwADAAAAAAAAAAAAAAA"
+    },
+    "¦": {
+      "codePoint": 166,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAADAwMDAwAAAwMDAwEAAA"
+    },
+    "§": {
+      "codePoint": 167,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAGAA+ADIAPAA+AGMAcwA+AAYAdgA+AAAAAAAAAAAA"
+    },
+    "¨": {
+      "codePoint": 168,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAASHwIAAAAAAAAAAAAAAAA"
+    },
+    "©": {
+      "codePoint": 169,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeADGAPoBYgHqALoAzAA4AAAAAAAAAAAAAAAAA"
+    },
+    "ª": {
+      "codePoint": 170,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAADg8PGw8AAAAAAAAAAAA"
+    },
+    "«": {
+      "codePoint": 171,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAbADYAbgB2ADYAEwAAAAAAAAAAAAAA"
+    },
+    "¬": {
+      "codePoint": 172,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAAAAD8APwADAAMAAAAAAAAAAAAAAAAA"
+    },
+    "­": {
+      "codePoint": 173,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAfDgAAAAAAAAA"
+    },
+    "®": {
+      "codePoint": 174,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAeAD0AP4B+gD+AMwAeAAAAAAAAAAAAAAAAAAAA"
+    },
+    "¯": {
+      "codePoint": 175,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAHgAAAAAAAAAAAAAAAAA"
+    },
+    "°": {
+      "codePoint": 176,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAADh8bHgwAAAAAAAAAAAA"
+    },
+    "±": {
+      "codePoint": 177,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAwADAA/AD4ADAAIAD8APgAAAAAAAAAAAAAA"
+    },
+    "²": {
+      "codePoint": 178,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAOCgYIDgAAAAAAAAAAAAA"
+    },
+    "³": {
+      "codePoint": 179,
+      "width": 7,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 5,
+      "baseline": 13,
+      "bitmap": "AAAAeAg4CHgAAAAAAAAAAAAA"
+    },
+    "´": {
+      "codePoint": 180,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAMGBgAAAAAAAAAAAAAAAA"
+    },
+    "µ": {
+      "codePoint": 181,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAMwAzADMAMwAzAD8APYAwADAAMAAAAAAA"
+    },
+    "¶": {
+      "codePoint": 182,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AH8AfwB/AB8ADwAPAA8ADwAAAAAAAAAAAAAA"
+    },
+    "·": {
+      "codePoint": 183,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAgcDAAAAAAAAAA"
+    },
+    "¸": {
+      "codePoint": 184,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAACAwcAAA"
+    },
+    "¹": {
+      "codePoint": 185,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAcDAwMDAAAAAAAAAAAAAA"
+    },
+    "º": {
+      "codePoint": 186,
+      "width": 8,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 6,
+      "baseline": 13,
+      "bitmap": "AAAAADh8ZHw8AAAAAAAAAAAA"
+    },
+    "»": {
+      "codePoint": 187,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAAAA2ADcAGwAbADYAJAAAAAAAAAAAAAAA"
+    },
+    "¼": {
+      "codePoint": 188,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwABEAEwASABZABIANQBnAEEAAAAAAAAAAAAAA"
+    },
+    "½": {
+      "codePoint": 189,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwABEAEwASABbgBCAM4BiAEOAAAAAAAAAAAAAA"
+    },
+    "¾": {
+      "codePoint": 190,
+      "width": 14,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 12,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAADiACYA5AAsgOkAGoATgDCAAAAAAAAAAAAAA"
+    },
+    "¿": {
+      "codePoint": 191,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAADAAMAAAADAAYADAAYABmAD4AHAAAAAAA"
+    },
+    "À": {
+      "codePoint": 192,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAYAAwABAAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Á": {
+      "codePoint": 193,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAADAAYABAAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Â": {
+      "codePoint": 194,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAGAA8AGQAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Ã": {
+      "codePoint": 195,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAIAB8AAgAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Ä": {
+      "codePoint": 196,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAKABsACgAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Å": {
+      "codePoint": 197,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAOAAoADgAOAA8AGwAbABmAP4A/gDDAYMAAAAAAAAAAAAAA"
+    },
+    "Æ": {
+      "codePoint": 198,
+      "width": 14,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 12,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAP8A/wH4AZgBvwP4A/gHHwY/AAAAAAAAAAAAAA"
+    },
+    "Ç": {
+      "codePoint": 199,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPAD/AMMBwwHAAcAAwwDvAH4AGAAMABwAAAAAA"
+    },
+    "È": {
+      "codePoint": 200,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAQABgACAA+AD4AMAAwAD4AMAAwAD4APwAAAAAAAAAAAAAA"
+    },
+    "É": {
+      "codePoint": 201,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAGAAwADAA+AD4AMAAwAD4AMAAwAD4APwAAAAAAAAAAAAAA"
+    },
+    "Ê": {
+      "codePoint": 202,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAMAB4AEgA+AD4AMAAwAD4AMAAwAD4APwAAAAAAAAAAAAAA"
+    },
+    "Ë": {
+      "codePoint": 203,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAASAD4AEgA+AD4AMAAwAD4AMAAwAD4APwAAAAAAAAAAAAAA"
+    },
+    "Ì": {
+      "codePoint": 204,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AEBgIDAwMDAwMDAwMAAAAAAA"
+    },
+    "Í": {
+      "codePoint": 205,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "ABgYMDAwMDAwMDAwMAAAAAAA"
+    },
+    "Î": {
+      "codePoint": 206,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "ADB4SDAwMDAwMDAwMAAAAAAA"
+    },
+    "Ï": {
+      "codePoint": 207,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AEh4SDAwMDAwMDAwMAAAAAAA"
+    },
+    "Ð": {
+      "codePoint": 208,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAA/AD+AMcAwwHzAMMAxwD+APwAAAAAAAAAAAAAA"
+    },
+    "Ñ": {
+      "codePoint": 209,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAEAA+AAQA4QDxgPGA2YDZgM2Az4DHgMeAAAAAAAAAAAAAA"
+    },
+    "Ò": {
+      "codePoint": 210,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAMAA4ABgAPgB/AMOBwYHBgcGAw4D3AH4AAAAAAAAAAAAAA"
+    },
+    "Ó": {
+      "codePoint": 211,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAABAAMAAgAPgB/AMOBwYHBgcGAw4D3AH4AAAAAAAAAAAAAA"
+    },
+    "Ô": {
+      "codePoint": 212,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAGAA8ACQAPgB/AMOBwYHBgcGAw4D3AH4AAAAAAAAAAAAAA"
+    },
+    "Õ": {
+      "codePoint": 213,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAEAA+AAQAPgB/AMOBwYHBgcGAw4D3AH4AAAAAAAAAAAAAA"
+    },
+    "Ö": {
+      "codePoint": 214,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAJAAkAAAAPAB+AOcAwwDDAMMA5wB+ADwAAAAAAAAAAAAAA"
+    },
+    "×": {
+      "codePoint": 215,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAIgA+ABwAHAA2ACIAAAAAAAAAAAAAAAAA"
+    },
+    "Ø": {
+      "codePoint": 216,
+      "width": 13,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 11,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAPwB/AMeBzYHZgdmA84D3AH4AwAAAAAAAAAAAA"
+    },
+    "Ù": {
+      "codePoint": 217,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAIAAwABAAwwDDAMMAwwDDAMMAxwDuAHwAAAAAAAAAAAAAA"
+    },
+    "Ú": {
+      "codePoint": 218,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAADAAYABAAwwDDAMMAwwDDAMMAxwDuAHwAAAAAAAAAAAAAA"
+    },
+    "Û": {
+      "codePoint": 219,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAGAA8AGQAwwDDAMMAwwDDAMMAxwDuAHwAAAAAAAAAAAAAA"
+    },
+    "Ü": {
+      "codePoint": 220,
+      "width": 12,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 10,
+      "baseline": 13,
+      "bitmap": "AAAIABsACwAwwDDAMMAwwDDAMMAxwDuAHwAAAAAAAAAAAAAA"
+    },
+    "Ý": {
+      "codePoint": 221,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAGAAYADABhgDMAMwA+AB4AHgAMAAwADAAAAAAAAAAAAAAA"
+    },
+    "Þ": {
+      "codePoint": 222,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADwAPwAzADOAMwA/AD4AMAAAAAAAAAAAAAAA"
+    },
+    "ß": {
+      "codePoint": 223,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAcADYAMwAyAHQAMwAxADMANgAAAAAAAAAAAAAA"
+    },
+    "à": {
+      "codePoint": 224,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAEAAYABgAOAA+AAYAPgB2AGYAPgAAAAAAAAAAAAAA"
+    },
+    "á": {
+      "codePoint": 225,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAADAAMAAgAOAA+AAYAPgB2AGYAPgAAAAAAAAAAAAAA"
+    },
+    "â": {
+      "codePoint": 226,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAHAAcADYAOAA+AAYAPgB2AGYAPgAAAAAAAAAAAAAA"
+    },
+    "ã": {
+      "codePoint": 227,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAEAA+AAQAOAA+AAYAPgB2AGYAPgAAAAAAAAAAAAAA"
+    },
+    "ä": {
+      "codePoint": 228,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAANgA2AAAAOAA8AAYAPgBmAH4AOgAAAAAAAAAAAAAA"
+    },
+    "å": {
+      "codePoint": 229,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAACAAUAAgAMAA8AAYAPgBmAH4AOgAAAAAAAAAAAAAA"
+    },
+    "æ": {
+      "codePoint": 230,
+      "width": 14,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 12,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAOMA/8AcwP/B3AGdwPeAAAAAAAAAAAAAA"
+    },
+    "ç": {
+      "codePoint": 231,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHgA/AHMAYABjADcAPgAMAA4ADAAAAAAA"
+    },
+    "è": {
+      "codePoint": 232,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAGAAYAAwAHAA/AHMAfwBwADcAPgAAAAAAAAAAAAAA"
+    },
+    "é": {
+      "codePoint": 233,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAABgAMAAwAHAA/AHMAfwBwADcAPgAAAAAAAAAAAAAA"
+    },
+    "ê": {
+      "codePoint": 234,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAADAAeABYAHAA/AHMAfwBwADcAPgAAAAAAAAAAAAAA"
+    },
+    "ë": {
+      "codePoint": 235,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAEgA+ABAAHAA/AHMAfwBwADcAPgAAAAAAAAAAAAAA"
+    },
+    "ì": {
+      "codePoint": 236,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAYGAgcHAwMDAwMAAAAAAA"
+    },
+    "í": {
+      "codePoint": 237,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAGDAwcHAwMDAwMAAAAAAA"
+    },
+    "î": {
+      "codePoint": 238,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAcHhYcHAwMDAwMAAAAAAA"
+    },
+    "ï": {
+      "codePoint": 239,
+      "width": 6,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 4,
+      "baseline": 13,
+      "bitmap": "AAAAQPhAcHAwMDAwMAAAAAAA"
+    },
+    "ð": {
+      "codePoint": 240,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAfAB8ABwA/gDOAYYBhAD8APgAAAAAAAAAAAAAA"
+    },
+    "ñ": {
+      "codePoint": 241,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAACAAeAAYALgA/ADMAMwAzADMAMwAAAAAAAAAAAAAA"
+    },
+    "ò": {
+      "codePoint": 242,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAGAAMAAwAHgA/AHOAYYBxgDsAPwAAAAAAAAAAAAAA"
+    },
+    "ó": {
+      "codePoint": 243,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAABgAGAAwAHgA/AHOAYYBxgDsAPwAAAAAAAAAAAAAA"
+    },
+    "ô": {
+      "codePoint": 244,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAADAAeABIAHgA/AHOAYYBxgDsAPwAAAAAAAAAAAAAA"
+    },
+    "õ": {
+      "codePoint": 245,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAACAAeAAYAHgA/AHOAYYBxgDsAPwAAAAAAAAAAAAAA"
+    },
+    "ö": {
+      "codePoint": 246,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAEgASAAAAHgA/ADMAMwAzAD8AHgAAAAAAAAAAAAAA"
+    },
+    "÷": {
+      "codePoint": 247,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAgADAAAAD8APgAIAAwAAAAAAAAAAAAAAAAA"
+    },
+    "ø": {
+      "codePoint": 248,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAAAAAAHwA/AHeAZYB5gDsAPwAgAAAAAAAAAAAA"
+    },
+    "ù": {
+      "codePoint": 249,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAGAAYAAgAIwAzADMAMwAzAD8APwAAAAAAAAAAAAAA"
+    },
+    "ú": {
+      "codePoint": 250,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAABgAMAAwAIwAzADMAMwAzAD8APwAAAAAAAAAAAAAA"
+    },
+    "û": {
+      "codePoint": 251,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAHAAeABYAIwAzADMAMwAzAD8APwAAAAAAAAAAAAAA"
+    },
+    "ü": {
+      "codePoint": 252,
+      "width": 10,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 8,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAASAAAAMwAzADMAMwA3AD8AGwAAAAAAAAAAAAAA"
+    },
+    "ý": {
+      "codePoint": 253,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAADAAMAAgAYgBmADYANgA2ABwAHAAMADgAMAAAAAAA"
+    },
+    "þ": {
+      "codePoint": 254,
+      "width": 11,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 9,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAAAAwADAAPgA/ADGAMYAxgDuAPwAwADAAMAAAAAAA"
+    },
+    "ÿ": {
+      "codePoint": 255,
+      "width": 9,
+      "height": 18,
+      "xOffset": 0,
+      "yOffset": 0,
+      "xAdvance": 7,
+      "baseline": 13,
+      "bitmap": "AAAAAAAAFAA2AAQAYgBmADYANgA2ABwAHAAMADgAMAAAAAAA"
+    }
+  }
+}

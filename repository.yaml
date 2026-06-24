@@ -1,0 +1,9 @@
+# Home Assistant add-on repository manifest.
+#
+# This file makes the repo discoverable as an add-on *repository*: users add the
+# URL below via Settings → Add-ons → Add-on Store → ⋮ → Repositories, and the
+# Supervisor scans each subdirectory for an add-on. The ZerryBit Engine add-on
+# lives in zb_engine/ (its config.yaml, Dockerfile, source, and docs).
+name: ZerryBit Add-ons
+url: https://github.com/ZerryGit/zb-ha-app
+maintainer: ZerryBit <contact@zerrybit.com>

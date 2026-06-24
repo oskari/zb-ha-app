@@ -1,0 +1,50 @@
+{
+  "name": "zb-ha-app",
+  "version": "0.1.0",
+  "description": "ZerryBit E-ink Engine — Home Assistant Add-on with 1-bit rendering engine",
+  "license": "MIT",
+  "author": "ZerryBit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZerryGit/zb-ha-app.git"
+  },
+  "homepage": "https://github.com/ZerryGit/zb-ha-app#readme",
+  "bugs": "https://github.com/ZerryGit/zb-ha-app/issues",
+  "main": "dist/ha/index.js",
+  "scripts": {
+    "build": "npm run build:expressions && tsc",
+    "build:expressions": "npm run build -w @zb/expressions",
+    "build:server": "tsc",
+    "start": "node dist/ha/index.js",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:expressions": "npm run test -w @zb/expressions",
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "fast-xml-parser": "^5.5.6",
+    "multer": "^2.1.1",
+    "sharp": "^0.33.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^20.0.0",
+    "@types/supertest": "^7.2.0",
+    "eslint": "^10.2.0",
+    "supertest": "^7.2.2",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.58.2",
+    "vitest": "^4.1.2"
+  },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

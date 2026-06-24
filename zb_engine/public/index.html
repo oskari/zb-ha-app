@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZerryBit Engine</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    .panel { max-width: 580px; margin: 0 auto; padding: 16px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #e0e3e9; }
+    header h1 { font-size: 1.15rem; font-weight: 700; color: #341f97; }
+    .badge { font-size: 0.72rem; padding: 3px 9px; border-radius: 12px; font-weight: 600; }
+    .badge-ok    { background: #e8f5e9; color: #2e7d32; }
+    .badge-warn  { background: #fff8e1; color: #f57f17; }
+    .badge-error { background: #fce4ec; color: #c62828; }
+
+    .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .card-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #999; margin-bottom: 12px; font-weight: 600; }
+
+    /* Preview */
+    .preview-box { background: #f4f4f4; border-radius: 6px; padding: 12px; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .preview-box img { max-width: 100%; height: auto; image-rendering: pixelated; display: block; margin: 0 auto; }
+    .preview-empty { color: #bbb; font-size: 0.82rem; }
+
+    /* Meta grid */
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .meta-cell { background: #f8f8f8; border-radius: 6px; padding: 8px 10px; }
+    .meta-cell .lbl { font-size: 0.68rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-cell .val { font-size: 0.92rem; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
+
+    /* Buttons */
+    .btn { border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.83rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    .btn:hover:not(:disabled) { opacity: 0.82; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary   { background: #341f97; color: white; }
+    .btn-secondary { background: #ede9ff; color: #341f97; }
+    .btn-ghost     { background: #f0f2f5; color: #555; padding: 5px 10px; font-size: 0.75rem; }
+
+    /* Rows */
+    .row { display: flex; align-items: center; gap: 8px; }
+    .input { border: 1px solid #dde1ea; border-radius: 6px; padding: 7px 10px; font-size: 0.83rem; flex: 1; outline: none; }
+    .input:focus { border-color: #341f97; }
+
+    /* URL rows */
+    .url-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .url-lbl { font-size: 0.7rem; color: #888; min-width: 28px; font-weight: 600; }
+    code { flex: 1; background: #f4f4f4; padding: 5px 8px; border-radius: 4px; font-size: 0.76rem; word-break: break-all; color: #333; }
+
+    /* Token row */
+    .token-val { flex: 1; background: #f4f4f4; padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 0.82rem; color: #555; letter-spacing: 0.06em; }
+
+    /* Status / info text */
+    .hint { font-size: 0.78rem; color: #888; margin-bottom: 10px; line-height: 1.4; }
+    .status-line { font-size: 0.78rem; color: #555; margin-top: 6px; min-height: 1em; }
+    .status-error { color: #c62828; }
+
+    /* Entity picker */
+    .entity-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid #eee; cursor:pointer; user-select:none; }
+    .entity-item:last-child { border-bottom:none; }
+    .entity-item:hover { background:#f0f0f8; }
+    .entity-item input[type=checkbox] { cursor:pointer; accent-color:#341f97; flex-shrink:0; }
+    .domain-badge { font-size:0.64rem; padding:2px 6px; border-radius:10px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+    .entity-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+    .entity-name { font-size:0.81rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .entity-id-label { font-size:0.67rem; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .entity-state { font-size:0.78rem; color:#555; white-space:nowrap; flex-shrink:0; }
+    /* Preview table */
+    #preview-table th { background:#e8e8f0; padding:5px 8px; text-align:left; font-size:0.7rem; font-weight:600; color:#555; position:sticky; top:0; }
+    #preview-table td { padding:5px 8px; border-bottom:1px solid #eee; font-size:0.72rem; color:#333; vertical-align:middle; }
+    #preview-table tr:last-child td { border-bottom:none; }
+  </style>
+</head>
+<body>
+<div class="panel">
+
+  <header>
+    <h1>⚡ ZerryBit Engine</h1>
+    <span class="badge badge-warn" id="status-badge">Loading…</span>
+  </header>
+
+  <!-- ① Preview -->
+  <div class="card">
+    <div class="card-title">Dashboard Preview</div>
+    <div class="preview-box" id="preview-box">
+      <div class="preview-empty" id="preview-empty">No image cached yet.</div>
+    </div>
+    <div class="row">
+      <button class="btn btn-secondary" id="refresh-btn" style="font-size:0.8rem;padding:6px 12px;">↻ Refresh</button>
+      <span class="status-line" id="refresh-status"></span>
+    </div>
+  </div>
+
+  <!-- ② Dashboard info -->
+  <div class="card">
+    <div class="card-title">Active Dashboard</div>
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="lbl">Name</div><div class="val" id="m-name">—</div></div>
+      <div class="meta-cell"><div class="lbl">Canvas</div><div class="val" id="m-size">—</div></div>
+      <div class="meta-cell"><div class="lbl">Sources</div><div class="val" id="m-sources">—</div></div>
+      <div class="meta-cell"><div class="lbl">Elements</div><div class="val" id="m-elements">—</div></div>
+    </div>
+  </div>
+
+  <!-- ③ Quick link to Builder -->
+  <div class="card">
+    <div class="card-title">Widget Builder</div>
+    <p class="hint">The builder is now the default view when you open the add-on. Use the button below to navigate there.</p>
+    <a class="btn btn-primary" href="../" style="display:inline-block;text-decoration:none;text-align:center;margin-top:8px;">Open Builder ↗</a>
+  </div>
+
+  <!-- ④ ESP32 Connection -->
+  <div class="card">
+    <div class="card-title">ESP32 Connection</div>
+    <p class="hint">Enter your Home Assistant local IP address to generate the endpoint URLs for your ESP32 firmware.</p>
+    <div class="row" style="margin-bottom:12px;">
+      <input class="input" id="ha-ip" type="text" placeholder="192.168.1.50">
+    </div>
+    <div class="url-row"><span class="url-lbl">PNG</span><code id="url-png">—</code><button class="btn btn-ghost" onclick="copyEl('url-png')">Copy</button></div>
+    <div class="url-row"><span class="url-lbl">BIN</span><code id="url-bin">—</code><button class="btn btn-ghost" onclick="copyEl('url-bin')">Copy</button></div>
+  </div>
+
+</div>
+
+<script>
+
+  // ── Init ───────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedIp = localStorage.getItem('zb_ha_ip') || '';
+    const ipInput = document.getElementById('ha-ip');
+    ipInput.value = savedIp;
+    if (savedIp) updateUrls(savedIp);
+
+    ipInput.addEventListener('input', e => {
+      const ip = e.target.value.trim();
+      localStorage.setItem('zb_ha_ip', ip);
+      updateUrls(ip);
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', refreshPreview);
+
+    loadPayloadInfo();
+    refreshPreview();
+  });
+
+  // ── Payload info ───────────────────────────────────────────────
+  async function loadPayloadInfo() {
+    try {
+      const res = await fetch('../payload');
+      if (!res.ok) { setBadge('No payload', 'warn'); return; }
+      const p = await res.json();
+      const misc = p.misc || {};
+      const size = misc.size || {};
+      document.getElementById('m-name').textContent = misc.name || 'untitled';
+      document.getElementById('m-size').textContent =
+        (size.width && size.height) ? `${size.width} × ${size.height}` : '—';
+      document.getElementById('m-sources').textContent = (p.sources || []).length;
+      document.getElementById('m-elements').textContent = (p.elements || []).length;
+      setBadge('Active', 'ok');
+    } catch {
+      setBadge('Error', 'error');
+    }
+  }
+
+  // ── Preview ────────────────────────────────────────────────────
+  function refreshPreview() {
+    const box = document.getElementById('preview-box');
+    const empty = document.getElementById('preview-empty');
+    const status = document.getElementById('refresh-status');
+    status.textContent = 'Refreshing…';
+    status.className = 'status-line';
+
+    const probe = new Image();
+    probe.onload = () => {
+      // Replace box contents with the fresh image
+      box.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = '../image.png?t=' + Date.now();
+      img.alt = 'Dashboard preview';
+      box.appendChild(img);
+      status.textContent = 'Updated at ' + new Date().toLocaleTimeString();
+    };
+    probe.onerror = () => {
+      box.innerHTML = '<div class="preview-empty">No image cached yet. Deploy a dashboard first.</div>';
+      status.textContent = '';
+    };
+    probe.src = '../image.png?t=' + Date.now();
+  }
+
+  // ── URL helpers ────────────────────────────────────────────────
+  function updateUrls(ip) {
+    const base = ip ? `http://${ip}:8000` : 'http://<HA_IP>:8000';
+    document.getElementById('url-png').textContent = `${base}/image.png`;
+    document.getElementById('url-bin').textContent = `${base}/image.bin`;
+  }
+
+  function copyEl(id) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent || '').catch(() => {});
+  }
+
+  // ── Domain colours ─────────────────────────────────────────────
+  const DOMAIN_COLORS = {
+    sensor:        ['#e3f2fd','#1565c0'],
+    binary_sensor: ['#fff3e0','#e65100'],
+    light:         ['#fffde7','#f9a825'],
+    switch:        ['#e8f5e9','#2e7d32'],
+    climate:       ['#e0f7fa','#00695c'],
+    media_player:  ['#f3e5f5','#6a1b9a'],
+    automation:    ['#fce4ec','#880e4f'],
+    script:        ['#fce4ec','#880e4f'],
+    input_boolean: ['#e8eaf6','#283593'],
+    input_number:  ['#e8eaf6','#283593'],
+    input_select:  ['#e8eaf6','#283593'],
+  };
+  function domainBg(d) { return (DOMAIN_COLORS[d] || ['#ede9ff','#341f97'])[0]; }
+  function domainFg(d) { return (DOMAIN_COLORS[d] || ['#ede9ff','#341f97'])[1]; }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Status badge ───────────────────────────────────────────────
+  function setBadge(text, type) {
+    const b = document.getElementById('status-badge');
+    b.textContent = text;
+    b.className = 'badge badge-' + type;
+  }
+</script>
+</body>
+</html>
