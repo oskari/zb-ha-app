@@ -54,7 +54,7 @@ import {
   deleteWidget,
   listWidgets,
 } from "./widgetService";
-import { maskWidgetSecrets, maskPayloadSecrets } from "./sourceSecrets";
+import { maskWidgetSecrets, maskPayloadSecrets, restorePayloadSecrets } from "./sourceSecrets";
 
 // ── Async route wrapper ────────────────────────────────────────
 
@@ -563,7 +563,15 @@ export function createIngressApp(adapter: PlatformAdapter): AppContext {
     }
     try {
       logInfo("render.start", { requestId: getRequestId(req), route: "PUT /payload", slot, deploy: true });
-      // Persist the Zod-validated payload to the slot-specific file.
+      // Restore mask-on-read source secrets from the prior deployed payload for
+      // this slot (matched by source id) BEFORE persist + render, so a re-deploy
+      // of a payload loaded via masked GET /payload neither writes the
+      // "__stored__" sentinel to disk (which would destroy the real stored
+      // credential) nor authenticates the deploy render with it. An unmatched
+      // sentinel is dropped, never persisted — that source deploys without auth.
+      const priorPayload = await storage.readPayload(slot);
+      restorePayloadSecrets(validated, priorPayload);
+      // Persist the Zod-validated, secret-restored payload to the slot-specific file.
       const payloadBuf = Buffer.from(JSON.stringify(validated, null, 2), "utf-8");
       await storage.writePayload(payloadBuf, slot);
       const meta = await renderAndCache(validated, storage, sourceHandler, slot);
@@ -660,6 +668,16 @@ export function createIngressApp(adapter: PlatformAdapter): AppContext {
     try {
       const isDeploy = req.headers["x-deploy"] === "true";
       logInfo("render.start", { requestId: getRequestId(req), route: "POST /render", slot, deploy: isDeploy });
+      if (isDeploy) {
+        // Deploy persists payload.json — restore mask-on-read source secrets from
+        // the prior deployed payload for this slot first (see PUT /payload), so the
+        // deploy neither authenticates with nor persists the "__stored__" sentinel.
+        // Preview (non-deploy) intentionally does NOT restore: the preview payload
+        // may belong to a different widget than the deployed slot, and matching by
+        // source id across unrelated payloads could surface the wrong stored token.
+        const priorPayload = await storage.readPayload(slot);
+        restorePayloadSecrets(payload, priorPayload);
+      }
       const { pngBuffer, binBuffer, meta } = await runPipeline(payload, sourceHandler, storage);
 
       if (meta.sourceErrors.length > 0) {

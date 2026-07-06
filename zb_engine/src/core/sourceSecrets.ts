@@ -167,8 +167,16 @@ function restoreHeaderSecrets(
 /**
  * Restore secrets on a single payload's sources by matching source `id`
  * against the persisted payload (mutates `incoming` in place).
+ *
+ * Exported for the deploy paths (PUT /payload, POST /render + x-deploy), which
+ * persist a client-supplied payload to `payload.json`. Because the builder
+ * loads payloads via masked GET /payload, a re-deploy carries the sentinel in
+ * place of every source secret; restoring from the slot's prior deployed
+ * payload keeps the write from destroying the real credential or
+ * authenticating with the sentinel. A sentinel with no persisted match is
+ * dropped (never persisted as a literal credential).
  */
-function restorePayloadSecrets(incoming: unknown, persisted: unknown): void {
+export function restorePayloadSecrets(incoming: unknown, persisted: unknown): void {
   if (!isPlainObject(incoming)) return;
   const incomingSources = incoming["sources"];
   if (!Array.isArray(incomingSources)) return;

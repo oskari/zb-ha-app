@@ -2,9 +2,10 @@
  * widgetRoutes.test.ts — HTTP-level widget save contract tests.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createIngressApp } from "../src/core/server";
+import { installInlineRenderWorker } from "./helpers/inlineRenderWorker";
 import type { PlatformAdapter, Slot, StorageAdapter, WidgetDoc, WidgetMeta } from "../src/core/adapters";
 
 const validDoc = {
@@ -199,5 +200,102 @@ describe("source-credential masking (FIX-04)", () => {
     expect(res.body.sources[0].headers.Authorization).toBe("__stored__");
     expect(res.body.sources[0].headers["X-Custom"]).toBe("keepme");
     expect(JSON.stringify(res.body)).not.toContain("realtok123");
+  });
+});
+
+/**
+ * A deployable payload with one http source carrying a bearer token. The URL is
+ * 127.0.0.1 so the deploy render's source fetch is rejected SYNCHRONOUSLY by the
+ * SSRF validator (no real network) while the source config still round-trips.
+ */
+function payloadWithBearer(bearer: string) {
+  return {
+    misc: { size: { width: 8, height: 8 }, format: "png", gridSize: "1x1" },
+    features: {},
+    sources: [
+      {
+        id: "src1",
+        kind: "http",
+        method: "GET",
+        url: "http://127.0.0.1/",
+        auth: { type: "bearer", bearer },
+        response: { type: "json" },
+      },
+    ],
+    elements: [],
+  };
+}
+
+/** Bearer of the first source in the most-recently persisted payload. */
+function lastDeployedBearer(written: { body: unknown }[]): unknown {
+  const body = written[written.length - 1]?.body as {
+    sources?: { auth?: { bearer?: unknown } }[];
+  };
+  return body?.sources?.[0]?.auth?.bearer;
+}
+
+function createPayloadStorage(prior: unknown) {
+  const written: { slot: Slot; body: unknown }[] = [];
+  const storage: StorageAdapter = {
+    readWidget: async () => null,
+    writeWidget: async () => {},
+    deleteWidget: async () => false,
+    listWidgets: async (): Promise<WidgetMeta[]> => [],
+    readPayload: async () => prior,
+    writePayload: async (buf: Buffer, slot: Slot = "primary") => {
+      written.push({ slot, body: JSON.parse(buf.toString("utf8")) });
+      return true;
+    },
+    writeCachedImage: async () => false,
+    getCachedImagePath: () => null,
+  };
+  return { storage, written };
+}
+
+describe("deploy paths restore masked source secrets (FIX-04 deploy wiring)", () => {
+  // The deploy paths run a real render (renderAndCache / runPipeline), which
+  // needs the worker; install the inline main-thread render worker for these.
+  let restoreWorker: () => void;
+  beforeAll(() => { restoreWorker = installInlineRenderWorker(); });
+  afterAll(() => restoreWorker());
+
+  it("PUT /payload restores the sentinel from the prior deployed payload (no credential loss)", async () => {
+    const { storage, written } = createPayloadStorage(payloadWithBearer("realtok123"));
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    const res = await request(ingressApp).put("/payload").send(payloadWithBearer("__stored__"));
+
+    expect(res.status).toBe(200);
+    // The persisted payload — which is the SAME object the deploy render used —
+    // carries the real secret, never the "__stored__" sentinel.
+    expect(lastDeployedBearer(written)).toBe("realtok123");
+    expect(JSON.stringify(written)).not.toContain("__stored__");
+  });
+
+  it("POST /render + x-deploy restores the sentinel before rendering and persisting", async () => {
+    const { storage, written } = createPayloadStorage(payloadWithBearer("realtokABC"));
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    const res = await request(ingressApp)
+      .post("/render")
+      .set("x-deploy", "true")
+      .send(payloadWithBearer("__stored__"));
+
+    expect(res.status).toBe(200);
+    expect(lastDeployedBearer(written)).toBe("realtokABC");
+    expect(JSON.stringify(written)).not.toContain("__stored__");
+  });
+
+  it("PUT /payload drops an unmatched sentinel instead of persisting it (fail-closed)", async () => {
+    // No prior payload to restore from -> the sentinel must be dropped, never
+    // written to disk as a literal credential.
+    const { storage, written } = createPayloadStorage(null);
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    const res = await request(ingressApp).put("/payload").send(payloadWithBearer("__stored__"));
+
+    expect(res.status).toBe(200);
+    expect(lastDeployedBearer(written)).toBeUndefined();
+    expect(JSON.stringify(written)).not.toContain("__stored__");
   });
 });
