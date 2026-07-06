@@ -105,11 +105,30 @@ function isHttpUrl(value: string): boolean {
 }
 
 /**
+ * True when an `svg` value carries a runtime binding/expression that resolves
+ * INSIDE the frozen engine — a binding/expression object (`{"$":...}`,
+ * `{"concat":[...]}`) or a string template containing `{{`. These are the
+ * documented residual and are left untouched here.
+ *
+ * Everything else that is not a non-empty inline string — `""`, `null`, `[]`,
+ * numbers — is treated as "no inline content": the frozen `resolveSvg` coerces
+ * it to `""` and then falls through to the `src` fetch fallback, so a literal
+ * http(s) `src` MUST be pre-fetched/inlined here or it reaches the frozen regex
+ * sanitizer with raw bytes. Gating branch (2) on this (instead of
+ * `svg === ""`) closes the `svg: null`/`[]` + http `src` sanitizer bypass.
+ */
+function isDeferredSvgBinding(svg: unknown): boolean {
+  if (typeof svg === "string") return svg.includes("{{");
+  return typeof svg === "object" && svg !== null && !Array.isArray(svg);
+}
+
+/**
  * Sanitize a single element. SVG-type elements with a literal string `svg`
- * (or an http(s) `src` to fetch and inline) come back with parser-sanitized,
+ * (or an http(s) `src` to fetch and inline — including when `svg` is empty or a
+ * static non-string like `null`/`[]`) come back with parser-sanitized,
  * whitespace-capped bytes; every other element — including binding-expression
- * (non-string) `svg`/`src`, `asset:`/`data:` `src`, and non-SVG elements — is
- * returned by reference, unchanged.
+ * `svg`, `asset:`/`data:` `src`, and non-SVG elements — is returned by
+ * reference, unchanged.
  */
 async function sanitizeElement(
   el: Record<string, unknown>,
@@ -145,13 +164,15 @@ async function sanitizeElement(
     };
   }
 
-  // (2) Empty inline SVG with a literal http(s) `src` — fetch out-of-engine
-  // through the existing SSRF/redirect/size-guarded helper, sanitize +
-  // collapse, inline onto `svg`, and clear `src` so the frozen `drawSvg`
-  // never performs the fetch. Any failure blanks both fields.
+  // (2) No usable inline SVG string (empty `""`, OR a static non-string such as
+  // `null`/`[]` that the frozen `resolveSvg` coerces to "" before its `src`
+  // fetch fallback) with a literal http(s) `src` — fetch out-of-engine through
+  // the existing SSRF/redirect/size-guarded helper, sanitize + collapse, inline
+  // onto `svg`, and clear `src` so the frozen `drawSvg` never performs the
+  // fetch. Any failure blanks both fields. Binding/expression `svg` is excluded
+  // by `isDeferredSvgBinding` (documented residual — resolves in the engine).
   if (
-    typeof el.svg === "string" &&
-    el.svg.length === 0 &&
+    !isDeferredSvgBinding(el.svg) &&
     typeof el.src === "string" &&
     isHttpUrl(el.src)
   ) {
@@ -169,9 +190,11 @@ async function sanitizeElement(
     }
   }
 
-  // (3) Non-string (binding-expression) svg/src, or a non-http src such as an
-  // `asset:` token or `data:` URI — resolved inside the frozen engine; leave
-  // untouched (documented residual).
+  // (3) Binding-expression `svg` (resolved inside the frozen engine), or any
+  // `src` that is not a literal http(s) URL — an `asset:` token or a `data:`
+  // URI (a `data:`/`file:` `src` is separately rejected by the engine's own
+  // SSRF URL validator before it can reach the regex). Leave untouched
+  // (documented residual).
   return el;
 }
 

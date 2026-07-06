@@ -238,6 +238,40 @@ describe("sanitizeSvgElementsForEngine — URL src fetch path", () => {
     expect(el.src).toBe("");
     expect(el.svg as string).toContain("<path");
   });
+
+  it("fetches+inlines+clears src for a non-string (null/[]) svg with a literal http src (closes the svg:null bypass)", async () => {
+    // Regression: a non-string `svg` (`null`, `[]`, …) used to skip BOTH sanitize
+    // branches and leave `src` live. The frozen `resolveSvg` coerces null->"" and
+    // `drawSvg`'s `!svgContent && props.src` fallback then fetches the RAW `src`
+    // bytes and runs them through the ReDoS-prone regex. A static non-string svg
+    // must be treated as "no inline content": fetch + sanitize + inline + clear
+    // src out-of-engine so the frozen fetch path is never reached.
+    const hostile = "<svg><image" + " ".repeat(200_000) + "/></svg>";
+    const emptySvgs: unknown[] = [null, []];
+    for (const svg of emptySvgs) {
+      vi.mocked(fetchTextWithLimit).mockReset();
+      vi.mocked(fetchTextWithLimit).mockResolvedValue(hostile);
+      const [el] = await sanitizeSvgElementsForEngine([
+        { type: "svg", svg, src: "http://attacker/redos.svg" },
+      ]);
+      // src cleared -> frozen drawSvg fallback fetch can never fire.
+      expect(el.src).toBe("");
+      // Fetched bytes are sanitized + whitespace-capped, not raw.
+      const out = el.svg as string;
+      expect(LONG_RUN.test(out)).toBe(false);
+      expect(vi.mocked(fetchTextWithLimit)).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("does NOT pre-fetch a binding-expression svg with a live http src (documented residual, by reference)", async () => {
+    // A binding object svg resolves in the engine and may become non-empty, so we
+    // must not pre-fetch/clear its src here — it stays the documented residual.
+    const el0 = { type: "svg", svg: { $: "features.icon" }, src: "http://host/x.svg" };
+    const [el] = await sanitizeSvgElementsForEngine([el0]);
+    expect(el).toBe(el0);
+    expect(el.src).toBe("http://host/x.svg");
+    expect(vi.mocked(fetchTextWithLimit)).not.toHaveBeenCalled();
+  });
 });
 
 describe("sanitizeSvgElementsForEngine — abort handling", () => {
