@@ -19,6 +19,7 @@ import {
   compositeRotatedText,
 } from "../data/rotatedTextRasterizer";
 import { normalizeSvgElements } from "../data/svgPreprocessor";
+import { clampElementGeometry } from "../data/geometryClamp";
 import { preRasterizeLargeSvgs, compositePreRasteredOnto } from "../data/svgPreRasterizer";
 import {
   preRasterizeRotatedSvgs,
@@ -329,7 +330,14 @@ async function preparePipeline(
     }
   }
 
-  const expandResult = expandGraphElements(elementsAfterAssets, ctx);
+  // Clamp resolved geometry (sizeX/sizeY/strokeWidth/pos/line points) to
+  // canvas-scale bounds before the frozen engine's draw loops consume them.
+  // Mirrors the position of normalizeSvgElements: validate → SVG
+  // normalize → user assets → geometry clamp → graph expansion. Unchanged
+  // elements keep their reference, so byte-identical renders stay cached.
+  const clampedElements = clampElementGeometry(elementsAfterAssets, ctx);
+
+  const expandResult = expandGraphElements(clampedElements, ctx);
   if (expandResult.elements.length > MAX_EXPANDED_ELEMENTS) {
     throw new Error(
       `Element count after graph expansion (${expandResult.elements.length}) exceeds the ${MAX_EXPANDED_ELEMENTS} limit.`,

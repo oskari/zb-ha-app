@@ -8,6 +8,7 @@
 import { describe, it, expect } from "vitest";
 import { payloadSchema, miscSchema } from "../src/schema/payloadSchema";
 import { sourceSchema } from "../src/schema/sourceSchema";
+import { elementSchema } from "../src/schema/elementSchema";
 
 // ── Misc schema ────────────────────────────────────────────────
 
@@ -255,5 +256,57 @@ describe("sourceSchema: name preservation", () => {
     });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.sources[0].name).toBe("Living Room Temp");
+  });
+});
+
+// ── Element geometry bounds ────────────────────────────────────
+//
+// Literal non-finite / absurd geometry (sizeX/sizeY/strokeWidth/pos/line
+// points) must be rejected at the schema boundary, while bindings and
+// in-range numbers still pass. `1e309` / `1e400` overflow to Infinity in JS.
+
+describe("elementSchema: geometry bounds", () => {
+  it("rejects non-finite / oversize literal rect geometry", () => {
+    expect(elementSchema.safeParse({ type: "rect", sizeX: Infinity }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "rect", sizeX: 1e309 }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "rect", sizeY: 1e400 }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "rect", strokeWidth: Infinity }).success).toBe(false);
+  });
+
+  it("rejects non-finite / oversize literal pos and circle strokeWidth", () => {
+    expect(elementSchema.safeParse({ type: "rect", pos: { x: Infinity, y: 0 } }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "rect", pos: { x: 0, y: 1e400 } }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "circle", strokeWidth: 1e400 }).success).toBe(false);
+  });
+
+  it("rejects non-finite / oversize literal line points", () => {
+    expect(elementSchema.safeParse({ type: "line", points: [[1e309, 0], [0, 0]] }).success).toBe(false);
+    expect(elementSchema.safeParse({ type: "line", points: [[0, 0], [Infinity, 0]] }).success).toBe(false);
+    // Beyond MAX_GEOMETRY_COORD (100000) — rejected at the schema.
+    expect(elementSchema.safeParse({ type: "line", points: [[0, 0], [200000, 0]] }).success).toBe(false);
+  });
+
+  it("accepts bindings and in-range numbers for geometry", () => {
+    expect(elementSchema.safeParse({ type: "rect", sizeX: "={{ features.w }}" }).success).toBe(true);
+    expect(elementSchema.safeParse({ type: "rect", sizeX: { $: "s.w" } }).success).toBe(true);
+    expect(elementSchema.safeParse({ type: "rect", sizeX: 800 }).success).toBe(true);
+    // In the schema cap (<=100000) but beyond the render-clamp bound — accepted
+    // here, bounded later by the pre-render geometry clamp.
+    expect(elementSchema.safeParse({ type: "rect", sizeX: 50000 }).success).toBe(true);
+    expect(elementSchema.safeParse({ type: "line", points: [[0, 0], [10, 10]] }).success).toBe(true);
+  });
+
+  it("still round-trips valid geometry through payloadSchema", () => {
+    const base = {
+      misc: { size: { width: 800, height: 480 } },
+      features: {},
+      sources: [],
+    };
+    expect(
+      payloadSchema.safeParse({ ...base, elements: [{ type: "rect", sizeX: 800, sizeY: 480 }] }).success,
+    ).toBe(true);
+    expect(
+      payloadSchema.safeParse({ ...base, elements: [{ type: "rect", sizeX: Infinity }] }).success,
+    ).toBe(false);
   });
 });

@@ -7,11 +7,36 @@
  */
 
 import { z } from "zod";
+import { MAX_GEOMETRY_COORD } from "../limits";
 
 // ── Shared sub-schemas (reused across element types) ───────────
 
+/**
+ * Geometry field that supports runtime bindings but rejects non-finite or
+ * absurd numeric LITERALS. The refinement fires ONLY when the value
+ * is `typeof === "number"`, so binding strings (`"={{...}}"`), binding objects
+ * (`{ "$": "path" }`), and expression objects (`{ "+": [...] }`) still pass
+ * validation unchanged and are bounded later by the pre-render geometry clamp.
+ * `.default(dflt)` reuses the field's existing default exactly.
+ */
+const geometryNumber = (dflt: unknown) =>
+  z
+    .unknown()
+    .superRefine((val, ctx) => {
+      if (
+        typeof val === "number" &&
+        (!Number.isFinite(val) || Math.abs(val) > MAX_GEOMETRY_COORD)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `geometry value must be a finite number within +/-${MAX_GEOMETRY_COORD}`,
+        });
+      }
+    })
+    .default(dflt);
+
 const pointSchema = z
-  .object({ x: z.unknown().default(0), y: z.unknown().default(0) })
+  .object({ x: geometryNumber(0), y: geometryNumber(0) })
   .default({ x: 0, y: 0 });
 
 /** Scale point defaults to 1,1 (identity) instead of 0,0 */
@@ -29,8 +54,8 @@ const transformFields = {
 
 /** Size: sizeX, sizeY */
 const sizeFields = {
-  sizeX: z.unknown().default(0),
-  sizeY: z.unknown().default(0),
+  sizeX: geometryNumber(0),
+  sizeY: geometryNumber(0),
 };
 
 /** Fill dither: enableFill, fill */
@@ -43,7 +68,7 @@ const fillFields = {
 const strokeFields = {
   enableStroke: z.unknown().default(false),
   strokeDither: z.unknown().default(100),
-  strokeWidth: z.unknown().default(1),
+  strokeWidth: geometryNumber(1),
   strokeDash: z.unknown().default([]),
   strokeCap: z.unknown().default("butt"),
   strokePosition: z.unknown().default("center"),
@@ -89,7 +114,7 @@ const circleSchema = z.object({
   // Stroke without strokeRadius (not applicable to circle)
   enableStroke: z.unknown().default(false),
   strokeDither: z.unknown().default(100),
-  strokeWidth: z.unknown().default(1),
+  strokeWidth: geometryNumber(1),
   strokeDash: z.unknown().default([]),
   strokeCap: z.unknown().default("butt"),
   strokePosition: z.unknown().default("center"),
@@ -105,8 +130,19 @@ const lineSchema = z.object({
   ...identityFields,
   ...visibilityField,
   ...transformFields,
-  // Line uses points, not sizeX/sizeY
-  points: z.array(z.tuple([z.number(), z.number()])).default([]),
+  // Line uses points, not sizeX/sizeY. Points are bare numbers (no binding
+  // support), so the finite+range bound rejects literal Infinity / absurd
+  // coordinates here; the pre-render clamp further tightens survivors to
+  // canvas scale. Array length is intentionally left uncapped here; a
+  // pathological many-segment line is bounded by the render-timeout backstop.
+  points: z
+    .array(
+      z.tuple([
+        z.number().finite().min(-MAX_GEOMETRY_COORD).max(MAX_GEOMETRY_COORD),
+        z.number().finite().min(-MAX_GEOMETRY_COORD).max(MAX_GEOMETRY_COORD),
+      ]),
+    )
+    .default([]),
   ...strokeFields,
   ...opacityField,
 });
