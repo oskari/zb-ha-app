@@ -28,6 +28,7 @@ import { ditherPercentToGray, getFill, getStroke, getStrokeProps, getEndpointCap
 import { makeRectSceneFunc, makeCircleSceneFunc, boxHitFunc } from './shapeSceneFuncs.js';
 import { roundPolyline } from '../utils/polyline.js';
 import { resolveVisibilityValue } from '../utils/visibility.js';
+import { resolveAssetSrc } from '../utils/assetSrc.js';
 import { resolveDisplayText, useAutoSizeText } from './useAutoSizeText.js';
 import { useAutoFetchSources } from './useAutoFetchSources.js';
 
@@ -122,6 +123,10 @@ export default function CanvasArea() {
   // Bitmap font loading is handled by the platform layer (App.jsx).
   // Subscribe to the store flag so we re-render when fonts become ready.
   const bitmapFontsLoaded = useUiStore((s) => s.bitmapFontsLoaded);
+  // Platform resolver that maps an `asset:<filename>` payload token to its
+  // loadable raw-bytes URL, so custom uploaded SVG/image assets preview on the
+  // canvas. Null on builds without an asset store (token left unresolved).
+  const assetUrlResolver = useUiStore((s) => s.assetUrlResolver);
 
   useAutoSizeText({ elements, bitmapFontsLoaded, bindingCtx, updateElementDerived });
   useAutoFetchSources(sources);
@@ -1275,7 +1280,7 @@ export default function CanvasArea() {
                     <Rect width={imgW} height={imgH} fill="transparent" />
                     <ImagePreview
                       elementType="img"
-                      src={element.src}
+                      src={resolveAssetSrc(element.src, assetUrlResolver)}
                       width={imgW}
                       height={imgH}
                       posX={resolveNumeric(element.pos?.x, 0, bindingCtx)}
@@ -1303,7 +1308,7 @@ export default function CanvasArea() {
                     <Rect width={svgW} height={svgH} fill="transparent" />
                     <ImagePreview
                       elementType="svg"
-                      src={element.src}
+                      src={resolveAssetSrc(element.src, assetUrlResolver)}
                       svgData={element.svg}
                       width={svgW}
                       height={svgH}

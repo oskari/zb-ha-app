@@ -24,6 +24,7 @@ import {
 
 export default function AssetPickerProvider() {
   const setOpenAssetPicker = useUiStore((s) => s.setOpenAssetPicker);
+  const setAssetUrlResolver = useUiStore((s) => s.setAssetUrlResolver);
 
   const [open, setOpen] = useState(false);
   const [assets, setAssets] = useState([]);
@@ -58,6 +59,15 @@ export default function AssetPickerProvider() {
     });
     return () => setOpenAssetPicker(null);
   }, [setOpenAssetPicker, refresh]);
+
+  // Register the asset raw-URL resolver so the canvas preview can display
+  // custom uploaded assets, whose payload `src` is an `asset:<filename>` token
+  // the browser cannot load directly. `assetRawUrl` maps a filename to the
+  // authenticated `/api/assets/<filename>/raw` endpoint. Cleared on unmount.
+  useEffect(() => {
+    setAssetUrlResolver(assetRawUrl);
+    return () => setAssetUrlResolver(null);
+  }, [setAssetUrlResolver]);
 
   const handleUpload = useCallback(
     async (file) => {
