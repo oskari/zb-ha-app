@@ -19,6 +19,7 @@ import {
   compositeRotatedText,
 } from "../data/rotatedTextRasterizer";
 import { normalizeSvgElements } from "../data/svgPreprocessor";
+import { sanitizeSvgElementsForEngine } from "../data/svgInlineSanitizer";
 import { clampElementGeometry } from "../data/geometryClamp";
 import { preRasterizeLargeSvgs, compositePreRasteredOnto } from "../data/svgPreRasterizer";
 import {
@@ -286,13 +287,21 @@ async function preparePipeline(
   const sourceResult = await fetchAllSources(sources, ctx, sourceHandler, signal);
   throwIfAborted(signal);
 
+  // Sanitize every statically-resolvable SVG out-of-engine so the frozen
+  // engine's regex `sanitizeSvg` only ever sees parser-sanitized,
+  // whitespace-run-capped bytes (kills its ReDoS + external-ref/entity gaps).
+  // See `data/svgInlineSanitizer.ts`. Runs first so its output feeds every
+  // downstream SVG pass. May fetch http(s) `src` SVGs, hence `await`.
+  const sanitizedElements = await sanitizeSvgElementsForEngine(elements, signal);
+  throwIfAborted(signal);
+
   // Normalize inline SVGs to the element's display size before the payload
   // reaches the engine. See `data/svgPreprocessor.ts` for the rationale —
   // briefly: this prevents librsvg timeouts on oversized vector exports and
   // forces the rasterizer to match the Konva preview's anisotropic stretch.
   // Equivalent in pattern to expandTextBounds / expandGraphElements: a
   // pre-render pass outside the frozen engine.
-  const preprocessedElements = normalizeSvgElements(elements);
+  const preprocessedElements = normalizeSvgElements(sanitizedElements);
 
   // Resolve user-uploaded asset references (`asset:<uuid>.<ext>` tokens).
   // Mirrors the pattern used by other pre-render passes: rewrite the

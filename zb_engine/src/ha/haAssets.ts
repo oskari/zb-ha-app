@@ -30,6 +30,7 @@ import sharp from "sharp";
 import { z } from "zod";
 import type { StorageAdapter } from "../core/adapters";
 import { sanitizeSvgForRasterization } from "../data/svgSanitization";
+import { collapseWhitespaceRuns } from "../data/svgInlineSanitizer";
 import {
   MAX_ASSET_SIZE_BYTES,
   MAX_ASSETS_TOTAL_BYTES,
@@ -289,7 +290,12 @@ export function registerAssetRoutes(app: express.Application, storage: StorageAd
             res.status(400).json({ error: "Invalid SVG encoding." });
             return;
           }
-          const sanitized = sanitizeSvgForRasterization(text);
+          // Collapse long whitespace runs as well as parser-sanitizing, so the
+          // bytes persisted to disk can never carry a run long enough to drive
+          // the frozen engine's regex sanitizeSvg into super-linear backtracking
+          // when the asset is later re-inlined at render time. Same cap the
+          // pre-render SVG pass applies (data/svgInlineSanitizer.ts).
+          const sanitized = collapseWhitespaceRuns(sanitizeSvgForRasterization(text));
           if (!/<svg[\s>]/i.test(sanitized)) {
             logWarn("upload.reject", {
               requestId: getRequestId(req),
