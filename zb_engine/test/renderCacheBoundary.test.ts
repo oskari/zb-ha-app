@@ -4,10 +4,18 @@
  * Non-deploy preview renders must never mutate the live ESP32 image cache.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createIngressApp } from "../src/core/server";
 import type { PlatformAdapter, Slot, StorageAdapter, WidgetDoc, WidgetMeta } from "../src/core/adapters";
+import { installInlineRenderWorker } from "./helpers/inlineRenderWorker";
+
+// Run the engine inline (the worker's dist file is absent under vitest).
+let restoreWorker: () => void;
+beforeAll(() => {
+  restoreWorker = installInlineRenderWorker();
+});
+afterAll(() => restoreWorker?.());
 
 const validPayload = {
   misc: { size: { width: 8, height: 8 }, format: "png", gridSize: "1x1" },

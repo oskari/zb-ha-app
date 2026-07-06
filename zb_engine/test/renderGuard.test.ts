@@ -3,8 +3,16 @@
  * the render route releasing it so the next render can proceed.
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { RenderGuard } from "../src/core/renderService";
+import { installInlineRenderWorker } from "./helpers/inlineRenderWorker";
+
+// Run the engine inline (the worker's dist file is absent under vitest).
+let restoreWorker: () => void;
+beforeAll(() => {
+  restoreWorker = installInlineRenderWorker();
+});
+afterAll(() => restoreWorker?.());
 
 const validPayload = {
   misc: { size: { width: 8, height: 8 }, format: "png", gridSize: "1x1" },
