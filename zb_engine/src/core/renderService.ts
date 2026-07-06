@@ -34,6 +34,7 @@ import { encodeBin } from "../encoder/binEncoder";
 import { RENDER_TIMEOUT_MS, MAX_EXPANDED_ELEMENTS } from "../limits";
 import { createHash } from "crypto";
 import type { StorageAdapter, RenderMeta, Slot } from "./adapters";
+import { stripSourcesSecrets } from "./sourceSecrets";
 import { logInfo } from "./logger";
 
 // ── Cancellation helpers ───────────────────────────────────────
@@ -726,5 +727,8 @@ export async function expandPipeline(
 ): Promise<{ misc: unknown; features: unknown; sources: unknown; elements: Record<string, unknown>[] }> {
   const { payload, expandedElements } = await preparePipeline(raw, sourceHandler, storage);
   const { misc, features, sources } = payload;
-  return { misc, features, sources, elements: expandedElements };
+  // Strip source credentials from the echoed sources — the fetch inside
+  // preparePipeline already ran with whatever auth the request carried, so
+  // data resolution is unaffected, but the response must not leak secrets.
+  return { misc, features, sources: stripSourcesSecrets(sources), elements: expandedElements };
 }

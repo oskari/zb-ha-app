@@ -10,6 +10,7 @@ import type { StorageAdapter, WidgetDoc, WidgetMeta } from "./adapters";
 import { fullscreenPayloadSchema, payloadSchema } from "../schema/payloadSchema";
 import { HttpError } from "../errors/httpError";
 import { AsyncMutex } from "./asyncMutex";
+import { restoreWidgetSecrets } from "./sourceSecrets";
 import { MAX_WIDGET_COUNT, MAX_WIDGETS_TOTAL_BYTES } from "../limits";
 
 /** Regex for valid widget IDs: alphanumeric, underscore, hyphen only. */
@@ -127,6 +128,12 @@ export async function writeWidget(
   // saves cannot race the quota check.
   await widgetWriteMutex.run(async () => {
     const existing = await storage.readWidget(widget.id);
+
+    // Restore sentinel-masked source credentials from the persisted copy
+    // (mask-on-read / restore-on-save). Runs inside the mutex, after the
+    // atomic read of `existing`, so the read-modify-write stays consistent and
+    // both the doc and fullscreen slots are covered before the quota check.
+    if (existing) restoreWidgetSecrets(widget, existing as WidgetDoc);
 
     // Storage quota (host disk DoS guard) — checked inside the mutex against
     // the incoming record so the byte projection is accurate.

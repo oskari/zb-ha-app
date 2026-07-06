@@ -54,6 +54,7 @@ import {
   deleteWidget,
   listWidgets,
 } from "./widgetService";
+import { maskWidgetSecrets, maskPayloadSecrets } from "./sourceSecrets";
 
 // ── Async route wrapper ────────────────────────────────────────
 
@@ -376,7 +377,7 @@ export function createIngressApp(adapter: PlatformAdapter): AppContext {
       res.status(404).json({ error: "Widget not found.", code: "NOT_FOUND" });
       return;
     }
-    res.json(widget);
+    res.json(maskWidgetSecrets(widget));
   }));
 
   app.put("/api/widgets/:id", mutationLimiter, asyncHandler("PUT /api/widgets/:id", "Failed to save widget.", async (req, res) => {
@@ -438,7 +439,7 @@ export function createIngressApp(adapter: PlatformAdapter): AppContext {
       res.status(404).json({ error: "No payload.json found." });
       return;
     }
-    res.json(raw);
+    res.json(maskPayloadSecrets(raw));
   }));
 
   // POST /export — create a temporary export token

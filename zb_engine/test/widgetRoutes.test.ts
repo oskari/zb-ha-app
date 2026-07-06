@@ -99,3 +99,105 @@ describe("PUT /api/widgets/:id", () => {
     expect(res.status).toBe(400);
   });
 });
+
+function docWithBearer(bearer: string) {
+  return {
+    misc: { size: { width: 8, height: 8 }, gridSize: "1x1" },
+    features: {},
+    sources: [
+      {
+        id: "src1",
+        kind: "http",
+        method: "GET",
+        url: "https://api.example.com",
+        auth: { type: "bearer", bearer },
+        response: { type: "json" },
+      },
+    ],
+    elements: [],
+  };
+}
+
+function readBearer(widget: WidgetDoc | undefined): unknown {
+  const sources = (widget?.doc as { sources?: { auth?: { bearer?: unknown } }[] })?.sources;
+  return sources?.[0]?.auth?.bearer;
+}
+
+describe("source-credential masking (FIX-04)", () => {
+  it("GET /api/widgets/:id masks a stored bearer and never leaks the raw token", async () => {
+    const { storage, widgets } = createMemoryStorage();
+    widgets.set("widget_secret01", {
+      id: "widget_secret01",
+      name: "S",
+      doc: docWithBearer("realtok123"),
+      updatedAt: 1,
+    });
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    const res = await request(ingressApp).get("/api/widgets/widget_secret01");
+
+    expect(res.status).toBe(200);
+    expect(readBearer(res.body)).toBe("__stored__");
+    expect(JSON.stringify(res.body)).not.toContain("realtok123");
+  });
+
+  it("PUT with the sentinel restores the persisted real secret", async () => {
+    const { storage, widgets } = createMemoryStorage();
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    // Seed a real secret.
+    const first = await request(ingressApp)
+      .put("/api/widgets/widget_secret02")
+      .send({ name: "S", doc: docWithBearer("realtok123") });
+    expect(first.status).toBe(200);
+    expect(readBearer(widgets.get("widget_secret02"))).toBe("realtok123");
+
+    // Save back the masked sentinel — the persisted secret must survive.
+    const second = await request(ingressApp)
+      .put("/api/widgets/widget_secret02")
+      .send({ name: "S", doc: docWithBearer("__stored__") });
+    expect(second.status).toBe(200);
+    expect(readBearer(widgets.get("widget_secret02"))).toBe("realtok123");
+  });
+
+  it("PUT with a new secret value persists the new value", async () => {
+    const { storage, widgets } = createMemoryStorage();
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    await request(ingressApp)
+      .put("/api/widgets/widget_secret03")
+      .send({ name: "S", doc: docWithBearer("realtok123") });
+
+    const res = await request(ingressApp)
+      .put("/api/widgets/widget_secret03")
+      .send({ name: "S", doc: docWithBearer("newtok456") });
+
+    expect(res.status).toBe(200);
+    expect(readBearer(widgets.get("widget_secret03"))).toBe("newtok456");
+  });
+
+  it("GET /payload masks the deployed payload's auth and header secrets", async () => {
+    const { storage } = createMemoryStorage();
+    storage.readPayload = async () => ({
+      misc: { size: { width: 8, height: 8 }, gridSize: "1x1" },
+      features: {},
+      sources: [
+        {
+          id: "src1",
+          auth: { type: "bearer", bearer: "realtok123" },
+          headers: { Authorization: "Bearer realtok123", "X-Custom": "keepme" },
+        },
+      ],
+      elements: [],
+    });
+    const { ingressApp } = createIngressApp(createAdapter(storage));
+
+    const res = await request(ingressApp).get("/payload");
+
+    expect(res.status).toBe(200);
+    expect(res.body.sources[0].auth.bearer).toBe("__stored__");
+    expect(res.body.sources[0].headers.Authorization).toBe("__stored__");
+    expect(res.body.sources[0].headers["X-Custom"]).toBe("keepme");
+    expect(JSON.stringify(res.body)).not.toContain("realtok123");
+  });
+});
