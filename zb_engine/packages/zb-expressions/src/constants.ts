@@ -29,3 +29,15 @@ export const MAX_EXPRESSION_OPS = 10_000;
  * at 1 MiB upstream).
  */
 export const MAX_EXPRESSION_OUTPUT_LENGTH = 1_000_000;
+
+/**
+ * Maximum number of `concat` arguments, and maximum number of `{{...}}`
+ * placeholders in a single template string, permitted in one expression.
+ *
+ * Defense-in-depth below the 10,000 op budget: it caps the count of output
+ * amplifiers so a pathological `concat`/template cannot fan out toward the
+ * op budget while each argument resolves to a near-1 MB source value. Applies
+ * ONLY to `concat` args and template placeholder count — never to numeric /
+ * logical variadic ops (`+`, `*`, `min`, `max`, `and`, `or`).
+ */
+export const MAX_EXPRESSION_ARGS = 1_000;

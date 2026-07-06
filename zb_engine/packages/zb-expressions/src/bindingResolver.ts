@@ -10,8 +10,8 @@ import type { DataContext } from "./context.js";
 import { resolvePath } from "./context.js";
 import { evaluateExpression } from "./expressionEvaluator.js";
 import { buildPipeExpression } from "./pipeSyntax.js";
-import { MAX_RESOLVE_DEPTH } from "./constants.js";
-import { type EvalBudget, createBudget, chargeOp, assertOutputLength } from "./budget.js";
+import { MAX_RESOLVE_DEPTH, MAX_EXPRESSION_ARGS } from "./constants.js";
+import { type EvalBudget, createBudget, chargeOp, chargeOutput } from "./budget.js";
 
 /**
  * Internal: full set of operator/binding keys that mark an object as an
@@ -63,17 +63,44 @@ export function resolveValue(
   // String template interpolation: "Hello {{source.field|round|format:1}} world"
   if (typeof value === "string") {
     if (!value.includes("{{")) return value;
-    const result = value.replace(/\{\{([^}]+)\}\}/g, (_, content: string) => {
-      const trimmed = content.trim();
-      if (!trimmed.includes("|")) {
-        const resolved = resolvePath(ctx, trimmed);
-        return resolved !== undefined && resolved !== null ? String(resolved) : "";
+    // Manual, incremental interpolation (equivalent to the previous
+    // `/\{\{([^}]+)\}\}/g` replace-with-function): charge each piece against
+    // the cumulative byte budget BEFORE appending so no oversized string is
+    // fully materialized, charge one op per placeholder (including the
+    // non-pipe `{{path}}` branch, previously unaccounted), and cap the number
+    // of placeholders. The regex is declared LOCALLY so its `lastIndex` never
+    // leaks across calls; `[^}]+` guarantees non-empty matches so exec always
+    // advances.
+    const re = /\{\{([^}]+)\}\}/g;
+    let result = "";
+    let last = 0;
+    let count = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(value)) !== null) {
+      if (++count > MAX_EXPRESSION_ARGS) {
+        throw new Error(
+          `Expression placeholder count exceeded (max ${MAX_EXPRESSION_ARGS} placeholders)`,
+        );
       }
-      const expr = buildPipeExpression(trimmed);
-      const resolved = resolveValue(expr, ctx, depth + 1, budget);
-      return resolved !== undefined && resolved !== null ? String(resolved) : "";
-    });
-    assertOutputLength(result.length);
+      const lit = value.slice(last, m.index);
+      chargeOutput(budget, lit.length);
+      result += lit;
+      chargeOp(budget);
+      const trimmed = m[1].trim();
+      let resolved: unknown;
+      if (!trimmed.includes("|")) {
+        resolved = resolvePath(ctx, trimmed);
+      } else {
+        resolved = resolveValue(buildPipeExpression(trimmed), ctx, depth + 1, budget);
+      }
+      const piece = resolved !== undefined && resolved !== null ? String(resolved) : "";
+      chargeOutput(budget, piece.length);
+      result += piece;
+      last = m.index + m[0].length;
+    }
+    const tail = value.slice(last);
+    chargeOutput(budget, tail.length);
+    result += tail;
     return result;
   }
 

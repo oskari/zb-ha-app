@@ -13,6 +13,7 @@ import {
   evaluateExpression,
   MAX_EXPRESSION_OPS,
   MAX_EXPRESSION_OUTPUT_LENGTH,
+  MAX_EXPRESSION_ARGS,
   type DataContext,
 } from "@zb/expressions";
 
@@ -65,6 +66,35 @@ describe("output length cap", () => {
     const huge = "z".repeat(MAX_EXPRESSION_OUTPUT_LENGTH + 10);
     const localCtx: DataContext = { misc: {}, features: { big: huge } };
     expect(() => resolveValue("{{features.big}}", localCtx)).toThrow(/output length/i);
+  });
+
+  it("charges output bytes cumulatively across the whole resolution (concat)", () => {
+    // Two sibling concats, each 600k (< 1M individually) but summing to 1.2M.
+    // Before the fix each was checked in isolation and both resolved.
+    const half = "a".repeat(600_000);
+    expect(() =>
+      resolveValue({ a: { concat: [half] }, b: { concat: [half] } }, { misc: {}, features: {} }),
+    ).toThrow(/output length/i);
+  });
+
+  it("bounds non-pipe {{path}} placeholders cumulatively", () => {
+    const big = "a".repeat(600_000);
+    const c: DataContext = { misc: {}, features: { big } };
+    expect(() =>
+      resolveValue({ a: "{{features.big}}", b: "{{features.big}}" }, c),
+    ).toThrow(/output length/i);
+  });
+
+  it("rejects concat with too many arguments", () => {
+    expect(() =>
+      evaluateExpression({ concat: Array.from({ length: MAX_EXPRESSION_ARGS + 1 }, () => "x") }, ctx),
+    ).toThrow(/argument count/i);
+  });
+
+  it("rejects a template with too many placeholders", () => {
+    expect(() =>
+      resolveValue("{{features.n}}".repeat(MAX_EXPRESSION_ARGS + 1), ctx),
+    ).toThrow(/placeholder count/i);
   });
 });
 
