@@ -29,6 +29,7 @@ export {
   MAX_RESOLVE_DEPTH,
   MAX_EXPRESSION_OPS,
   MAX_EXPRESSION_OUTPUT_LENGTH,
+  MAX_EXPRESSION_ARGS,
 } from "./constants.js";
 
 // Builder-compatible alias: the builder's `evaluate(value, ctx)` is the

@@ -5,7 +5,7 @@
  * cannot start while the timed-out one is still consuming CPU.
  */
 
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeAll, afterAll } from "vitest";
 
 // Force a tiny render timeout so the test exercises the abort path
 // quickly. The mock MUST be defined before importing renderService.
@@ -19,6 +19,17 @@ vi.mock("../src/limits", async () => {
 
 import { runPipeline, RenderTimeoutError } from "../src/core/renderService";
 import type { SourceHandler } from "../src/core/renderService";
+import { installInlineRenderWorker } from "./helpers/inlineRenderWorker";
+
+// The render engine runs in a worker loaded from dist (absent under vitest);
+// install a fake that runs render() inline so the non-timeout render path (the
+// second render in the RenderGuard test) resolves. The timeout paths abort
+// during source fetch, before the worker is ever reached.
+let restoreWorker: () => void;
+beforeAll(() => {
+  restoreWorker = installInlineRenderWorker();
+});
+afterAll(() => restoreWorker?.());
 
 const tinyPayload = {
   misc: { size: { width: 8, height: 8 }, format: "png" as const, gridSize: "1x1" },

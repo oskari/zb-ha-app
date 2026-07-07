@@ -171,6 +171,24 @@ describe("resolveUserAssets — SVG assets", () => {
     expect(out).toContain("<svg");
   });
 
+  it("caps long whitespace runs in a re-inlined SVG asset (ReDoS defense)", async () => {
+    const ctx = createDataContext();
+    // A valid, small (<50 KB) SVG whose text node carries a huge whitespace
+    // run. Under the pre-rasterizer threshold it would reach the frozen
+    // engine's regex sanitizeSvg; the run must be capped before it does.
+    const svgText =
+      `<svg xmlns="http://www.w3.org/2000/svg"><text>` +
+      " ".repeat(200000) +
+      `</text></svg>`;
+    const els = [makeSvg({ src: `asset:${VALID_UUID}.svg` })];
+    const stub = storageWith({ [`${VALID_UUID}.svg`]: Buffer.from(svgText, "utf-8") });
+    const res = await resolveUserAssets(els, ctx, stub);
+    expect(res.errors).toEqual([]);
+    const out = res.elements[0].svg as string;
+    expect(out).toContain("<svg");
+    expect(/\s{257,}/.test(out)).toBe(false);
+  });
+
   it("rejects an SVG asset missing an <svg> root", async () => {
     const ctx = createDataContext();
     const els = [makeSvg({ src: `asset:${VALID_UUID}.svg` })];

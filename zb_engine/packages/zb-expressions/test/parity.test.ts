@@ -11,7 +11,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { resolveValue, createDataContext, type DataContext } from "../src/index";
+import { resolveValue, createDataContext, MAX_EXPRESSION_ARGS, type DataContext } from "../src/index";
 
 interface BuilderContext {
   misc?: Record<string, unknown>;
@@ -48,6 +48,18 @@ function materializeExpression(expr: unknown): unknown {
     let e: unknown = "deep";
     for (let i = 0; i < 25; i++) e = { if: [true, e, "fallback"] };
     return e;
+  }
+  if (expr === "PLACEHOLDER_CONCAT_ARGS_OVERFLOW") {
+    // One more arg than the cap → rejected before any output is built.
+    return { concat: Array.from({ length: MAX_EXPRESSION_ARGS + 1 }, () => "x") };
+  }
+  if (expr === "PLACEHOLDER_TEMPLATE_PLACEHOLDERS_OVERFLOW") {
+    // One more placeholder than the cap in a single template string.
+    return "{{features.n}}".repeat(MAX_EXPRESSION_ARGS + 1);
+  }
+  if (expr === "PLACEHOLDER_OUTPUT_BYTES_OVERFLOW") {
+    // 20 args (< arg cap), each 60k (< 1 MB per-piece); cumulative 1.2M > 1M.
+    return { concat: Array.from({ length: 20 }, () => "a".repeat(60_000)) };
   }
   return expr;
 }

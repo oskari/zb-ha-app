@@ -6,6 +6,8 @@
  * filesystem directly.
  */
 
+import { Worker } from "node:worker_threads";
+import * as path from "node:path";
 import { payloadSchema } from "../schema/payloadSchema";
 import { createDataContext, type DataContext } from "@zb/expressions";
 import { resolveFeatures } from "../data/featureResolver";
@@ -17,18 +19,22 @@ import {
   compositeRotatedText,
 } from "../data/rotatedTextRasterizer";
 import { normalizeSvgElements } from "../data/svgPreprocessor";
+import { sanitizeSvgElementsForEngine } from "../data/svgInlineSanitizer";
+import { clampElementGeometry } from "../data/geometryClamp";
 import { preRasterizeLargeSvgs, compositePreRasteredOnto } from "../data/svgPreRasterizer";
 import {
   preRasterizeRotatedSvgs,
   compositeRotatedSvgs,
 } from "../data/rotatedSvgRasterizer";
 import { resolveUserAssets, compositeUserAssetsOnto, type AssetReader } from "../data/userAssets";
-import { render } from "../engine/renderer";
+import { Canvas } from "../engine/canvas";
+import type { RenderErrorInfo } from "../errors/renderError";
 import { encodePng } from "../encoder/pngEncoder";
 import { encodeBin } from "../encoder/binEncoder";
 import { RENDER_TIMEOUT_MS, MAX_EXPANDED_ELEMENTS } from "../limits";
 import { createHash } from "crypto";
 import type { StorageAdapter, RenderMeta, Slot } from "./adapters";
+import { stripSourcesSecrets } from "./sourceSecrets";
 import { logInfo } from "./logger";
 
 // ── Cancellation helpers ───────────────────────────────────────
@@ -89,6 +95,128 @@ export class RenderGuard {
       this._locked = false;
     };
   }
+}
+
+// ── Terminable render worker ───────────────────────────────────
+//
+// The frozen engine `render()` (src/engine/renderer.ts) is a synchronous,
+// non-yielding CPU loop with no AbortSignal, so the per-render timeout below
+// cannot stop it on the main thread. Running it in a worker_thread lets the
+// main-thread timer terminate() a runaway render. RenderGuard already
+// serialises renders, so a single reusable worker is sufficient; a terminated
+// worker cannot be reused, so it is dropped and lazily respawned.
+
+/** Reply posted back by `renderWorker.ts`. */
+type RenderWorkerResponse =
+  | {
+      ok: true;
+      buffer: ArrayBuffer;
+      width: number;
+      height: number;
+      stride: number;
+      errors: RenderErrorInfo[];
+    }
+  | { ok: false; message: string };
+
+/**
+ * Factory for the engine worker. Overridable in tests, which run TypeScript
+ * with no compiled `dist/core/renderWorker.js`, via `__setEngineWorkerFactory`.
+ * `__dirname` is valid because the server is compiled as CommonJS.
+ */
+const defaultEngineWorkerFactory = (): Worker =>
+  new Worker(path.resolve(__dirname, "renderWorker.js"));
+
+let engineWorkerFactory: () => Worker = defaultEngineWorkerFactory;
+
+/** TEST-ONLY: substitute a fake worker factory. Pass `null` to restore default. */
+export function __setEngineWorkerFactory(factory: (() => Worker) | null): void {
+  engineWorkerFactory = factory ?? defaultEngineWorkerFactory;
+}
+
+/** The single long-lived engine worker (or null before first use / after a kill). */
+let engineWorker: Worker | null = null;
+
+function getEngineWorker(): Worker {
+  if (!engineWorker) {
+    engineWorker = engineWorkerFactory();
+    // Never let the worker keep the process alive on shutdown.
+    engineWorker.unref?.();
+  }
+  return engineWorker;
+}
+
+/** Drop the current worker reference so the next render respawns a fresh one. */
+function disposeEngineWorker(): void {
+  engineWorker = null;
+}
+
+/**
+ * Run the frozen engine `render()` inside the terminable worker. When `signal`
+ * fires (the render timeout), the worker is hard-killed via `terminate()`; its
+ * `exit` event rejects this promise with RENDER_ABORT_MARKER so `runPipeline`
+ * unwinds and the route releases the RenderGuard. On success the packed 1-bit
+ * buffer is transferred back and the Canvas is reconstructed losslessly on the
+ * main thread, so a normal render produces byte-identical output.
+ */
+export function renderInWorker(
+  elements: Record<string, unknown>[],
+  ctx: DataContext,
+  width: number,
+  height: number,
+  signal?: AbortSignal,
+): Promise<{ canvas: Canvas; errors: RenderErrorInfo[] }> {
+  const worker = getEngineWorker();
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const onMessage = (msg: RenderWorkerResponse): void => {
+      if (settled) return;
+      if (msg.ok) {
+        const canvas = new Canvas(width, height);
+        canvas.buffer.set(new Uint8Array(msg.buffer));
+        finalize();
+        resolve({ canvas, errors: msg.errors });
+      } else {
+        finalize();
+        reject(new Error(msg.message));
+      }
+    };
+    const onError = (err: Error): void => {
+      if (settled) return;
+      finalize();
+      reject(err);
+    };
+    const onExit = (): void => {
+      // A terminated worker cannot be reused — drop it so the next render
+      // spawns a fresh one.
+      disposeEngineWorker();
+      if (settled) return;
+      finalize();
+      reject(new Error(RENDER_ABORT_MARKER));
+    };
+    const onAbort = (): void => {
+      // Hard-kill the synchronous engine work the cooperative signal cannot
+      // reach. The `exit` handler above turns this into a promise rejection.
+      void worker.terminate();
+    };
+
+    // Remove every listener on settle so a reused (non-terminated) worker does
+    // not accumulate exit/error listeners across successive renders.
+    function finalize(): void {
+      settled = true;
+      worker.removeListener("message", onMessage);
+      worker.removeListener("error", onError);
+      worker.removeListener("exit", onExit);
+      signal?.removeEventListener("abort", onAbort);
+    }
+
+    worker.on("message", onMessage);
+    worker.on("error", onError);
+    worker.on("exit", onExit);
+    signal?.addEventListener("abort", onAbort, { once: true });
+
+    worker.postMessage({ elements, ctx, width, height });
+  });
 }
 
 // ── Core render pipeline ───────────────────────────────────────
@@ -160,13 +288,21 @@ async function preparePipeline(
   const sourceResult = await fetchAllSources(sources, ctx, sourceHandler, signal);
   throwIfAborted(signal);
 
+  // Sanitize every statically-resolvable SVG out-of-engine so the frozen
+  // engine's regex `sanitizeSvg` only ever sees parser-sanitized,
+  // whitespace-run-capped bytes (kills its ReDoS + external-ref/entity gaps).
+  // See `data/svgInlineSanitizer.ts`. Runs first so its output feeds every
+  // downstream SVG pass. May fetch http(s) `src` SVGs, hence `await`.
+  const sanitizedElements = await sanitizeSvgElementsForEngine(elements, signal);
+  throwIfAborted(signal);
+
   // Normalize inline SVGs to the element's display size before the payload
   // reaches the engine. See `data/svgPreprocessor.ts` for the rationale —
   // briefly: this prevents librsvg timeouts on oversized vector exports and
   // forces the rasterizer to match the Konva preview's anisotropic stretch.
   // Equivalent in pattern to expandTextBounds / expandGraphElements: a
   // pre-render pass outside the frozen engine.
-  const preprocessedElements = normalizeSvgElements(elements);
+  const preprocessedElements = normalizeSvgElements(sanitizedElements);
 
   // Resolve user-uploaded asset references (`asset:<uuid>.<ext>` tokens).
   // Mirrors the pattern used by other pre-render passes: rewrite the
@@ -204,7 +340,14 @@ async function preparePipeline(
     }
   }
 
-  const expandResult = expandGraphElements(elementsAfterAssets, ctx);
+  // Clamp resolved geometry (sizeX/sizeY/strokeWidth/pos/line points) to
+  // canvas-scale bounds before the frozen engine's draw loops consume them.
+  // Mirrors the position of normalizeSvgElements: validate → SVG
+  // normalize → user assets → geometry clamp → graph expansion. Unchanged
+  // elements keep their reference, so byte-identical renders stay cached.
+  const clampedElements = clampElementGeometry(elementsAfterAssets, ctx);
+
+  const expandResult = expandGraphElements(clampedElements, ctx);
   if (expandResult.elements.length > MAX_EXPANDED_ELEMENTS) {
     throw new Error(
       `Element count after graph expansion (${expandResult.elements.length}) exceeds the ${MAX_EXPANDED_ELEMENTS} limit.`,
@@ -357,15 +500,17 @@ export async function runPipeline(
     }
     throwIfAborted(signal);
 
-    // The frozen engine cannot be made AbortSignal-aware, so this is
-    // the LAST cancellation checkpoint before the engine consumes CPU.
-    // Anything past here (render → composite → encode) runs to
-    // completion before the route can release `RenderGuard`.
-    const { canvas, errors: renderErrors } = await render(
+    // The frozen engine cannot be made AbortSignal-aware, so it runs inside a
+    // terminable worker_thread: when the timeout's AbortController
+    // fires, the worker is hard-killed and `renderInWorker` rejects, so the
+    // render timeout is actually enforced and the route can release
+    // `RenderGuard`. The composite → encode steps below stay on the main thread.
+    const { canvas, errors: renderErrors } = await renderInWorker(
       preRasterElements,
       ctx,
       misc.size.width,
       misc.size.height,
+      signal,
     );
 
     // Composite pre-rasterized SVG bitmaps onto the canvas using the
@@ -582,5 +727,8 @@ export async function expandPipeline(
 ): Promise<{ misc: unknown; features: unknown; sources: unknown; elements: Record<string, unknown>[] }> {
   const { payload, expandedElements } = await preparePipeline(raw, sourceHandler, storage);
   const { misc, features, sources } = payload;
-  return { misc, features, sources, elements: expandedElements };
+  // Strip source credentials from the echoed sources — the fetch inside
+  // preparePipeline already ran with whatever auth the request carried, so
+  // data resolution is unaffected, but the response must not leak secrets.
+  return { misc, features, sources: stripSourcesSecrets(sources), elements: expandedElements };
 }

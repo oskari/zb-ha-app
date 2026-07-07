@@ -171,5 +171,9 @@
 
   { "name": "deep nested: ((a+b)*c) - (d/e)", "expression": { "-": [{ "*": [{ "+": [2, 3] }, 4] }, { "/": [10, 2] }] }, "context": {}, "expectedKind": "value", "expected": 15 },
   { "name": "object recursion: array of bindings inside object", "expression": { "list": [{ "$": "features.a" }, { "$": "features.b" }] }, "context": { "features": { "a": 1, "b": 2 } }, "expectedKind": "value", "expected": { "list": [1, 2] } },
-  { "name": "object recursion: nested objects", "expression": { "outer": { "inner": { "$": "features.x" } } }, "context": { "features": { "x": 42 } }, "expectedKind": "value", "expected": { "outer": { "inner": 42 } } }
+  { "name": "object recursion: nested objects", "expression": { "outer": { "inner": { "$": "features.x" } } }, "context": { "features": { "x": 42 } }, "expectedKind": "value", "expected": { "outer": { "inner": 42 } } },
+
+  { "name": "budget: concat arg count exceeded", "expression": "PLACEHOLDER_CONCAT_ARGS_OVERFLOW", "context": {}, "expectedKind": "throws", "errorIncludes": "argument count exceeded" },
+  { "name": "budget: template placeholder count exceeded", "expression": "PLACEHOLDER_TEMPLATE_PLACEHOLDERS_OVERFLOW", "context": { "features": { "n": 1 } }, "expectedKind": "throws", "errorIncludes": "placeholder count exceeded" },
+  { "name": "budget: cumulative output length exceeded", "expression": "PLACEHOLDER_OUTPUT_BYTES_OVERFLOW", "context": {}, "expectedKind": "throws", "errorIncludes": "output length exceeded" }
 ]

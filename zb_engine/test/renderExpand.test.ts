@@ -64,6 +64,42 @@ describe("POST /render/expand", () => {
     expect(res.body).toEqual(validPayload);
   });
 
+  it("strips auth and headers from the echoed sources", async () => {
+    const { ingressApp } = createIngressApp(createAdapter());
+    ingressApp.set("trust proxy", true);
+
+    // 127.0.0.1 is rejected synchronously by the SSRF validator (no network),
+    // so the fetch fails non-fatally and the source config still echoes back.
+    const payloadWithSecret = {
+      misc: { size: { width: 8, height: 8 }, format: "png", gridSize: "1x1" },
+      features: {},
+      sources: [
+        {
+          id: "src1",
+          kind: "http",
+          method: "GET",
+          url: "http://127.0.0.1/",
+          auth: { type: "bearer", bearer: "sekret" },
+          headers: { Authorization: "Bearer sekret" },
+          response: { type: "json" },
+        },
+      ],
+      elements: [],
+    };
+
+    const res = await request(ingressApp)
+      .post("/render/expand")
+      .set("X-Forwarded-For", "198.51.100.20")
+      .send(payloadWithSecret);
+
+    expect(res.status).toBe(200);
+    const src = res.body.sources[0];
+    expect(src.id).toBe("src1");
+    expect("auth" in src).toBe(false);
+    expect("headers" in src).toBe(false);
+    expect(JSON.stringify(res.body)).not.toContain("sekret");
+  });
+
   it("returns 429 when requests exceed RATE_LIMIT_RENDER_EXPAND", async () => {
     const { ingressApp } = createIngressApp(createAdapter());
     ingressApp.set("trust proxy", true);

@@ -43,6 +43,7 @@ import { resolveElement } from "../engine/elementResolver";
 import type { ImgProps } from "../engine/types";
 import type { DataContext } from "@zb/expressions";
 import { sanitizeSvgForRasterization } from "./svgSanitization";
+import { collapseWhitespaceRuns } from "./svgInlineSanitizer";
 import { MAX_RASTER_AXIS, MAX_RASTER_PIXELS } from "./rasterLimits";
 import { MAX_USER_SVG_BYTES } from "../limits";
 
@@ -186,7 +187,13 @@ export async function resolveUserAssets(
         out[i] = { ...raw, src: "", svg: "" };
         continue;
       }
-      const sanitized = sanitizeSvgForRasterization(text);
+      // Collapse long whitespace runs in addition to parser-sanitizing:
+      // `sanitizeSvgForRasterization` (trimValues:false) preserves arbitrarily
+      // long runs, which would still drive the frozen engine's regex
+      // sanitizeSvg (drawSvg) into super-linear backtracking for a re-inlined
+      // asset SVG under the pre-rasterizer threshold. Same cap the inline/URL
+      // pre-render pass applies (svgInlineSanitizer.ts).
+      const sanitized = collapseWhitespaceRuns(sanitizeSvgForRasterization(text));
       if (!/<svg[\s>]/i.test(sanitized)) {
         errors.push(`Element #${i}: SVG asset has no <svg> root.`);
         out[i] = { ...raw, src: "", svg: "" };

@@ -133,6 +133,26 @@ describe("POST /api/assets", () => {
     expect(text).toContain("<svg");
   });
 
+  it("caps long whitespace runs in SVG uploads (ReDoS defense)", async () => {
+    const storage = makeStorage();
+    const app = makeApp(storage);
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg"><text>${" ".repeat(200_000)}</text></svg>`;
+
+    const res = await request(app)
+      .post("/api/assets")
+      .attach("file", Buffer.from(svg, "utf-8"), {
+        filename: "ws.svg",
+        contentType: "image/svg+xml",
+      });
+
+    expect(res.status).toBe(201);
+    const stored = storage._files.get(res.body.filename)!;
+    const text = stored.bytes.toString("utf-8");
+    expect(text).toContain("<svg");
+    expect(/\s{257,}/.test(text)).toBe(false);
+  });
+
   it("rejects an oversized SVG with 413", async () => {
     const storage = makeStorage();
     const app = makeApp(storage);

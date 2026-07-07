@@ -13,11 +13,17 @@ import { MAX_EXPRESSION_OPS, MAX_EXPRESSION_OUTPUT_LENGTH } from "./constants.js
 export interface EvalBudget {
   /** Number of resolve operations charged so far this top-level evaluation. */
   ops: number;
+  /**
+   * Cumulative number of output characters produced so far this top-level
+   * evaluation (across every `concat` / template-interpolation piece). Bounds
+   * total string amplification, not just any single output.
+   */
+  bytes: number;
 }
 
 /** Create a fresh budget for a top-level resolution. */
 export function createBudget(): EvalBudget {
-  return { ops: 0 };
+  return { ops: 0, bytes: 0 };
 }
 
 /**
@@ -31,12 +37,16 @@ export function chargeOp(budget: EvalBudget): void {
 }
 
 /**
- * Assert that a produced string stays within `MAX_EXPRESSION_OUTPUT_LENGTH`.
- * Throws otherwise — used after building `concat` / template-interpolation
- * output.
+ * Charge `length` output characters against the cumulative byte budget.
+ * Callers MUST charge each piece BEFORE appending it so an oversized string
+ * is never fully materialized. Throws once the running total exceeds
+ * `MAX_EXPRESSION_OUTPUT_LENGTH` (strictly greater, preserving the existing
+ * boundary). The message keeps the 'output length exceeded' substring so
+ * existing matchers still hold.
  */
-export function assertOutputLength(length: number): void {
-  if (length > MAX_EXPRESSION_OUTPUT_LENGTH) {
+export function chargeOutput(budget: EvalBudget, length: number): void {
+  budget.bytes += length;
+  if (budget.bytes > MAX_EXPRESSION_OUTPUT_LENGTH) {
     throw new Error(
       `Expression output length exceeded (max ${MAX_EXPRESSION_OUTPUT_LENGTH} characters)`,
     );

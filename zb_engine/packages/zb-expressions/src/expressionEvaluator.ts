@@ -10,7 +10,8 @@
 
 import type { DataContext } from "./context.js";
 import { resolveValue } from "./bindingResolver.js";
-import { type EvalBudget, createBudget, assertOutputLength } from "./budget.js";
+import { type EvalBudget, createBudget, chargeOutput } from "./budget.js";
+import { MAX_EXPRESSION_ARGS } from "./constants.js";
 
 /** Coerce to number, treating NaN as 0. */
 function toNumber(v: unknown): number {
@@ -160,12 +161,23 @@ export function evaluateExpression(
   if ("concat" in expr) {
     const args = expr["concat"];
     if (!Array.isArray(args)) return "";
-    const joined = args.map((a) => {
+    // Cap the argument count (defense-in-depth below the op budget) so a
+    // pathological concat cannot fan out toward the op limit while each arg
+    // resolves to a near-1 MB value.
+    if (args.length > MAX_EXPRESSION_ARGS) {
+      throw new Error(
+        `Expression argument count exceeded (max ${MAX_EXPRESSION_ARGS} arguments)`,
+      );
+    }
+    // Stream: charge each resolved piece against the cumulative byte budget
+    // BEFORE appending, so the giant string is never fully materialized.
+    let joined = "";
+    for (const a of args) {
       const v = resolveValue(a, ctx, depth, budget);
-      return v !== null && v !== undefined ? String(v) : "";
-    }).join("");
-    // Bound string amplification — `concat` is the primary output amplifier.
-    assertOutputLength(joined.length);
+      const piece = v !== null && v !== undefined ? String(v) : "";
+      chargeOutput(budget, piece.length);
+      joined += piece;
+    }
     return joined;
   }
 

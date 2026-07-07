@@ -84,6 +84,15 @@ export const useUiStore = create(
     // into core via uiStore callbacks).
     openAssetPicker: null,
 
+    // Platform-injected resolver mapping a user-asset FILENAME to its
+    // authenticated raw-bytes URL (`GET /api/assets/<filename>/raw`). Set by the
+    // AssetPickerProvider on the HA platform; null on builds without an asset
+    // store. The canvas preview uses it to display custom uploaded SVG/image
+    // assets, whose payload `src` is an `asset:<filename>` token the browser
+    // cannot load directly (Engineering constraint §11 — platform injects into
+    // core via uiStore callbacks). Signature: (filename: string) => string
+    assetUrlResolver: null,
+
     // Timestamp of last successful render (used to coordinate TopBar ⟳ with PreviewTab).
     lastRenderAt: null,
 
@@ -422,6 +431,18 @@ export const useUiStore = create(
     setOpenAssetPicker(fn) {
       set((state) => {
         state.openAssetPicker = fn;
+      });
+    },
+
+    /**
+     * Register the platform's asset raw-URL resolver. Called once by
+     * AssetPickerProvider on mount; cleared on unmount. Pass null to disable
+     * (builds without an asset store leave `asset:` tokens unresolved, so the
+     * canvas shows the load-failed placeholder as before).
+     */
+    setAssetUrlResolver(fn) {
+      set((state) => {
+        state.assetUrlResolver = fn;
       });
     },
 

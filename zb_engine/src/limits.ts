@@ -52,6 +52,22 @@ export const RENDER_TIMEOUT_MS = 30_000; // 30 seconds
 /** Maximum elements after graph expansion — prevents OOM. */
 export const MAX_EXPANDED_ELEMENTS = 50_000;
 
+// ── Geometry bounds ────────────────────────────────────────────
+
+/**
+ * COARSE, SCHEMA-ONLY absolute cap for LITERAL geometry values
+ * (sizeX/sizeY/strokeWidth/pos/line points), enforced at Zod validation to
+ * fail-fast on non-finite / absurd numeric literals. Deliberately LOOSER than
+ * the render-time clamp so an in-band-but-oversize literal (e.g. a line point
+ * of 5000 used with a negative pos) is ACCEPTED and then bounded by the
+ * pre-render geometry clamp rather than rejected outright.
+ *
+ * The pre-render geometry clamp (`data/geometryClamp.ts`) bounds RESOLVED
+ * sizes, strokeWidth AND coordinates to `MAX_RASTER_AXIS` (canvas scale), so
+ * this constant is NOT used at runtime — only by `schema/elementSchema.ts`.
+ */
+export const MAX_GEOMETRY_COORD = 100_000;
+
 // ── Source fetching ────────────────────────────────────────────
 
 /** Maximum per-source fetch timeout (ms). */
