@@ -58,9 +58,8 @@ export function useAutoSave() {
       const companionId = fullscreenIdFor(activeWidgetId);
 
       // Detect change in primary doc, companion doc, OR companion presence
-      // (created/removed). Presence change is the trigger required by
-      // Resolved Decision §9 — deleting a companion must save even with
-      // no further edits.
+      // (created/removed). Presence change is a required trigger — deleting a
+      // companion must save even with no further edits.
       const primaryChanged =
         state.docs[activeWidgetId]?.doc !== prev.docs[activeWidgetId]?.doc;
       const companionChanged =
@@ -215,10 +214,13 @@ async function _doSave(widgetId, { forceNameSave = false } = {}) {
     : widgets.find((w) => w.id === widgetId)?.name ?? widgetId;
 
   try {
-    useAutoSaveStore.getState().setSaving(true);
-
+    // Resolve the payload BEFORE flagging a save in progress: a missing doc
+    // entry yields a null payload, and bailing here must not leave the
+    // `saving` guard stuck true (which would wedge auto-save until reload).
     const savePayload = collectWidgetSavePayload(widgetId, widgetName);
     if (!savePayload) return;
+
+    useAutoSaveStore.getState().setSaving(true);
     await saveWidget(widgetId, savePayload.body);
 
     // Mark clean in docStore for both entries — single source of truth.

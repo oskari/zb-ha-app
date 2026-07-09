@@ -847,4 +847,75 @@ describe('docStore', () => {
       expect(state().docs['w1'].dirty).toBe(false);
     });
   });
+
+  // ── setFocusedFullScreen + per-widget size durability ────────────────
+  //
+  // The mocked global getScreenSize returns 800×480, so a fresh newDoc is
+  // 3x2 / 800×480. Pinning to 720×480 is therefore an off-global size — the
+  // exact condition under which the "size reverts on the next misc edit" bug
+  // manifested before updateMisc stopped re-deriving size on metadata edits.
+  describe('setFocusedFullScreen + size durability', () => {
+    beforeEach(() => {
+      state().newDoc('w1');
+      state().switchFocus('w1');
+    });
+
+    it('pins the focused doc to the full-screen grid at the given size (dirty + history)', () => {
+      state().setFocusedFullScreen({ width: 720, height: 480 });
+      const misc = state().docs['w1'].doc.misc;
+      expect(misc.gridSize).toBe('3x2');
+      expect(misc.size).toEqual({ width: 720, height: 480 });
+      expect(state().docs['w1'].dirty).toBe(true);
+      expect(state().docs['w1'].history.past.length).toBe(1);
+    });
+
+    it('is a no-op when the widget is already full-screen at that size', () => {
+      // Fresh newDoc is already 3x2 / 800×480 (the mocked global). Re-pinning to
+      // the identical size must not dirty the doc or push a no-op undo entry.
+      expect(state().docs['w1'].doc.misc.size).toEqual({ width: 800, height: 480 });
+      state().setFocusedFullScreen({ width: 800, height: 480 });
+      expect(state().docs['w1'].dirty).toBe(false);
+      expect(state().docs['w1'].history.past.length).toBe(0);
+    });
+
+    it('ignores an invalid size (NaN / non-positive / missing)', () => {
+      const before = state().docs['w1'].doc.misc.size;
+      state().setFocusedFullScreen({ width: NaN, height: 480 });
+      state().setFocusedFullScreen({ width: -1, height: 480 });
+      state().setFocusedFullScreen(null);
+      expect(state().docs['w1'].doc.misc.size).toEqual(before);
+      expect(state().docs['w1'].dirty).toBe(false);
+    });
+
+    it('no-ops (without throwing) when nothing is focused', () => {
+      useDocStore.setState({ focusedDocId: null });
+      expect(() => state().setFocusedFullScreen({ width: 720, height: 480 })).not.toThrow();
+    });
+
+    it('resizes ONLY the focused doc, never other open widgets (per-widget, not global)', () => {
+      state().newDoc('w2'); // second primary, stays at the global 800×480
+      state().switchFocus('w1');
+      state().setFocusedFullScreen({ width: 720, height: 480 });
+      expect(state().docs['w1'].doc.misc.size).toEqual({ width: 720, height: 480 });
+      expect(state().docs['w2'].doc.misc.size).toEqual({ width: 800, height: 480 });
+      expect(state().docs['w2'].dirty).toBe(false);
+    });
+
+    it('a metadata edit (name) does NOT revert a pinned off-global size', () => {
+      state().setFocusedFullScreen({ width: 720, height: 480 }); // 720 ≠ global 800
+      state().updateMisc({ name: 'Living room' });
+      // Regression guard: a name edit must keep 720×480, not snap back to the
+      // global-derived 800×480 via normalizeDoc.
+      expect(state().docs['w1'].doc.misc.name).toBe('Living room');
+      expect(state().docs['w1'].doc.misc.size).toEqual({ width: 720, height: 480 });
+    });
+
+    it('a gridSize edit DOES re-derive the size from the global screen', () => {
+      state().setFocusedFullScreen({ width: 720, height: 480 });
+      state().updateMisc({ gridSize: '2x2' });
+      // gridSize changed → recompute from the mocked global 800×480:
+      // round(2/3*800)=533, round(2/2*480)=480.
+      expect(state().docs['w1'].doc.misc.size).toEqual({ width: 533, height: 480 });
+    });
+  });
 });

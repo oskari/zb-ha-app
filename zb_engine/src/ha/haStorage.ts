@@ -9,7 +9,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import type { StorageAdapter, WidgetDoc, WidgetMeta, AssetMeta, Slot } from "../core/adapters";
+import type { StorageAdapter, WidgetDoc, WidgetMeta, AssetMeta, Slot, DeviceId } from "../core/adapters";
+import { DEFAULT_DEVICE_ID, assertValidDeviceId } from "../core/adapters";
 import { logError, logWarn } from "../core/logger";
 
 // ── File paths ────────────────────────────────────────────
@@ -47,6 +48,49 @@ const LEGACY_CACHE_BIN_FILES: Record<Slot, string> = {
   primary: path.join(ROOT, "image.bin"),
   fullscreen: path.join(ROOT, "image_fullscreen.bin"),
 };
+
+/**
+ * Per-device artifact root. Each device (== widget id, see adapters.ts
+ * `DeviceId`) gets its own subdirectory so render payloads/images never
+ * collide across devices. This is the CURRENT on-disk layout; the flat
+ * `PAYLOAD_FILES`/`CACHE_*_FILES` and `LEGACY_*` maps above become a
+ * two-tier migration source, for the default device only.
+ */
+const DEVICES_DIR = path.join(DATA_ROOT, "devices");
+
+/**
+ * On-disk basename for an artifact, independent of device. Pure function.
+ * Exported (alongside the other path helpers below) so the derivation logic
+ * is unit-testable without touching the real filesystem — `HaStorageAdapter`
+ * hardcodes `/data`, which is unsafe to exercise outside its real container.
+ */
+export function artifactBasename(format: "payload" | "png" | "bin", slot: Slot): string {
+  if (format === "payload") return slot === "fullscreen" ? "payload.fullscreen.json" : "payload.json";
+  return slot === "fullscreen" ? `image_fullscreen.${format}` : `image.${format}`;
+}
+
+/**
+ * Absolute path to a device's artifact file. Pure function of
+ * `(deviceId, format, slot)`. The sole chokepoint where a `deviceId` turns
+ * into a filesystem path — validated here so no call path can reach storage
+ * with an unchecked id.
+ */
+export function deviceArtifactPath(deviceId: DeviceId, format: "payload" | "png" | "bin", slot: Slot): string {
+  assertValidDeviceId(deviceId);
+  return path.join(DEVICES_DIR, deviceId, artifactBasename(format, slot));
+}
+
+/** Absolute path to a device's artifact directory. */
+function deviceDir(deviceId: DeviceId): string {
+  assertValidDeviceId(deviceId);
+  return path.join(DEVICES_DIR, deviceId);
+}
+
+/** The flat (pre-multi-device) path for an artifact — migration source only. */
+export function flatArtifactPath(format: "payload" | "png" | "bin", slot: Slot): string {
+  if (format === "payload") return PAYLOAD_FILES[slot];
+  return format === "png" ? CACHE_PNG_FILES[slot] : CACHE_BIN_FILES[slot];
+}
 
 /**
  * Per-user widget documents are stored in /data/widgets/ as individual JSON
@@ -140,6 +184,33 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+/**
+ * Resolve the effective on-disk path for an artifact, honoring the
+ * migration fallback chain for the DEFAULT device only:
+ *   1. the per-device path (current layout)
+ *   2. the flat `DATA_ROOT` path (pre-multi-device layout)
+ *   3. the oldest repo-root legacy path
+ * Non-default devices never fall back — they have no pre-multi-device
+ * history, so a missing device path simply means "nothing rendered yet".
+ * The returned path is not guaranteed to exist; callers check that.
+ */
+export async function resolveArtifactPath(deviceId: DeviceId, format: "payload" | "png" | "bin", slot: Slot): Promise<string> {
+  const devicePath = deviceArtifactPath(deviceId, format, slot);
+  if (deviceId !== DEFAULT_DEVICE_ID || (await fileExists(devicePath))) return devicePath;
+  const flatPath = flatArtifactPath(format, slot);
+  if (await fileExists(flatPath)) return flatPath;
+  return legacyArtifactPath(format, slot);
+}
+
+/** Synchronous counterpart of {@link resolveArtifactPath}, for `getCachedImagePath`. */
+export function resolveArtifactPathSync(deviceId: DeviceId, format: "payload" | "png" | "bin", slot: Slot): string {
+  const devicePath = deviceArtifactPath(deviceId, format, slot);
+  if (deviceId !== DEFAULT_DEVICE_ID || fs.existsSync(devicePath)) return devicePath;
+  const flatPath = flatArtifactPath(format, slot);
+  if (fs.existsSync(flatPath)) return flatPath;
+  return legacyArtifactPath(format, slot);
+}
+
 // ── StorageAdapter implementation ──────────────────────────────
 
 export class HaStorageAdapter implements StorageAdapter {
@@ -166,6 +237,22 @@ export class HaStorageAdapter implements StorageAdapter {
       migrateLegacyFile(PAYLOAD_FILES[slot], LEGACY_PAYLOAD_FILES[slot]);
       migrateLegacyFile(CACHE_PNG_FILES[slot], LEGACY_CACHE_PNG_FILES[slot]);
       migrateLegacyFile(CACHE_BIN_FILES[slot], LEGACY_CACHE_BIN_FILES[slot]);
+    }
+
+    // Multi-device migration: fold the pre-existing single-device flat
+    // layout into the default device's directory — exactly once, exactly
+    // the default device. This runs per SLOT, never per
+    // device — there is no device list to iterate at this layer. Idempotent
+    // via migrateLegacyFile's existing "skip if target exists" guard.
+    try {
+      fs.mkdirSync(deviceDir(DEFAULT_DEVICE_ID), { recursive: true });
+    } catch (err) {
+      logWarn("storage.error", { component: "devices", operation: "create_directory", error: err });
+    }
+    for (const slot of ["primary", "fullscreen"] as const) {
+      migrateLegacyFile(deviceArtifactPath(DEFAULT_DEVICE_ID, "payload", slot), PAYLOAD_FILES[slot]);
+      migrateLegacyFile(deviceArtifactPath(DEFAULT_DEVICE_ID, "png", slot), CACHE_PNG_FILES[slot]);
+      migrateLegacyFile(deviceArtifactPath(DEFAULT_DEVICE_ID, "bin", slot), CACHE_BIN_FILES[slot]);
     }
   }
 
@@ -225,10 +312,8 @@ export class HaStorageAdapter implements StorageAdapter {
     return results.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
   }
 
-  async readPayload(slot: Slot = "primary"): Promise<unknown | null> {
-    const filePath = await fileExists(PAYLOAD_FILES[slot])
-      ? PAYLOAD_FILES[slot]
-      : legacyArtifactPath("payload", slot);
+  async readPayload(slot: Slot = "primary", deviceId: DeviceId = DEFAULT_DEVICE_ID): Promise<unknown | null> {
+    const filePath = await resolveArtifactPath(deviceId, "payload", slot);
     if (!(await fileExists(filePath))) return null;
     try {
       const raw = await fs.promises.readFile(filePath, "utf-8");
@@ -238,20 +323,26 @@ export class HaStorageAdapter implements StorageAdapter {
     }
   }
 
-  async writePayload(data: Buffer, slot: Slot = "primary"): Promise<boolean> {
-    return writeIfChanged(PAYLOAD_FILES[slot], data);
-  }
-
-  async writeCachedImage(format: "png" | "bin", data: Buffer, slot: Slot = "primary"): Promise<boolean> {
-    const filePath = format === "png" ? CACHE_PNG_FILES[slot] : CACHE_BIN_FILES[slot];
+  async writePayload(data: Buffer, slot: Slot = "primary", deviceId: DeviceId = DEFAULT_DEVICE_ID): Promise<boolean> {
+    const filePath = deviceArtifactPath(deviceId, "payload", slot);
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
     return writeIfChanged(filePath, data);
   }
 
-  getCachedImagePath(format: "png" | "bin", slot: Slot = "primary"): string | null {
-    const filePath = format === "png" ? CACHE_PNG_FILES[slot] : CACHE_BIN_FILES[slot];
-    if (fs.existsSync(filePath)) return filePath;
-    const legacyPath = legacyArtifactPath(format, slot);
-    return fs.existsSync(legacyPath) ? legacyPath : null;
+  async writeCachedImage(
+    format: "png" | "bin",
+    data: Buffer,
+    slot: Slot = "primary",
+    deviceId: DeviceId = DEFAULT_DEVICE_ID,
+  ): Promise<boolean> {
+    const filePath = deviceArtifactPath(deviceId, format, slot);
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    return writeIfChanged(filePath, data);
+  }
+
+  getCachedImagePath(format: "png" | "bin", slot: Slot = "primary", deviceId: DeviceId = DEFAULT_DEVICE_ID): string | null {
+    const filePath = resolveArtifactPathSync(deviceId, format, slot);
+    return fs.existsSync(filePath) ? filePath : null;
   }
 
   /**
@@ -261,18 +352,27 @@ export class HaStorageAdapter implements StorageAdapter {
    * lifecycle is owned by the widget CRUD path (`deleteWidget`). For
    * `fullscreen`, this is the cleanup hook used when a user removes the
    * companion: each missing file is treated as already-deleted, so the
-   * call is fully idempotent.
+   * call is fully idempotent. For the default device only, this also
+   * sweeps the pre-multi-device flat/legacy tiers so an old install can't
+   * leave an orphaned companion file behind after migration.
    */
-  async deleteSlot(slot: Slot): Promise<void> {
+  async deleteSlot(slot: Slot, deviceId: DeviceId = DEFAULT_DEVICE_ID): Promise<void> {
     if (slot === "primary") return;
     const targets = [
-      PAYLOAD_FILES[slot],
-      CACHE_PNG_FILES[slot],
-      CACHE_BIN_FILES[slot],
-      LEGACY_PAYLOAD_FILES[slot],
-      LEGACY_CACHE_PNG_FILES[slot],
-      LEGACY_CACHE_BIN_FILES[slot],
+      deviceArtifactPath(deviceId, "payload", slot),
+      deviceArtifactPath(deviceId, "png", slot),
+      deviceArtifactPath(deviceId, "bin", slot),
     ];
+    if (deviceId === DEFAULT_DEVICE_ID) {
+      targets.push(
+        PAYLOAD_FILES[slot],
+        CACHE_PNG_FILES[slot],
+        CACHE_BIN_FILES[slot],
+        LEGACY_PAYLOAD_FILES[slot],
+        LEGACY_CACHE_PNG_FILES[slot],
+        LEGACY_CACHE_BIN_FILES[slot],
+      );
+    }
     await Promise.all(
       targets.map(async (p) => {
         try {

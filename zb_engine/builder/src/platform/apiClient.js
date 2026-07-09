@@ -76,6 +76,15 @@ const hostIpResponseSchema = z.object({
   // Supervisor mapping can't be read — the client falls back to the default.
   port: z.number().int().positive().max(65535).nullable().default(null),
 }).passthrough();
+// Response from the guided self-host `/config` push proxy. `ok:true` means the
+// proxy reached the device; `status` is the DEVICE's HTTP status (200 = stored,
+// 400 = device rejected the config), so ok:true + status:400 is "device said no".
+const deviceConfigResponseSchema = z.object({
+  ok: z.literal(true),
+  status: z.number().int(),
+  configured: z.boolean().optional(),
+  body: z.unknown().optional(),
+}).passthrough();
 const fontListResponseSchema = z.array(z.string().regex(/^[A-Za-z]+_\d+px_[A-Za-z]+\.json$/));
 
 // ── Relative endpoint resolution ───────────────────────────────
@@ -378,6 +387,31 @@ export async function fetchEntityHistory(entityIds, hoursBack = 24) {
 export async function fetchHostIp() {
   const res = await apiFetch('api/host-ip');
   return readValidatedJson(res, hostIpResponseSchema, 'host IP');
+}
+
+// ── Device config push API ─────────────────────────────────────
+// Route mounted by the HA platform adapter on the Ingress port only
+// (`src/ha/haDevice.ts`). Proxies the self-host `/config` POST to a LAN
+// device so the browser never talks to the ESP32 directly.
+
+/**
+ * Proxy a self-host config POST to a LAN device via the add-on backend.
+ * No `port`: the device setup server is fixed at :80 server-side.
+ *
+ * `apiFetch` throws a typed Error on any non-2xx proxy response (400 for a
+ * bad IP/config, 502 when the device is unreachable), so callers can surface
+ * `err.message` directly. A resolved value means the proxy reached the device;
+ * inspect `.status`/`.configured` to learn whether the DEVICE accepted it.
+ *
+ * @param {{ deviceIp: string, config: object }} args
+ * @returns {Promise<{ ok: true, status: number, configured?: boolean, body?: unknown }>}
+ */
+export async function pushDeviceConfig({ deviceIp, config }) {
+  const res = await apiFetch('api/device/config', {
+    method: 'POST',
+    body: JSON.stringify({ deviceIp, config }),
+  });
+  return readValidatedJson(res, deviceConfigResponseSchema, 'device config push');
 }
 
 // ── Bitmap font loading ────────────────────────────────────────

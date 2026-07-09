@@ -7,7 +7,8 @@ import TopBar from './platform/TopBar.jsx';
 import WelcomeScreen from './platform/WelcomeScreen.jsx';
 import AssetPickerProvider from './platform/AssetPickerProvider.jsx';
 import GridSizeSelector from './components/GridSizeSelector.jsx';
-import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitmapFonts, fetchHostIp } from './platform/apiClient.js';
+import SetupModeScreen from './components/SetupModeScreen.jsx';
+import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitmapFonts, fetchHostIp, pushDeviceConfig } from './platform/apiClient.js';
 import { useEntityStore } from './platform/entityStore.js';
 import HaStateSourceFields from './platform/HaStateSourceFields.jsx';
 import HaHistorySourceFields from './platform/HaHistorySourceFields.jsx';
@@ -80,15 +81,17 @@ async function previewRenderer(payload, opts) {
  * App startup flow:
  *   1. WelcomeScreen — choose existing widget or "New Widget"
  *   2. GridSizeSelector — pick canvas size (only for new widgets)
- *   3. Editor — full canvas + panels
+ *   3. SetupModeScreen — "How do you want to set up?" (only for new widgets)
+ *   4. Editor — full canvas + panels
  *
- * Opening an existing widget skips the grid selector because the size
- * is already defined in the saved document.
+ * Opening an existing widget skips the grid selector AND the setup-mode screen
+ * because the size is already defined in the saved document.
  */
 
-/** Screen state: 'welcome' → 'gridSelect' → 'editor' */
+/** Screen state: 'welcome' → 'gridSelect' → 'setupMode' → 'editor' */
 const SCREEN_WELCOME = 'welcome';
 const SCREEN_GRID_SELECT = 'gridSelect';
+const SCREEN_SETUP_MODE = 'setupMode';
 const SCREEN_EDITOR = 'editor';
 
 function App() {
@@ -110,6 +113,12 @@ function App() {
     // device endpoint URL. Injected (not imported by core) so the panel stays
     // platform-agnostic — mirrors the source-test / preview handlers above.
     store.setHostInfoProvider(fetchHostIp);
+
+    // Provide the guided self-host `/config` push proxy so the Self-Host setup
+    // dialog can POST to a LAN device through the add-on backend. Injected (not
+    // imported by core) so the dialog stays platform-agnostic and disables
+    // "Send" when this is absent (standalone / non-HA build).
+    store.setDeviceConfigPusher(pushDeviceConfig);
 
     // Resolve the host IP + image host port once on init so the TopBar can
     // always show the "http://<ip>:<port>" device endpoint. Fire-and-forget:
@@ -292,7 +301,9 @@ function App() {
     try {
       await useWidgetStore.getState().createNewWidget({ name: pendingWidgetName });
       setPendingWidgetName('');
-      setScreen(SCREEN_EDITOR);
+      // New widgets pass through the "How do you want to set up?" screen before
+      // the editor; the setupMode overlay's Continue/OK advances to the editor.
+      setScreen(SCREEN_SETUP_MODE);
     } catch {
       // createNewWidget failed — stay on grid select so the user sees the error
       // instead of briefly flashing the editor then snapping back to welcome.
@@ -305,6 +316,7 @@ function App() {
 
   const showWelcome = screen === SCREEN_WELCOME;
   const showGridSelect = screen === SCREEN_GRID_SELECT;
+  const showSetupMode = screen === SCREEN_SETUP_MODE;
 
   // ── Panel resize & collapse state ──
   const leftPanelWidth = useUiStore((s) => s.leftPanelWidth);
@@ -341,7 +353,7 @@ function App() {
     <div className="app-root">
       <TopBar />
       <div
-        className={`app-layout${showWelcome || showGridSelect ? ' app-layout--blurred' : ''}`}
+        className={`app-layout${showWelcome || showGridSelect || showSetupMode ? ' app-layout--blurred' : ''}`}
         style={{ gridTemplateColumns }}
       >
         {!leftCollapsed && <LeftPanel />}
@@ -379,6 +391,9 @@ function App() {
         />
       )}
       {showGridSelect && <GridSizeSelector onConfirm={handleGridConfirm} />}
+      {showSetupMode && (
+        <SetupModeScreen onContinue={() => setScreen(SCREEN_EDITOR)} />
+      )}
       {/* Platform providers — register their callbacks into uiStore on mount. */}
       <AssetPickerProvider />
     </div>

@@ -11,11 +11,14 @@
  * This component is platform-agnostic (core).
  */
 
+import { useState } from 'react';
 import { useDisplayConfigStore, DISPLAY_PRESETS } from '../store/displayConfigStore.js';
 import { useDocStore } from '../store/docStore.js';
 import DeviceEndpointSettings from './DeviceEndpointSettings.jsx';
+import SetupModeScreen from '../components/SetupModeScreen.jsx';
 
 export default function SettingsPanel() {
+  const [showSetup, setShowSetup] = useState(false);
   const displayMode = useDisplayConfigStore((s) => s.displayMode);
   const setDisplayMode = useDisplayConfigStore((s) => s.setDisplayMode);
   const widgetMode = useDisplayConfigStore((s) => s.widgetMode);
@@ -136,7 +139,29 @@ export default function SettingsPanel() {
 
         {/* ── ESP32 device endpoint (auto-detected host IP) ── */}
         <DeviceEndpointSettings />
+
+        {/* ── Device setup (re-open the two-tile "How do you want to set up?" flow) ── */}
+        <div
+          className="field-stack"
+          style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--c-border)' }}
+        >
+          <span className="field-label">Device setup</span>
+          <p className="settings-hint">
+            Re-open the setup guide to connect a device or send a self-host config to an ESP32 on
+            your network.
+          </p>
+          <button type="button" className="btn" onClick={() => setShowSetup(true)}>
+            Set up a device / send config…
+          </button>
+        </div>
       </div>
+
+      {/* Embedded two-tile setup modal. We're already in the editor, so nothing
+          navigates the canvas: the App-guide OK returns to the two tiles, and
+          the ✕ / backdrop / Self-host Close (onContinue) dismiss the modal. */}
+      {showSetup && (
+        <SetupModeScreen embedded onContinue={() => setShowSetup(false)} />
+      )}
     </div>
   );
 }

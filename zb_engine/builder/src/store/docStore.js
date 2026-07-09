@@ -2,7 +2,7 @@ import { current } from 'immer';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
-import { createNewDocument, gridSizeToSize, normalizeGridSize } from '../models/document.js';
+import { createNewDocument, gridSizeToSize, normalizeGridSize, REF_COLS, REF_ROWS } from '../models/document.js';
 import { createElement } from '../models/elementDefaults.js';
 import { createNameGeneratorFromElements, importRuntimeJson, mergeInheritedSources } from '../models/mapper.js';
 import { getDisplayConfig } from './displayConfigStore.js';
@@ -434,6 +434,48 @@ export const useDocStore = create(
     },
 
     /**
+     * Force the focused PRIMARY widget to occupy the FULL device screen at an
+     * explicit pixel size, PER WIDGET — deliberately bypassing the global
+     * widgetMode-derived normalize (which would re-read the shared setting).
+     *
+     * Self-host widgets are always full screen; the sidebar toggle only picks
+     * the drawable width: 720×480 (HA sidebar column reserved) vs 800×480
+     * (whole screen). Flipping the GLOBAL widgetMode would reflow every open
+     * widget, so we instead pin THIS doc's own misc: gridSize to the full-screen
+     * reference grid (REF_COLS×REF_ROWS) and size to the passed preset. Marks
+     * the doc dirty so auto-save persists it, and records history so it's undoable.
+     *
+     * @param {{width:number,height:number}} size — the full-screen preset to pin.
+     */
+    setFocusedFullScreen(size) {
+      set((state) => {
+        const entry = getFocusedEntry(state);
+        if (!entry || !size) return;
+        const width = Number(size.width);
+        const height = Number(size.height);
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+        const gridSize = `${REF_COLS}x${REF_ROWS}`; // full-screen reference grid
+        // The reference grid maps 1:1 to the full screen, so gridSizeToSize here
+        // returns exactly {width, height} — i.e. the passed preset, written
+        // directly instead of re-derived from the global widgetMode.
+        const nextSize = gridSizeToSize(gridSize, { width, height });
+        const misc = entry.doc.misc;
+        // No-op when the widget already IS full-screen at this size (the common
+        // sidebar-on path: a fresh 'panel' widget is already 3x2 / 720×480).
+        // Skips a redundant auto-save and a confusing no-op undo step.
+        if (misc.gridSize === gridSize && misc.size?.width === nextSize.width
+            && misc.size?.height === nextSize.height) {
+          return;
+        }
+        recordHistory(entry);
+        misc.gridSize = gridSize;
+        misc.size = nextSize;
+        if (!Array.isArray(misc.tags)) misc.tags = [];
+        entry.dirty = true;
+      });
+    },
+
+    /**
      * Re-derive the size of EVERY open fullscreen companion from the current
      * Display Mode and mark each touched companion dirty so auto-save persists
      * the new size. Display Mode sizes only the companion, so primary docs are
@@ -512,7 +554,19 @@ export const useDocStore = create(
         if (!entry) return;
         recordHistory(entry);
         applyDeepishPatch(entry.doc.misc, patch);
-        normalizeDoc(entry.doc, screenSizeForDocId(state.focusedDocId));
+        // Only re-derive the pixel size when the GRID actually changed. A plain
+        // metadata edit (name/type/subcategory/tags) must NOT reflow the canvas:
+        // re-running normalizeDoc would recompute misc.size from the GLOBAL
+        // widgetMode and silently clobber any per-widget size that intentionally
+        // differs from it — e.g. a self-host full-screen widget pinned to 800×480
+        // (via setFocusedFullScreen) while widgetMode is 'panel' (720×480). A
+        // gridSize edit still normalizes (the grid is what size derives from).
+        if ('gridSize' in patch) {
+          normalizeDoc(entry.doc, screenSizeForDocId(state.focusedDocId));
+        } else {
+          entry.doc.misc.gridSize = normalizeGridSize(entry.doc.misc.gridSize);
+          if (!Array.isArray(entry.doc.misc.tags)) entry.doc.misc.tags = [];
+        }
         entry.dirty = true;
       });
     },

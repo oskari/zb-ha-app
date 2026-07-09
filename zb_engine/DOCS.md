@@ -1,6 +1,6 @@
 # ZerryBit Engine — Documentation
 
-**Version 0.1.0**
+**Version 0.1.2**
 
 > **Note.** For the builder SPA API, see [`BUILDER_API.md`](BUILDER_API.md).
 > Port `8000` is read-only (image serving for ESP32 devices). All write
@@ -10,7 +10,7 @@
 
 ## Overview
 
-ZerryBit Engine (v0.1.0) is a self-contained TypeScript rendering pipeline
+ZerryBit Engine (v0.1.2) is a self-contained TypeScript rendering pipeline
 built into a Home Assistant Add-on. It accepts a declarative JSON payload,
 optionally fetches live data from HA entities and external APIs, and renders a
 1-bit dithered image for E-ink displays (ESP32 and similar devices). Includes a
@@ -38,8 +38,8 @@ GET http://<your-ha-ip>:8099/builder/  # Widget Builder SPA
 Provides a constant, unauthenticated URL for ESP32 devices.
 
 ```text
-GET http://<your-ha-ip>:8000/image.png   # PNG preview
-GET http://<your-ha-ip>:8000/image.bin   # 1-bit binary
+GET  http://<your-ha-ip>:8000/image.png   # PNG preview
+POST http://<your-ha-ip>:8000/image.bin   # framed 1-bit device reply
 ```
 
 ---
@@ -236,17 +236,20 @@ Serves the cached PNG written on the last deploy or the most recent on-demand
 render. Returns `503` if no payload has been deployed yet. `Cache-Control:
 no-cache`. Sends ETag; honors `If-None-Match` with `304`.
 
-**`GET :8000/image.bin`**
-Serves the cached 1-bit binary for ESP32. Size = `ceil(width/8) * height` bytes.
-Format: MSB-first, 8 pixels/byte, row-major. Bit value: `1` = black, `0` = white
-(buffer sent as-is, no inversion). If your panel uses the inverse convention,
-flip the bits on the firmware side. Sends ETag; honors `If-None-Match` with
-`304`.
+**`POST :8000/image.bin`**
+Returns the ESP32 self-host **framed reply**: a 25-byte header (magic,
+dimensions, placement, refresh flags, next-wake, payload length, and a
+big-endian sidebar clock) followed by the 1-bit image. Image bytes are
+MSB-first, 8 pixels/byte, row-major, with bit polarity matched to the ESP32
+wire format (`1` = white). Total size = `25 + ceil(width/8) * height` bytes.
+Returns `503` if no payload has been deployed yet. `Cache-Control: no-cache`.
+The request body is ignored, and — because the live clock makes every reply
+unique — there is no ETag / conditional-request path on this endpoint.
 
 **`GET :8000/image_fullscreen.png`**
-**`GET :8000/image_fullscreen.bin`**
+**`POST :8000/image_fullscreen.bin`**
 Same shape as the primary endpoints, but for the fullscreen companion slot.
-Independent buffer, ETag, and cooldown.
+Independent buffer and cooldown.
 
 ### Port 8099 — authenticated via HA Ingress session
 
@@ -550,9 +553,10 @@ Errors are collected, not thrown. The image always renders.
   44, 56 px. Note: 14px snaps to 12px. 12px Regular snaps to Light.
 
 **`image.bin` wrong size**
-- **Cause:** Width not a multiple of 8 — last byte is padded.
-- **Fix:** Expected size = `ceil(width/8) * height` bytes. For 200×200:
-  `ceil(200/8)*200 = 25*200 = 5000` bytes.
+- **Cause:** The `POST` reply is framed — a 25-byte header precedes the image —
+  and each row's width is padded up to a byte boundary.
+- **Fix:** Expected size = `25 + ceil(width/8) * height` bytes. For 200×200:
+  `25 + ceil(200/8)*200 = 25 + 5000 = 5025` bytes.
 
 ---
 

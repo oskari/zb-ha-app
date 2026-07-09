@@ -1,5 +1,5 @@
 name: "ZerryBit Engine"
-version: "0.1.0"
+version: "0.1.2"
 slug: "zb_engine"
 description: "Renders 1-bit e-ink dashboards from a JSON payload. Visual widget builder"
 arch:
@@ -19,7 +19,7 @@ hassio_api: true
 # raw sockets. Set `apparmor: false` to opt out (not recommended).
 ingress: true
 ingress_port: 8099
-panel_title: "ZB Engine"
+panel_title: "ZerryBit Engine"
 panel_icon: "mdi:card-text-outline"
 ports:
   8000/tcp: 8000
