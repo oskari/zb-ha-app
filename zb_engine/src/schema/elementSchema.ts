@@ -266,7 +266,8 @@ const calendarListSchema = z.object({
   type: z.literal("calendarList"),
   ...identityFields,
   ...visibilityField,
-  pos: pointSchema,
+  ...transformFields,
+  ...sizeFields,
   ...opacityField,
 
   sourceId: z.unknown().default(""),

@@ -154,6 +154,7 @@ LayerItem.propTypes = {
 };
 
 import InspectorPanel from './InspectorPanel.jsx';
+import { getCalendarListBounds } from '../editor/calendarListBounds.js';
 
 // Error boundary to prevent a single bad layer from crashing the panel
 class LayerErrorBoundary extends Component {
@@ -267,6 +268,12 @@ function LayersList() {
             if (py > maxY) maxY = py;
           }
           if (!isFinite(minX)) { minX = ox; minY = oy; maxX = ox; maxY = oy; }
+        } else if (element.type === 'calendarList') {
+          const { width, height } = getCalendarListBounds(element);
+          minX = ox;
+          minY = oy;
+          maxX = ox + width;
+          maxY = oy + height;
         } else {
           // Rect, circle, text, img, svg, graph — use sizeX/sizeY
           minX = ox;
