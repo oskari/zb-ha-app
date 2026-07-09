@@ -1412,6 +1412,12 @@ body {
   font-weight: 600;
 }
 
+.welcome-import-btn {
+  min-width: 180px;
+  padding: var(--sp-2) var(--sp-5);
+  font-size: var(--text-sm);
+}
+
 .welcome-new-group {
   display: flex;
   flex-direction: column;

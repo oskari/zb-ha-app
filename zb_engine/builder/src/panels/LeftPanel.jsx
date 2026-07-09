@@ -59,6 +59,8 @@ export default function LeftPanel() {
   const misc = useDocStore(selectFocusedMisc);
   const updateMisc = useDocStore((s) => s.updateMisc);
   const replaceDocFromJson = useDocStore((s) => s.replaceDocFromJson);
+  const downloadJsonSlotHandler = useUiStore((s) => s.downloadJsonSlotHandler);
+  const openJsonSlotUpload = useUiStore((s) => s.openJsonSlotUpload);
 
   const tabs = ['Widget', 'Sources', 'Data', 'Features', 'Preview', 'Settings', 'JSON'];
 
@@ -110,6 +112,34 @@ export default function LeftPanel() {
   const [drawJsonText, setDrawJsonText] = useState('');
   const [drawJsonLoading, setDrawJsonLoading] = useState(false);
   const [drawJsonError, setDrawJsonError] = useState(null);
+
+  const handleJsonDownload = () => {
+    if (!downloadJsonSlotHandler) return;
+    try {
+      downloadJsonSlotHandler({
+        doc,
+        slot: exportSlot,
+        primarySources: sharedSources,
+        widgetName: misc?.name,
+      });
+    } catch (err) {
+      setError(err.message || 'Download failed');
+    }
+  };
+
+  const handleJsonUploadClick = () => {
+    if (!openJsonSlotUpload) return;
+    openJsonSlotUpload({ slot: exportSlot }, ({ error, payload }) => {
+      if (error) {
+        setError(error);
+        return;
+      }
+      setError(null);
+      isSyncingFromJson.current = true;
+      replaceDocFromJson(payload);
+      setJsonText(JSON.stringify(payload, null, 2));
+    });
+  };
 
   useEffect(() => {
     if (isSyncingFromJson.current) {
@@ -295,6 +325,24 @@ export default function LeftPanel() {
               gap: '6px',
             }}
           >
+            {!showDrawJson && downloadJsonSlotHandler && openJsonSlotUpload && (
+              <>
+                <button
+                  className="btn"
+                  onClick={handleJsonDownload}
+                  title="Download this slot as a JSON file"
+                >
+                  Download
+                </button>
+                <button
+                  className="btn"
+                  onClick={handleJsonUploadClick}
+                  title="Load a JSON file into this slot"
+                >
+                  Upload
+                </button>
+              </>
+            )}
             <button
               className={`btn${showDrawJson ? ' btn-primary' : ''}`}
               onClick={handleToggleDrawJson}

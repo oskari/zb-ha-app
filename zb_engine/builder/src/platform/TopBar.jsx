@@ -15,6 +15,7 @@ import { formatTimeAgo } from '../utils/timeAgo.js';
 import * as api from './apiClient.js';
 import { deployActiveWidget } from './deploy.js';
 import ConfirmModal from '../components/ConfirmModal.jsx';
+import { useWidgetImport } from './useWidgetImport.js';
 
 // Default ESP32 image host port (config.yaml maps container 8000/tcp -> 8000).
 // Used when the Supervisor-reported host-port mapping is unavailable.
@@ -35,7 +36,18 @@ export default function TopBar() {
     deleteWidget,
     setActiveWidgetName,
     clearError,
+    exportActiveWidget,
   } = useWidgetStore();
+
+  const {
+    fileInputRef,
+    triggerImport,
+    handleFileChange,
+    pendingImport,
+    confirmPendingImport,
+    cancelPendingImport,
+    missingAssetsMessage,
+  } = useWidgetImport();
 
   const autoSaveEnabled = useAutoSaveStore((s) => s.enabled);
   const autoSaveLastSaved = useAutoSaveStore((s) => s.lastSavedAt);
@@ -131,6 +143,13 @@ export default function TopBar() {
 
   return (
     <div className="topbar">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
       {/* Widget selector */}
       <div className="topbar-widget-selector">
         <button
@@ -166,6 +185,16 @@ export default function TopBar() {
             ))}
             <button className="topbar-dropdown-item-btn topbar-new-btn" onClick={handleNewWidget}>
               + New Widget
+            </button>
+            <button
+              className="topbar-dropdown-item-btn"
+              onClick={() => {
+                setDropdownOpen(false);
+                triggerImport();
+              }}
+              disabled={busy}
+            >
+              Import widget…
             </button>
           </div>
         )}
@@ -221,6 +250,14 @@ export default function TopBar() {
 
         <button
           className="topbar-btn"
+          onClick={exportActiveWidget}
+          disabled={busy || !activeWidgetId}
+          title="Download widget JSON file"
+        >
+          Export
+        </button>
+        <button
+          className="topbar-btn"
           onClick={saveCurrentWidget}
           disabled={busy || !activeWidgetId}
         >
@@ -252,6 +289,14 @@ export default function TopBar() {
           message="Delete this widget? This cannot be undone."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {pendingImport && (
+        <ConfirmModal
+          message={missingAssetsMessage}
+          onConfirm={confirmPendingImport}
+          onCancel={cancelPendingImport}
         />
       )}
     </div>

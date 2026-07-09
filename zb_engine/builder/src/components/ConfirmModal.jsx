@@ -23,7 +23,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel }) {
           width: '90%',
         }}
       >
-        <p style={{ margin: '0 0 var(--sp-5) 0', fontSize: 'var(--text-base)', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 var(--sp-5) 0', fontSize: 'var(--text-base)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
           {message}
         </p>
         <div style={{ display: 'flex', gap: 'var(--sp-2)', justifyContent: 'flex-end' }}>

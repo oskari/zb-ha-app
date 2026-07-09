@@ -18,6 +18,7 @@ vi.mock('../apiClient.js', () => ({
   saveWidget: vi.fn(() => Promise.resolve()),
   newWidgetId: vi.fn(() => Promise.resolve('w_new')),
   deleteWidget: vi.fn(() => Promise.resolve()),
+  listAssets: vi.fn(() => Promise.resolve([])),
 }));
 
 vi.mock('../../store/displayConfigStore.js', () => ({
@@ -340,5 +341,81 @@ describe('widgetStore — companion lifecycle', () => {
     expect(useDocStore.getState().docs[fullscreenIdFor('w1')]).toBeUndefined();
     expect(useDocStore.getState().focusedDocId).toBe('w2');
     expect(useWidgetStore.getState().activeWidgetId).toBe('w2');
+  });
+});
+
+describe('widgetStore — import / export', () => {
+  beforeEach(reset);
+
+  it('exportActiveWidget sets error when no widget is active', () => {
+    useWidgetStore.getState().exportActiveWidget();
+    expect(useWidgetStore.getState().error).toContain('No widget selected');
+  });
+
+  it('inspectWidgetImportFile reports missing assets', async () => {
+    api.listAssets.mockResolvedValue([{ filename: 'present.png' }]);
+    const file = new File(
+      [JSON.stringify({
+        exportVersion: 1,
+        name: 'Imported',
+        doc: {
+          misc: {},
+          features: {},
+          sources: [],
+          elements: [{ type: 'img', src: 'asset:missing.png' }],
+        },
+        fullscreen: null,
+      })],
+      'widget.json',
+      { type: 'application/json' },
+    );
+
+    const result = await useWidgetStore.getState().inspectWidgetImportFile(file);
+
+    expect(result.status).toBe('missing_assets');
+    expect(result.missingAssets).toEqual(['missing.png']);
+  });
+
+  it('importParsedWidget creates a new widget and opens it', async () => {
+    api.loadWidget.mockResolvedValue({
+      name: 'Imported',
+      doc: { misc: { gridSize: '1x1' }, elements: [], sources: [] },
+    });
+    api.listWidgets.mockResolvedValue({
+      widgets: [{ id: 'w_new', name: 'Imported' }],
+    });
+
+    const id = await useWidgetStore.getState().importParsedWidget({
+      name: 'Imported',
+      doc: { misc: { gridSize: '1x1' }, elements: [], sources: [] },
+      fullscreen: null,
+    });
+
+    expect(id).toBe('w_new');
+    expect(api.newWidgetId).toHaveBeenCalled();
+    expect(api.saveWidget).toHaveBeenCalledWith(
+      'w_new',
+      expect.objectContaining({ name: 'Imported' }),
+    );
+    expect(api.loadWidget).toHaveBeenCalledWith('w_new');
+    expect(useWidgetStore.getState().activeWidgetId).toBe('w_new');
+  });
+
+  it('importParsedWidget auto-generates a name when none is provided', async () => {
+    api.loadWidget.mockResolvedValue({
+      name: 'Untitled 1',
+      doc: { misc: { gridSize: '1x1' }, elements: [], sources: [] },
+    });
+
+    await useWidgetStore.getState().importParsedWidget({
+      name: '',
+      doc: { misc: { gridSize: '1x1' }, elements: [], sources: [] },
+      fullscreen: null,
+    });
+
+    expect(api.saveWidget).toHaveBeenCalledWith(
+      'w_new',
+      expect.objectContaining({ name: 'Untitled 1' }),
+    );
   });
 });

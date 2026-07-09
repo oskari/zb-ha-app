@@ -267,7 +267,12 @@ docStore state. These rules keep auto-save and manual save from stepping on each
 4. **Export via mapper.** Saving always serializes via `exportRuntimeJson(doc)` from
    `builder/src/models/mapper.js`. There is no alternative export path.
 
-5. **writeIfChanged on server.** The server's `writeWidget` uses `Buffer.equals()` to skip
+5. **JSON tab file I/O.** Slot-level Download/Upload in `LeftPanel` dispatches through
+   `uiStore.downloadJsonSlotHandler` and `uiStore.openJsonSlotUpload`, registered by
+   `platform/JsonSlotTransferProvider.jsx`. Core never calls `fetch()` or browser file
+   APIs for widget transfer.
+
+6. **writeIfChanged on server.** The server's `writeWidget` uses `Buffer.equals()` to skip
    no-op writes. The client-side dirty flag is an optimization to avoid unnecessary network
    calls; the server is the final safety net.
 

@@ -190,6 +190,7 @@ Directory: `builder/src/platform/`.
 | Auto-save hook | `useAutoSave.js` (debounced save on doc change) | Same pattern, different transport |
 | HA entity cache | `entityStore.js` (Supervisor entity list) | Cloud entity/data source |
 | User assets | `AssetPickerProvider.jsx` + `apiClient.js` asset helpers + HA asset routes | Object storage / signed uploads / media library |
+| JSON slot file I/O | `JsonSlotTransferProvider.jsx` (JSON tab download/upload) | Cloud file APIs / browser download helpers |
 | Auth / session | Ingress cookies (implicit) | OAuth login + token refresh |
 | Navigation | `TopBar.jsx` (widget dropdown + save/deploy) | Add user menu, sharing, etc. |
 | Welcome screen | `WelcomeScreen.jsx` (initial setup / grid select) | Cloud onboarding flow |

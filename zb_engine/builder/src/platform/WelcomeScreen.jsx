@@ -11,12 +11,25 @@
 
 import { useEffect, useState } from 'react';
 import { useWidgetStore } from './widgetStore.js';
+import ConfirmModal from '../components/ConfirmModal.jsx';
+import { useWidgetImport } from './useWidgetImport.js';
 
 export default function WelcomeScreen({ onNewWidget, onOpenWidget }) {
   const widgets = useWidgetStore((s) => s.widgets);
   const loading = useWidgetStore((s) => s.loading);
   const error = useWidgetStore((s) => s.error);
   const fetchWidgets = useWidgetStore((s) => s.fetchWidgets);
+
+  const {
+    fileInputRef,
+    triggerImport,
+    handleFileChange,
+    pendingImport,
+    confirmPendingImport,
+    cancelPendingImport,
+    missingAssetsMessage,
+    loading: importLoading,
+  } = useWidgetImport();
 
   const [hasFetched, setHasFetched] = useState(false);
   const [widgetName, setWidgetName] = useState('');
@@ -44,6 +57,13 @@ export default function WelcomeScreen({ onNewWidget, onOpenWidget }) {
 
   return (
     <div className="welcome-overlay">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
       <div className="welcome-card">
         <h1 className="welcome-title">
           ZerryBit Widget Builder<span className="welcome-beta-badge">Beta</span>
@@ -71,6 +91,14 @@ export default function WelcomeScreen({ onNewWidget, onOpenWidget }) {
             disabled={isDuplicate}
           >
             + New Widget
+          </button>
+          <button
+            type="button"
+            className="btn welcome-import-btn"
+            onClick={triggerImport}
+            disabled={loading || importLoading}
+          >
+            Import widget
           </button>
         </div>
 
@@ -109,6 +137,14 @@ export default function WelcomeScreen({ onNewWidget, onOpenWidget }) {
           <p className="welcome-empty">No saved widgets yet. Create your first one!</p>
         )}
       </div>
+
+      {pendingImport && (
+        <ConfirmModal
+          message={missingAssetsMessage}
+          onConfirm={confirmPendingImport}
+          onCancel={cancelPendingImport}
+        />
+      )}
     </div>
   );
 }
