@@ -1,6 +1,6 @@
 # ZerryBit Engine — Documentation
 
-**Version 0.1.3-dev.20260709.2**
+**Version 0.1.3.dev1**
 
 > **Note.** For the builder SPA API, see [`BUILDER_API.md`](BUILDER_API.md).
 > Port `8000` is read-only (image serving for ESP32 devices). All write
@@ -10,7 +10,7 @@
 
 ## Overview
 
-ZerryBit Engine (v0.1.3-dev.20260709.2) is a self-contained TypeScript rendering pipeline
+ZerryBit Engine (v0.1.3.dev1) is a self-contained TypeScript rendering pipeline
 built into a Home Assistant Add-on. It accepts a declarative JSON payload,
 optionally fetches live data from HA entities and external APIs, and renders a
 1-bit dithered image for E-ink displays (ESP32 and similar devices). Includes a
@@ -639,8 +639,13 @@ Home Assistant reads the add-on **Version** from `config.yaml` in the repository
 | Kind | Example | When |
 |------|---------|------|
 | Release | `0.1.3` | Tagged release; bump `config.yaml`, `package.json`, and `CHANGELOG.md` together |
-| Dev build | `0.1.3-dev.20260709` | Unreleased work pushed to the repo; date suffix makes builds identifiable in HA |
+| Dev build | `0.1.3.dev1`, `0.1.3.dev2`, … | Unreleased work; increment `.devN` on each push that should trigger an HA update |
 | Runtime detail | `GET /health` → `{ version, build: { builtAt, commit } }` | Exact image identity inside the container (Settings tab shows this too) |
+
+HA Supervisor compares versions with **AwesomeVersion**. Do **not** append extra
+dot segments to a date suffix (e.g. `0.1.3-dev.20260709.2`) — Supervisor treats
+that as incomparable to `0.1.3-dev.20260709` and will not offer an update. Use
+PEP-440-style `.devN` instead.
 
 `npm run build` and the Docker image run `scripts/stamp-version.mjs`, which writes
 `src/version.json` (gitignored) with build time and an optional git short SHA when

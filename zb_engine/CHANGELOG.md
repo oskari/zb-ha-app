@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev version bumps for HA updates** — use `0.1.3.devN` (not
+  `0.1.3-dev.YYYYMMDD.N`); Supervisor's AwesomeVersion parser treats an extra
+  dot suffix as incomparable and will not offer an update.
 - **`haCalendar` HTTP 400** — `calendar.get_events` now calls the REST API with
   `?return_response` and parses events from the `service_response` envelope.
 
@@ -26,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bindings, and validation checklist for AI agents and offline generators.
   Sample import files live in [`examples/agent-widgets/`](examples/agent-widgets/).
 
-- **Version identification** — Dev builds use `X.Y.Z-dev.YYYYMMDD` in `config.yaml`
+- **Version identification** — Dev builds use `X.Y.Z.devN` in `config.yaml`
   (visible in HA add-on Info). Runtime `/health` and Settings tab also report the
   semver plus optional git commit from the Docker build.
 
