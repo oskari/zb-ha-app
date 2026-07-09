@@ -460,6 +460,36 @@ export const useUiStore = create(
       });
     },
 
+    // Platform-injected handler for downloading the focused JSON slot as a file.
+    // Signature: ({ doc, slot, primarySources, widgetName }) => void
+    // Set by JsonSlotTransferProvider on the HA platform; null on standalone builds.
+    downloadJsonSlotHandler: null,
+
+    // Platform-injected opener for uploading a JSON file into the focused slot.
+    // Signature: (context: { slot }, onLoaded: ({ error?, payload? }) => void) => void
+    // Set by JsonSlotTransferProvider on the HA platform; null on standalone builds.
+    openJsonSlotUpload: null,
+
+    /**
+     * Register the platform's JSON-slot download handler. Called once by
+     * JsonSlotTransferProvider on mount; cleared on unmount.
+     */
+    setDownloadJsonSlotHandler(handler) {
+      set((state) => {
+        state.downloadJsonSlotHandler = handler;
+      });
+    },
+
+    /**
+     * Register the platform's JSON-slot upload opener. Called once by
+     * JsonSlotTransferProvider on mount; cleared on unmount.
+     */
+    setOpenJsonSlotUpload(fn) {
+      set((state) => {
+        state.openJsonSlotUpload = fn;
+      });
+    },
+
     // Platform-injected HA entity catalog store reference.
     // Set by the platform layer on init; null when running standalone or non-HA.
     // Core panels check this to conditionally render HA entity features.

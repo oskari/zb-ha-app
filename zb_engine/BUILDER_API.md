@@ -188,6 +188,41 @@ The builder persists named widgets (each a document with a `primary` payload and
 
 > **Source secrets** are stored and returned in clear text over `GET ../api/widgets/:id`, exactly as for `GET ../payload` (see that note above).
 
+### Widget file import / export (client-side)
+
+The builder can download and upload widget documents as JSON files. This is **entirely client-side** — no dedicated server route. Import always creates a **new** widget (`GET ../api/widgets/new-id` + `PUT ../api/widgets/:id`).
+
+**Export (Top bar → Export)**
+
+Downloads a versioned envelope:
+
+```json
+{
+  "exportVersion": 1,
+  "exportedAt": 1730000000000,
+  "name": "Kitchen display",
+  "doc": { "misc": {}, "features": {}, "sources": [], "elements": [] },
+  "fullscreen": null
+}
+```
+
+- `doc` is the primary slot runtime payload; `fullscreen` is the optional `3x2` companion (or `null`).
+- Filename pattern: `zerrybit-widget-<name>.json`
+- Export reads from the in-memory editor, so HTTP source credentials are included as real values. **Treat exported files as sensitive.**
+
+**Import (Welcome screen or widget dropdown → Import widget…)**
+
+1. User selects a `.json` file.
+2. The builder accepts either the envelope above or a bare runtime payload (`{ misc, features, sources, elements }`).
+3. Referenced uploaded assets (`asset:<uuid>.<ext>` tokens in element `src` fields) are checked against `GET ../api/assets`. If any are missing on this system, the user is warned but may proceed.
+4. A new widget ID is allocated and the document is saved via `PUT ../api/widgets/:id`.
+
+**Uploaded assets are not embedded** in the JSON file — only the `asset:` token strings. Importing on another Home Assistant instance (or after deleting assets) leaves broken image references until assets are re-uploaded manually.
+
+**JSON tab (slot-level)**
+
+The JSON panel also offers **Download** / **Upload** for the currently focused slot (primary or fullscreen). Upload replaces the open slot in the editor; Top-bar import creates a new widget.
+
 ---
 
 ## 3. Entity Data Flow

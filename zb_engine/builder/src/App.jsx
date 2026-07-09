@@ -6,6 +6,7 @@ import PanelResizeHandle from './components/PanelResizeHandle.jsx';
 import TopBar from './platform/TopBar.jsx';
 import WelcomeScreen from './platform/WelcomeScreen.jsx';
 import AssetPickerProvider from './platform/AssetPickerProvider.jsx';
+import JsonSlotTransferProvider from './platform/JsonSlotTransferProvider.jsx';
 import GridSizeSelector from './components/GridSizeSelector.jsx';
 import SetupModeScreen from './components/SetupModeScreen.jsx';
 import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitmapFonts, fetchHostIp, pushDeviceConfig } from './platform/apiClient.js';
@@ -396,6 +397,7 @@ function App() {
       )}
       {/* Platform providers — register their callbacks into uiStore on mount. */}
       <AssetPickerProvider />
+      <JsonSlotTransferProvider />
     </div>
   );
 }

@@ -13,6 +13,15 @@ import { useAutoSaveStore } from './autoSaveStore.js';
 import { fullscreenIdFor } from '../store/companionId.js';
 import { exportRuntimeJson } from '../models/mapper.js';
 import { nextAvailableName } from '../utils/names.js';
+import {
+  buildExportEnvelope,
+  collectAssetRefsFromImport,
+  downloadJsonFile,
+  exportFilename,
+  findMissingAssets,
+  parseWidgetImportFile,
+  readFileAsText,
+} from '../utils/widgetTransfer.js';
 
 export function collectWidgetSavePayload(widgetId, widgetName) {
   const primaryDoc = getDocById(widgetId);
@@ -286,6 +295,95 @@ export const useWidgetStore = create((set, get) => ({
   /** Clear the error state. */
   clearError() {
     set({ error: null });
+  },
+
+  /** Download the active widget as a portable JSON file. */
+  exportActiveWidget() {
+    const { activeWidgetId, activeWidgetName } = get();
+    if (!activeWidgetId) {
+      set({ error: 'No widget selected to export.' });
+      return;
+    }
+
+    try {
+      const savePayload = collectWidgetSavePayload(activeWidgetId, activeWidgetName);
+      const envelope = buildExportEnvelope(savePayload, activeWidgetName || activeWidgetId);
+      downloadJsonFile(
+        exportFilename(activeWidgetName || activeWidgetId),
+        envelope,
+      );
+    } catch (err) {
+      set({ error: err.message });
+    }
+  },
+
+  /**
+   * Parse a widget file and check for missing uploaded assets.
+   *
+   * @returns {Promise<
+   *   | { status: 'ok', parsed: object, missingAssets: string[] }
+   *   | { status: 'missing_assets', parsed: object, missingAssets: string[] }
+   *   | { status: 'error', error: string }
+   * >}
+   */
+  async inspectWidgetImportFile(file) {
+    set({ error: null });
+    try {
+      const text = await readFileAsText(file);
+      const parsed = parseWidgetImportFile(text);
+      const assetRefs = collectAssetRefsFromImport(parsed);
+
+      let missingAssets = [];
+      if (assetRefs.length > 0) {
+        const assets = await api.listAssets();
+        const existing = (Array.isArray(assets) ? assets : []).map((asset) => asset.filename);
+        missingAssets = findMissingAssets(assetRefs, existing);
+      }
+
+      if (missingAssets.length > 0) {
+        return { status: 'missing_assets', parsed, missingAssets };
+      }
+
+      return { status: 'ok', parsed, missingAssets: [] };
+    } catch (err) {
+      set({ error: err.message });
+      return { status: 'error', error: err.message };
+    }
+  },
+
+  /**
+   * Create a new widget from a parsed import payload and open it in the editor.
+   *
+   * @param {{ name?: string, doc: object, fullscreen?: object | null }} parsed
+   * @returns {Promise<string>} New widget id
+   */
+  async importParsedWidget(parsed) {
+    set({ loading: true, error: null });
+    try {
+      const prevId = get().activeWidgetId;
+      if (prevId) {
+        await flushDirtyWidgetBeforeSwitch(prevId);
+      }
+
+      const id = await api.newWidgetId();
+      const existingNames = get().widgets.map((w) => w.name);
+      const miscName = parsed.doc?.misc?.name;
+      const resolvedName = parsed.name?.trim()
+        || (typeof miscName === 'string' ? miscName.trim() : '')
+        || nextAvailableName('Untitled', existingNames);
+
+      await api.saveWidget(id, {
+        name: resolvedName,
+        doc: parsed.doc,
+        fullscreen: parsed.fullscreen ?? null,
+      });
+
+      await get().openWidget(id);
+      return id;
+    } catch (err) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
   },
 
   // ── Fullscreen-companion lifecycle ────────────
