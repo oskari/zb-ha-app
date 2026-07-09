@@ -19,21 +19,21 @@
         "name": "Ulkona",
         "kind": "haState",
         "enabled": true,
-        "entity_id": "sensor.ulkona_temperature"
+        "entity_id": "sensor.outdoor_temperature"
       },
       {
         "id": "weather",
         "name": "Sää",
         "kind": "haState",
         "enabled": true,
-        "entity_id": "weather.moskalanmaki"
+        "entity_id": "weather.home"
       },
       {
         "id": "temp_hist",
         "name": "Lämpöhistoria",
         "kind": "haHistory",
         "enabled": true,
-        "entity_id": "sensor.ulkona_temperature",
+        "entity_id": "sensor.outdoor_temperature",
         "hoursBack": 20
       },
       {
