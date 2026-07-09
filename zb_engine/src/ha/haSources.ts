@@ -9,7 +9,7 @@
 import { fetchWithTimeout, readResponseJsonWithLimit } from "../data/safeFetch";
 import { downsampleLTTB } from "../data/downsampling";
 import { buildHistoryResult } from "./historyResult";
-import { buildHaCalendarResult, type RawHaCalendarEvent } from "./calendarEvent";
+import { buildHaCalendarResult, extractCalendarEventsFromServiceResponse } from "./calendarEvent";
 import { SourceError } from "../errors/sourceError";
 import { resolveValue } from "@zb/expressions";
 import {
@@ -187,7 +187,9 @@ async function fetchHaCalendarSource(
     );
   }
 
-  const url = "http://supervisor/core/api/services/calendar/get_events";
+  // calendar.get_events always returns response data; HA REST API requires
+  // ?return_response or it responds with HTTP 400.
+  const url = "http://supervisor/core/api/services/calendar/get_events?return_response";
 
   const res = await fetchWithTimeout(url, 10_000, {
     method: "POST",
@@ -209,7 +211,7 @@ async function fetchHaCalendarSource(
     );
   }
 
-  const raw = await readResponseJsonWithLimit<Record<string, { events?: RawHaCalendarEvent[] }>>(
+  const raw = await readResponseJsonWithLimit<unknown>(
     res,
     MAX_HA_HISTORY_RESPONSE_BYTES,
     MAX_SOURCE_TOTAL_TIMEOUT_MS,
@@ -217,8 +219,7 @@ async function fetchHaCalendarSource(
     signal,
   );
 
-  const bucket = raw[source.entity_id];
-  const rawEvents = Array.isArray(bucket?.events) ? bucket.events : [];
+  const rawEvents = extractCalendarEventsFromServiceResponse(raw, source.entity_id);
 
   const includeOngoing = resolveValue(source.includeOngoing ?? true, ctx) !== false;
 

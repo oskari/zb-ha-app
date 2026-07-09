@@ -154,3 +154,40 @@ export function buildHaCalendarResult(
     events: capped,
   };
 }
+
+/** HA REST `calendar.get_events?return_response` envelope. */
+export interface CalendarGetEventsApiResponse {
+  changed_states?: unknown[];
+  service_response?: Record<string, { events?: RawHaCalendarEvent[] }>;
+}
+
+/**
+ * Extract events from a calendar.get_events HTTP response.
+ * Supports the REST envelope (`service_response`) and the direct automation
+ * response shape (`{ "calendar.x": { events: [...] } }`).
+ */
+export function extractCalendarEventsFromServiceResponse(
+  raw: unknown,
+  entity_id: string,
+): RawHaCalendarEvent[] {
+  if (!raw || typeof raw !== "object") return [];
+
+  const obj = raw as Record<string, unknown>;
+
+  const serviceResponse = obj.service_response;
+  if (serviceResponse && typeof serviceResponse === "object") {
+    const bucket = (serviceResponse as Record<string, unknown>)[entity_id];
+    if (bucket && typeof bucket === "object") {
+      const events = (bucket as { events?: unknown }).events;
+      if (Array.isArray(events)) return events as RawHaCalendarEvent[];
+    }
+  }
+
+  const direct = obj[entity_id];
+  if (direct && typeof direct === "object") {
+    const events = (direct as { events?: unknown }).events;
+    if (Array.isArray(events)) return events as RawHaCalendarEvent[];
+  }
+
+  return [];
+}
