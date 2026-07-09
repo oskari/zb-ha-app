@@ -256,6 +256,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-2);
+  /* Keep both columns top-aligned so a taller column (e.g. one showing an error)
+     never stretches and pushes the other column's input out of alignment. */
+  align-items: start;
 }
 
 .input,
@@ -1168,6 +1171,187 @@ body {
   min-width: 160px;
   padding: var(--sp-2) var(--sp-4);
   font-size: var(--text-base);
+}
+
+/* ========================================
+   Setup Mode Screen ("How do you want to set up?")
+   Same overlay family as the welcome / grid-selector screens.
+   ======================================== */
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.setup-card {
+  position: relative;
+  background: var(--c-surface);
+  border-radius: 12px;
+  padding: var(--sp-6) 32px 32px;
+  max-width: 640px;
+  width: 92%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+
+.setup-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 1.35em;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.setup-subtitle {
+  margin: 0 0 var(--sp-5);
+  color: var(--c-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.setup-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  justify-content: center;
+  margin-bottom: var(--sp-5);
+}
+
+.setup-tile {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4);
+  border: 2px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.setup-tile:hover {
+  border-color: var(--c-accent);
+  background: var(--c-accent-subtle);
+}
+
+/* Selection is applied only after the user clicks a tile — there is no
+   pre-highlighted default (the "Recommended" badge is a label, not a choice). */
+.setup-tile--selected {
+  border-color: var(--c-accent);
+  background: var(--c-accent-subtle);
+  box-shadow: 0 0 0 1px var(--c-accent) inset;
+}
+
+.setup-tile-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-accent-contrast);
+  background: var(--c-accent);
+  border-radius: 8px;
+}
+
+.setup-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-accent);
+  line-height: 1;
+}
+
+.setup-tile-title {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--c-text);
+}
+
+.setup-tile-desc {
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
+  line-height: 1.5;
+}
+
+.setup-continue {
+  min-width: 200px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--text-base);
+}
+
+/* Shown when Continue is pressed with no setup style chosen. */
+.setup-continue-error {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--c-danger);
+}
+
+/* Self-host dialog: grouped checkboxes — checkbox then label, stacked on the
+   left with matching spacing between rows. */
+.selfhost-checks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.selfhost-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--c-text);
+}
+
+.selfhost-check input[type='checkbox'] {
+  flex: none;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Small red required-field message under an input (shown on a Send attempt). */
+.field-error {
+  font-size: var(--text-xs);
+  color: var(--c-danger);
+}
+
+/* Placeholder body of the app-guide dialog — a cursive "coming soon :)". */
+.setup-guide-comingsoon {
+  margin: var(--sp-5) 0 var(--sp-6);
+  font-style: italic;
+  font-family: 'Segoe Script', 'Brush Script MT', cursive;
+  font-size: 1.6em;
+  color: var(--c-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .setup-tiles {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .setup-tile {
+    max-width: none;
+  }
 }
 
 /* ========================================

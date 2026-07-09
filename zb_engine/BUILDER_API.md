@@ -1,8 +1,8 @@
 # ZerryBit Engine — Web Builder API Reference
 
 > **Audience:** Frontend/fullstack engineers building or modifying the ZerryBit widget builder.  
-> **Version:** Engine v0.1.0  
-> **Last updated:** 2026-06-14
+> **Version:** Engine v0.1.2  
+> **Last updated:** 2026-07-08
 
 ---
 
@@ -536,8 +536,8 @@ async function deployPayload(payload) {
 **Port 8000 is read-only.** The builder does not call it. These URLs are provided to the user in the HA sidebar so they can configure their ESP32 firmware:
 
 ```
-PNG:  http://<HA_IP>:8000/image.png
-BIN:  http://<HA_IP>:8000/image.bin
+GET   http://<HA_IP>:8000/image.png    # PNG preview
+POST  http://<HA_IP>:8000/image.bin    # framed 1-bit device reply
 ```
 
 Both endpoints:

@@ -1,6 +1,6 @@
 # ZerryBit Engine
 
-**Version 0.1.0 (Beta)** · Home Assistant Add-on for E-ink Displays
+**Version 0.1.2 (Beta)** · Home Assistant Add-on for E-ink Displays
 
 > ⚠️ **Beta software.** ZerryBit Engine — including the Widget Builder — is in **beta**. Expect rough edges, breaking changes between releases, and APIs/payload formats that may change without notice. Not yet recommended for unattended production use. Please [report issues](https://github.com/ZerryGit/zb-ha-app/issues) and back up any widgets you create.
 
@@ -14,7 +14,7 @@ A local-first Home Assistant add-on that renders **1-bit dithered images** from 
 2. **Start** the add-on.
 3. Open the **ZB Engine** panel from the HA sidebar.
 4. Select entities → click **Open Builder** → design your dashboard → **Deploy**.
-5. Point your ESP32 to `http://<HA_IP>:8000/image.bin`.
+5. Point your ESP32 at `http://<HA_IP>:8000/image.bin` — it polls this endpoint with `POST`.
 
 > **Repository layout.** This is a Home Assistant **add-on repository**. The add-on
 > itself lives in [`zb_engine/`](zb_engine/) — its `config.yaml`, `Dockerfile`,
@@ -30,7 +30,7 @@ A local-first Home Assistant add-on that renders **1-bit dithered images** from 
 2. The builder sends a JSON payload to the rendering engine.
 3. The engine fetches live data (HA entities, external APIs), resolves dynamic bindings, and draws shapes/text/images onto a 1-bit canvas.
 4. The rendered image is cached to disk as both **PNG** (preview) and **BIN** (ESP32).
-5. Your ESP32 polls `GET /image.bin` on a timer. The image port serves the latest in-memory image immediately when available and can optionally perform bounded on-demand rendering.
+5. Your ESP32 polls `POST /image.bin` on a timer. The image port returns the latest in-memory image as a framed device reply — a 25-byte header (dimensions, refresh flags, next-wake, sidebar clock) followed by the 1-bit image — and can optionally perform bounded on-demand rendering.
 
 ---
 
@@ -58,16 +58,16 @@ A local-first Home Assistant add-on that renders **1-bit dithered images** from 
 > ESP32 devices that cannot speak HA's auth protocol. The operator is
 > responsible for keeping it on a trusted LAN. The add-on adds three
 > safeguards: a configurable per-slot cooldown
-> (`image_port_cooldown_ms`), strong-ETag conditional GETs (`If-None-Match` →
-> `304`), and an `image_port_mode: cache-only` switch that disables on-demand
+> (`image_port_cooldown_ms`), strong-ETag conditional GETs on the PNG preview
+> (`If-None-Match` → `304`), and an `image_port_mode: cache-only` switch that disables on-demand
 > rendering entirely. See [`DOCS.md`](zb_engine/DOCS.md) for full details.
 
 | Method | URL | Description |
 |--------|-----|-------------|
 | `GET` | `/image.png` | Cached PNG (primary slot) — sends `ETag`, honors `If-None-Match` |
-| `GET` | `/image.bin` | Cached 1-bit binary for ESP32 — sends `ETag`, honors `If-None-Match` |
+| `POST` | `/image.bin` | Framed 1-bit reply for ESP32 — 25-byte header + image; no ETag (a live clock makes every reply unique) |
 | `GET` | `/image_fullscreen.png` | Cached PNG (fullscreen companion slot) |
-| `GET` | `/image_fullscreen.bin` | Cached 1-bit binary (fullscreen companion slot) |
+| `POST` | `/image_fullscreen.bin` | Framed 1-bit reply (fullscreen companion slot) |
 
 ### Port 8099 — HA Ingress (session-authenticated)
 
@@ -313,7 +313,7 @@ cd builder && npx vitest run        # Builder tests
 ```bash
 # Quick manual tests
 curl -o test.png http://localhost:8000/image.png
-curl -o test.bin http://localhost:8000/image.bin && wc -c test.bin
+curl -X POST -o test.bin http://localhost:8000/image.bin && wc -c test.bin
 curl http://localhost:8099/api/widgets          # List saved widgets
 ```
 
@@ -326,7 +326,7 @@ curl http://localhost:8099/api/widgets          # List saved widgets
 | "Dockerfile is missing" in Supervisor logs | Run `ha supervisor reload`, then reinstall the add-on |
 | `image.png` returns 500 | Check `payload.json` exists and is valid JSON with `misc.size` defined |
 | Text wrong size | Engine snaps to nearest font. Use 10, 12, 16, 20, 26, 34, 44, or 56 for exact results |
-| `image.bin` unexpected size | Expected = `⌈width/8⌉ × height` bytes. Width is padded to byte boundary. |
+| `image.bin` unexpected size | The `POST` reply is a 25-byte header + `⌈width/8⌉ × height` image bytes (width padded to a byte boundary). |
 | Deploy returns 403 | Ensure you're accessing via HA Ingress (sidebar). Direct port 8099 access without HA session will fail. |
 
 ---

@@ -1,8 +1,8 @@
 /**
- * imagePort.test.ts — Port 8000 on-demand render & stale-while-revalidate tests
+ * imagePort.test.ts — Port 8000 on-demand render and the framed device reply
  *
  * §1.2: Proves the image-serving behavior including 503 before first render,
- * 200 after render, cooldown window, and binary format support.
+ * 200 after render, cooldown window, and the POST `.bin` framed contract.
  *
  * Uses the extracted createOnDemandImageApp factory with mock dependencies
  * to avoid side effects from the HA entrypoint.
@@ -43,6 +43,22 @@ function createTestApp(overrides: Partial<OnDemandDeps> = {}) {
   return { ...createOnDemandImageApp(deps), renderGuard };
 }
 
+/** Parse the 25-byte framed header (Self-host-mode.md §5.1) from a response body. */
+function parseFrame(body: Buffer) {
+  return {
+    magic: body.readUInt16LE(0),
+    width: body.readUInt16LE(2),
+    height: body.readUInt16LE(4),
+    x: body.readUInt16LE(6),
+    y: body.readUInt16LE(8),
+    flags: body.readUInt16LE(10),
+    nextWake: body.readUInt32LE(12),
+    payloadLen: body.readUInt32LE(16),
+    localTime: body.subarray(20, 25),
+    image: body.subarray(25),
+  };
+}
+
 // ── §1.2 Image serving behavior ────────────────────────────────
 
 describe("image port — GET /image.png", () => {
@@ -76,7 +92,7 @@ describe("image port — GET /image.png", () => {
 
     const presetPng = Buffer.from("preset-png");
     const presetBin = Buffer.from("preset-bin");
-    setBuffer(presetPng, presetBin);
+    setBuffer(presetPng, presetBin, fakeMeta);
 
     const res = await request(app).get("/image.png");
     expect(res.status).toBe(200);
@@ -86,22 +102,82 @@ describe("image port — GET /image.png", () => {
   });
 });
 
-describe("image port — GET /image.bin", () => {
+describe("image port — POST /image.bin (framed device reply)", () => {
   it("returns 503 before any render when payload is unavailable", async () => {
     const { app } = createTestApp({ readPayload: async () => null });
 
-    const res = await request(app).get("/image.bin");
+    const res = await request(app).post("/image.bin");
     expect(res.status).toBe(503);
     expect(res.body.error).toBe("No image available yet.");
   });
 
-  it("returns 200 with octet-stream after render completes", async () => {
+  it("returns 200 with a framed reply (header + image) after render completes", async () => {
     const { app } = createTestApp();
 
-    const res = await request(app).get("/image.bin");
+    const res = await request(app).post("/image.bin");
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/octet-stream");
-    expect(res.headers["content-disposition"]).toBe("attachment; filename=image.bin");
+
+    const body = Buffer.from(res.body as Buffer);
+    expect(body.length).toBe(25 + FAKE_BIN.length);
+    const frame = parseFrame(body);
+    expect(frame.magic).toBe(0x5a46);
+    expect(frame.width).toBe(fakeMeta.width);
+    expect(frame.height).toBe(fakeMeta.height);
+    expect(frame.x).toBe(0);
+    expect(frame.y).toBe(0);
+    expect(frame.flags).toBe(0);
+    expect(frame.nextWake).toBe(0);
+    expect(frame.payloadLen).toBe(FAKE_BIN.length);
+    // Image bytes are polarity-inverted from the cached (Canvas convention) buffer.
+    const expectedInverted = Buffer.from(FAKE_BIN.map((b) => b ^ 0xff));
+    expect(frame.image.equals(expectedInverted)).toBe(true);
+  });
+
+  it("does not set a Content-Disposition header (device consumption, not a browser download)", async () => {
+    const { app } = createTestApp();
+    const res = await request(app).post("/image.bin");
+    expect(res.headers["content-disposition"]).toBeUndefined();
+  });
+
+  it("GET /image.bin returns 405 (POST only)", async () => {
+    const { app } = createTestApp();
+    const res = await request(app).get("/image.bin");
+    expect(res.status).toBe(405);
+    expect(res.headers["allow"]).toBe("POST");
+  });
+
+  it("never issues a 304 — the live clock makes every framed reply unique", async () => {
+    const { app } = createTestApp({ cooldownMs: 60_000 });
+
+    const first = await request(app).post("/image.bin");
+    expect(first.status).toBe(200);
+    // POST responses never carry an ETag at all (no conditional-GET path).
+    expect(first.headers["etag"]).toBeUndefined();
+
+    const second = await request(app).post("/image.bin").set("If-None-Match", '"sha1-whatever"');
+    expect(second.status).toBe(200);
+  });
+
+  it("ignores the request body entirely — any JSON telemetry payload is accepted and has no effect", async () => {
+    const { app } = createTestApp();
+    const res = await request(app)
+      .post("/image.bin")
+      .set("Content-Type", "application/json")
+      .send({ wakeReason: "timer", delta: 0, telemetry: { battery: 0 }, mac: "AA:BB:CC:DD:EE:FF" });
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("application/octet-stream");
+  });
+
+  it("rejects an oversized body with 413 instead of hanging or crashing", async () => {
+    const { app } = createTestApp();
+    const oversized = Buffer.alloc(64 * 1024, 0x41); // far above MAX_DEVICE_REQUEST_BODY_BYTES
+    const res = await request(app)
+      .post("/image.bin")
+      .set("Content-Type", "application/octet-stream")
+      .send(oversized);
+    expect(res.status).toBe(413);
+    expect(res.body).not.toHaveProperty("stack");
   });
 });
 
@@ -153,7 +229,7 @@ describe("image port — concurrency guard", () => {
     });
 
     // Pre-set buffer and lock the guard
-    setBuffer(FAKE_PNG, FAKE_BIN);
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta);
     const release = renderGuard.tryAcquire()!;
 
     // Request should serve stale buffer (guard is locked, no re-render)
@@ -192,6 +268,7 @@ describe("image port — method rejection", () => {
 
     const res = await request(app).put("/image.bin");
     expect(res.status).toBe(405);
+    expect(res.headers["allow"]).toBe("POST");
   });
 
   it("DELETE /image.png returns 405", async () => {
@@ -226,7 +303,13 @@ describe("image port — route isolation", () => {
     }
   });
 
-  it("rejects mutation methods even when the path resembles an ingress route", async () => {
+  it("mutation methods on paths that don't match any image route 404 (no matching route), same as GET would", async () => {
+    // Phase 2 (multi-device-plan.md) replaced the old blanket "non-GET/HEAD
+    // -> 405" middleware with per-route method handling scoped to the 4
+    // known image path shapes, since POST is now valid on `.bin` routes.
+    // Paths that were never image routes to begin with fall through to
+    // Express's normal no-route-matched 404 regardless of method — no
+    // mutation capability exists anywhere on this app either way.
     const { app } = createTestApp();
     const cases = [
       () => request(app).post("/payload"),
@@ -238,9 +321,23 @@ describe("image port — route isolation", () => {
 
     for (const run of cases) {
       const res = await run();
+      expect(res.status).toBe(404);
+    }
+  });
+
+  it("mutation methods on REAL image paths still 405, not 404", async () => {
+    const { app } = createTestApp();
+    const cases = [
+      () => request(app).put("/image.png"),
+      () => request(app).delete("/image.bin"),
+      () => request(app).patch("/image_fullscreen.png"),
+      () => request(app).delete("/image_fullscreen.bin"),
+    ];
+    for (const run of cases) {
+      const res = await run();
       expect(res.status).toBe(405);
-      expect(res.headers["allow"]).toBe("GET, HEAD");
       expect(res.body).toEqual({ error: "Method not allowed." });
+      expect(res.body).not.toHaveProperty("stack");
     }
   });
 });
@@ -263,6 +360,14 @@ describe("image port — security headers", () => {
     const res = await request(app).get("/image.png");
     expect(res.headers["content-security-policy"]).toBe("default-src 'none'");
   });
+
+  it("applies the same headers to the POST /image.bin framed reply", async () => {
+    const { app } = createTestApp();
+    const res = await request(app).post("/image.bin");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+    expect(res.headers["content-security-policy"]).toBe("default-src 'none'");
+  });
 });
 
 describe("image port — render errors", () => {
@@ -272,7 +377,7 @@ describe("image port — render errors", () => {
       runPipeline: async () => { throw new Error("render failed"); },
     });
 
-    setBuffer(FAKE_PNG, FAKE_BIN);
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta);
 
     // Wait a bit for cooldown to be irrelevant
     await new Promise((r) => setTimeout(r, 5));
@@ -323,15 +428,16 @@ describe("image port — fullscreen slot routes", () => {
     expect(Buffer.from(res.body).toString()).toBe("fs-png");
   });
 
-  it("GET /image_fullscreen.bin returns 200 with attachment filename for fullscreen", async () => {
+  it("POST /image_fullscreen.bin returns a framed reply", async () => {
     const { app } = createTestApp({
       readPayload: async () => ({ any: true }),
     });
 
-    const res = await request(app).get("/image_fullscreen.bin");
+    const res = await request(app).post("/image_fullscreen.bin");
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/octet-stream");
-    expect(res.headers["content-disposition"]).toBe("attachment; filename=image_fullscreen.bin");
+    const body = Buffer.from(res.body as Buffer);
+    expect(parseFrame(body).magic).toBe(0x5a46);
   });
 
   it("primary and fullscreen cooldowns are independent", async () => {
@@ -383,6 +489,13 @@ describe("image port — fullscreen slot routes", () => {
     expect(res.headers["allow"]).toBe("GET, HEAD");
   });
 
+  it("GET /image_fullscreen.bin returns 405", async () => {
+    const { app } = createTestApp();
+    const res = await request(app).get("/image_fullscreen.bin");
+    expect(res.status).toBe(405);
+    expect(res.headers["allow"]).toBe("POST");
+  });
+
   it("HEAD /image_fullscreen.png returns 200 with no body", async () => {
     const { app } = createTestApp({ readPayload: async () => ({ fs: true }) });
     await request(app).get("/image_fullscreen.png"); // warm
@@ -398,8 +511,8 @@ describe("image port — fullscreen slot routes", () => {
       readPayload: async () => null,
     });
 
-    setBuffer(FAKE_PNG, FAKE_BIN, "primary");
-    setBuffer(FAKE_PNG, FAKE_BIN, "fullscreen");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "primary");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "fullscreen");
 
     expect(getBuffer("primary")).not.toBeNull();
     expect(getBuffer("fullscreen")).not.toBeNull();
@@ -424,9 +537,6 @@ describe("image port — fullscreen slot routes", () => {
 });
 
 // ── Task 4: cache-only mode, ETag/304 ───
-// (The configured-cooldownMs suppression path is already covered by
-// "serves stale buffer during cooldown window" above, which runs with an
-// explicit cooldownMs.)
 
 describe("image port — cache-only mode", () => {
   it("never calls runPipeline in cache-only mode", async () => {
@@ -449,23 +559,29 @@ describe("image port — cache-only mode", () => {
 
     // Pre-set buffer (simulating a render driven by Ingress UI / scheduler)
     // → served as-is, still no render.
-    setBuffer(FAKE_PNG, FAKE_BIN, "primary");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "primary");
     const served = await request(app).get("/image.png");
     expect(served.status).toBe(200);
     expect(runPipeline).not.toHaveBeenCalled();
   });
 
-  it("cache-only respects all four URL paths (primary + fullscreen, png + bin)", async () => {
+  it("cache-only respects both GET .png paths (primary + fullscreen)", async () => {
     const runPipeline = vi.fn();
     const { app } = createTestApp({ runPipeline, mode: "cache-only", readPayload: async () => null });
 
-    for (const path of [
-      "/image.png",
-      "/image.bin",
-      "/image_fullscreen.png",
-      "/image_fullscreen.bin",
-    ]) {
+    for (const path of ["/image.png", "/image_fullscreen.png"]) {
       const res = await request(app).get(path);
+      expect(res.status).toBe(503);
+    }
+    expect(runPipeline).not.toHaveBeenCalled();
+  });
+
+  it("cache-only also suppresses POST .bin renders (primary + fullscreen)", async () => {
+    const runPipeline = vi.fn();
+    const { app } = createTestApp({ runPipeline, mode: "cache-only", readPayload: async () => null });
+
+    for (const path of ["/image.bin", "/image_fullscreen.bin"]) {
+      const res = await request(app).post(path);
       expect(res.status).toBe(503);
     }
     expect(runPipeline).not.toHaveBeenCalled();
@@ -526,21 +642,16 @@ describe("image port — ETag / 304 conditional GET", () => {
     expect(second.headers["etag"]).not.toBe(firstEtag);
   });
 
-  it("304 fast path applies to all four URL paths (primary + fullscreen, png + bin)", async () => {
+  it("304 fast path applies to both GET .png paths (primary + fullscreen)", async () => {
     const { app, setBuffer } = createTestApp({
       readPayload: async () => null,
       cooldownMs: 60_000, // long enough that no on-demand render can evict the pre-set buffer mid-loop
     });
 
-    setBuffer(FAKE_PNG, FAKE_BIN, "primary");
-    setBuffer(FAKE_PNG, FAKE_BIN, "fullscreen");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "primary");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "fullscreen");
 
-    for (const path of [
-      "/image.png",
-      "/image.bin",
-      "/image_fullscreen.png",
-      "/image_fullscreen.bin",
-    ]) {
+    for (const path of ["/image.png", "/image_fullscreen.png"]) {
       const first = await request(app).get(path);
       expect(first.status).toBe(200);
       const etag = first.headers["etag"];
@@ -549,6 +660,19 @@ describe("image port — ETag / 304 conditional GET", () => {
       const second = await request(app).get(path).set("If-None-Match", etag);
       expect(second.status).toBe(304);
     }
+  });
+
+  it("POST .bin never 304s even when the client sends a stale-but-matching If-None-Match", async () => {
+    const { app } = createTestApp({ cooldownMs: 60_000 });
+
+    const first = await request(app).post("/image.bin");
+    expect(first.status).toBe(200);
+    expect(first.headers["etag"]).toBeUndefined();
+
+    // Even a client that (incorrectly) tries conditional GET semantics on
+    // the POST route gets a full 200 framed reply — no 304 path exists here.
+    const second = await request(app).post("/image.bin").set("If-None-Match", '"sha1-anything"');
+    expect(second.status).toBe(200);
   });
 
   it("non-matching If-None-Match falls through to 200", async () => {
@@ -564,7 +688,7 @@ describe("image port — ETag / 304 conditional GET", () => {
   it("evictSlot clears the ETag so subsequent 304 attempt 503s instead", async () => {
     const { app, setBuffer, evictSlot } = createTestApp({ readPayload: async () => null });
 
-    setBuffer(FAKE_PNG, FAKE_BIN, "primary");
+    setBuffer(FAKE_PNG, FAKE_BIN, fakeMeta, "primary");
     const first = await request(app).get("/image.png");
     const etag = first.headers["etag"];
 
@@ -578,4 +702,3 @@ describe("image port — ETag / 304 conditional GET", () => {
     expect(res.status).toBe(503);
   });
 });
-

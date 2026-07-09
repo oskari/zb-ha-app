@@ -14,6 +14,16 @@
 /** Maximum JSON request body size accepted by Express. */
 export const MAX_REQUEST_BODY = "2mb";
 
+/**
+ * Maximum body size accepted on the device-facing `POST /image.bin`
+ * endpoint (port 8000). The ESP32 self-host contract (Self-host-mode.md §4)
+ * sends a small JSON telemetry body, but this add-on has no telemetry→render
+ * channel — the body is never parsed for meaning, only drained up to this
+ * bound to prevent a large POST from exhausting resources on the
+ * unauthenticated port (multi-device-plan.md Phase 2.2).
+ */
+export const MAX_DEVICE_REQUEST_BODY_BYTES = 4 * 1024; // 4 KiB
+
 // ── Export tokens ──────────────────────────────────────────────
 
 /** How long an export token remains valid (ms). */
@@ -140,6 +150,16 @@ export const RATE_LIMIT_RENDER_EXPAND = RATE_LIMIT_SOURCE_TEST;
  * misbehaving (but authenticated) Ingress client.
  */
 export const RATE_LIMIT_HA_PROXY = 60;
+
+/**
+ * Maximum requests per window for the guided Self-Host device-config proxy
+ * (`POST /api/device/config`). Each call makes the server POST to a LAN device,
+ * so the cap bounds the outbound blast radius even for an authenticated caller.
+ */
+export const RATE_LIMIT_DEVICE_CONFIG = 20;
+
+/** Timeout for the guided device `/config` POST proxy fetch (ms). */
+export const DEVICE_CONFIG_TIMEOUT_MS = 10_000; // 10 seconds
 
 // ── Graph normalisation ────────────────────────────────────────
 

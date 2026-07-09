@@ -5,6 +5,57 @@ All notable changes to ZerryBit Engine are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.2
+
+### Added
+
+- **Guided self-host setup.** Creating a new widget now opens a "How do you
+  want to set up?" chooser — *Using the mobile application* (recommended) or
+  *Self-host* (advanced). The self-host path provides a Postman-style form:
+  enter your ESP32's LAN IP, press **Send**, and the add-on pushes the device
+  `/config` for you, so the browser never has to talk to the device directly.
+  Re-openable later from the Settings tab.
+- **Server-side `/config` push proxy.** A new authenticated
+  `POST /api/device/config` endpoint (HA Ingress only — never the
+  unauthenticated image port) forwards a fixed-shape self-host configuration to
+  an ESP32 on the LAN. The target is restricted to private-LAN (RFC1918)
+  addresses with loopback, link-local, Docker, and HA-Supervisor ranges
+  blocked; the address is canonicalized before it is dialed; the device port is
+  fixed at `:80`; and the request is Zod-validated and capped at 1024 bytes,
+  rate-limited, timeout-bounded (10s), redirect-refusing, and response-size
+  capped.
+
+### Changed
+
+- **HA sidebar panel renamed to "ZerryBit Engine".**
+- **Self-host setup UX polish** — the image URL auto-fills with this add-on's
+  own endpoint, required fields surface clear errors on **Send**, tile
+  selection is explicit, the image-URL help text sits next to its input, and
+  the form spacing no longer shifts as you type.
+- **Send → Continue on a successful push.** Once the device accepts the config,
+  the **Send** button becomes **Continue** and the form locks; Continue (or the
+  header ✕) goes straight to the builder. In the new-widget flow the canvas is
+  sized to the full device screen from the sidebar toggle — 720×480 with the
+  sidebar column reserved, 800×480 without.
+
+### Documentation
+
+- Brought the ESP32 `.bin` endpoint documentation in line with the
+  `POST`/framed-reply contract shipped in 0.1.1 (it was previously still
+  documented as `GET /image.bin`).
+
+## 0.1.1
+
+### Changed
+
+- **The ESP32-facing `.bin` endpoint is now `POST`, not `GET`.** It returns
+  the self-host framed reply: a 25-byte header — width, height, refresh
+  flags, next-wake, sidebar clock — followed by the 1-bit image, with bit
+  polarity corrected to match the ESP32 wire format (`1` = white). The
+  request body is never read. Existing self-host device configurations
+  pointing at the old `GET /image.bin` will need to be reconfigured to
+  `POST`.
+
 ## 0.1.0
 
 Initial public release of ZerryBit Engine — a self-contained, fully local Home

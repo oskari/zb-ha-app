@@ -11,6 +11,7 @@
 import type express from "express";
 import type { DataContext } from "@zb/expressions";
 import type { AnySourceDef } from "../data/sourceFetcher";
+import { HttpError } from "../errors/httpError";
 
 // ── Shared types ───────────────────────────────────────────────
 
@@ -23,6 +24,38 @@ import type { AnySourceDef } from "../data/sourceFetcher";
  * pipeline and are served on parallel ESP32 endpoints.
  */
 export type Slot = "primary" | "fullscreen";
+
+/**
+ * Device identity for multi-device storage addressing (see
+ * `ignore/multi-device-plan.md` D2/D3).
+ *
+ * A "device" is a widget document — `deviceId` IS the widget id, not a
+ * separate registry entity. This is a NEW axis, orthogonal to `Slot`: the
+ * storage key is the composite `(deviceId × slot)`. Never fold a device
+ * into the `Slot` union above.
+ */
+export type DeviceId = string;
+
+/** Charset every `DeviceId` must match — see `assertValidDeviceId`. */
+const DEVICE_ID_RE = /^[a-z0-9_-]+$/;
+
+/**
+ * The implicit device that pre-multi-device singleton storage migrates to,
+ * and that bare (non-prefixed) routes serve for single-device convenience
+ * (plan decision D5).
+ */
+export const DEFAULT_DEVICE_ID: DeviceId = "default";
+
+/**
+ * Validate a `deviceId`'s charset before it is allowed to reach storage or a
+ * route (plan decision D7). `deviceId` flows directly into filesystem
+ * paths, so an unvalidated value is a path-traversal vector.
+ */
+export function assertValidDeviceId(id: string): asserts id is DeviceId {
+  if (!id || !DEVICE_ID_RE.test(id)) {
+    throw new HttpError(400, `Invalid device ID: "${id}"`);
+  }
+}
 
 /** Full widget document stored on disk / in database. */
 export interface WidgetDoc {
@@ -90,35 +123,40 @@ export interface StorageAdapter {
 
   /**
    * Read the current render payload for a slot. Returns null if none exists.
-   * Defaults to the primary slot for backward compatibility.
+   * Defaults to the primary slot and the default device for backward
+   * compatibility.
    */
-  readPayload(slot?: Slot): Promise<unknown | null>;
+  readPayload(slot?: Slot, deviceId?: DeviceId): Promise<unknown | null>;
 
   /**
    * Write the render payload for a slot. Returns true if content changed.
-   * Defaults to the primary slot for backward compatibility.
+   * Defaults to the primary slot and the default device for backward
+   * compatibility.
    */
-  writePayload(data: Buffer, slot?: Slot): Promise<boolean>;
+  writePayload(data: Buffer, slot?: Slot, deviceId?: DeviceId): Promise<boolean>;
 
   /**
    * Write a cached image (PNG or BIN) for a slot. Returns true if content
-   * changed. Defaults to the primary slot for backward compatibility.
+   * changed. Defaults to the primary slot and the default device for
+   * backward compatibility.
    */
-  writeCachedImage(format: "png" | "bin", data: Buffer, slot?: Slot): Promise<boolean>;
+  writeCachedImage(format: "png" | "bin", data: Buffer, slot?: Slot, deviceId?: DeviceId): Promise<boolean>;
 
   /**
    * Get the absolute path to a cached image for a slot, or null if not
-   * available. Defaults to the primary slot for backward compatibility.
+   * available. Defaults to the primary slot and the default device for
+   * backward compatibility.
    */
-  getCachedImagePath(format: "png" | "bin", slot?: Slot): string | null;
+  getCachedImagePath(format: "png" | "bin", slot?: Slot, deviceId?: DeviceId): string | null;
 
   /**
    * Delete all on-disk artifacts for a slot (payload + cached images).
    * No-op for `primary` (primary widget deletion is a separate operation).
    * Idempotent — missing files are not errors. Optional on platforms that
    * do not implement slot deletion (callers must handle the absence).
+   * Defaults to the default device for backward compatibility.
    */
-  deleteSlot?(slot: Slot): Promise<void>;
+  deleteSlot?(slot: Slot, deviceId?: DeviceId): Promise<void>;
 
   // ── User assets ──────────────────────────────────────────────
   // Optional on platforms that do not implement user-uploaded assets.

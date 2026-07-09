@@ -101,10 +101,21 @@ describe("image app security headers", () => {
 // ── Image app method rejection (ENGINEERING_CONSTRAINTS HA3, §13) ───────────
 
 describe("image app method rejection", () => {
+  // createImageApp() itself no longer enforces a blanket "GET/HEAD only"
+  // middleware — multi-device-plan.md Phase 2 moved method handling to a
+  // per-route get+all-405-catchall pattern (see imageApp.ts
+  // registerImageRoutes), since POST is now valid on `.bin` paths and must
+  // stay invalid on `.png` paths. This registers that same pattern here to
+  // prove headers + method hardening still compose correctly for a caller
+  // that follows it; the full real-route method/device matrix is covered
+  // in imagePort.test.ts.
   const imageApp = createImageApp();
 
   imageApp.get("/image.png", (_req, res) => {
     res.status(200).send("ok");
+  });
+  imageApp.all("/image.png", (_req, res) => {
+    res.status(405).setHeader("Allow", "GET, HEAD").json({ error: "Method not allowed." });
   });
 
   it("rejects POST with 405 and Allow header", async () => {

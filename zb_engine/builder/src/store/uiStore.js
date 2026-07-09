@@ -63,6 +63,13 @@ export const useUiStore = create(
     // Signature: () => Promise<{ ip: string|null, candidates: Array<{ interface, ip, primary }> }>
     hostInfoProvider: null,
 
+    // Platform-injected handler for the guided self-host `/config` push. Set by
+    // the platform layer on init; null when running standalone (no add-on
+    // backend). The Self-Host setup dialog reads this and only enables "Send"
+    // when it is non-null. Mirrors sourceTestHandler / hostInfoProvider.
+    // Signature: ({deviceIp, config}) => Promise<{ok,status,configured?,body?}>
+    deviceConfigPusher: null,
+
     // Resolved HA host LAN IP and the host port the ESP32 image endpoint is
     // mapped to (config.yaml `ports: 8000/tcp`, remappable in the add-on
     // Network settings). Both null when unavailable / not yet fetched.
@@ -143,7 +150,7 @@ export const useUiStore = create(
     // ── App screen state ──
     // Persisted in the store (not component state) so window resize
     // cannot accidentally reinitialize it back to 'welcome'.
-    appScreen: 'welcome', // 'welcome' | 'gridSelect' | 'editor'
+    appScreen: 'welcome', // 'welcome' | 'gridSelect' | 'setupMode' | 'editor'
 
     setAppScreen(screen) {
       set((state) => {
@@ -404,6 +411,13 @@ export const useUiStore = create(
     setHostInfoProvider(provider) {
       set((state) => {
         state.hostInfoProvider = provider;
+      });
+    },
+
+    /** Set the platform-specific device-config pusher. Called by platform layer on init. */
+    setDeviceConfigPusher(handler) {
+      set((state) => {
+        state.deviceConfigPusher = handler;
       });
     },
 

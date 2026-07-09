@@ -11,13 +11,15 @@ import type { Server } from "http";
 import { configureUrlValidator, configureBlockedHostnames } from "../data/urlValidator";
 import { createIngressApp } from "../core/server";
 import { runPipeline } from "../core/renderService";
-import type { PlatformAdapter } from "../core/adapters";
+import type { PlatformAdapter, DeviceId } from "../core/adapters";
+import { DEFAULT_DEVICE_ID } from "../core/adapters";
 import { logError, logInfo, logWarn } from "../core/logger";
 import { HaStorageAdapter } from "./haStorage";
 import { haSourceHandler } from "./haSources";
 import { registerEntityRoutes } from "./haEntities";
 import { registerNetworkRoutes } from "./haNetwork";
 import { registerAssetRoutes } from "./haAssets";
+import { registerDeviceRoutes } from "./haDevice";
 import { loadOptions } from "./haOptions";
 import { createOnDemandImageApp } from "./imageApp";
 
@@ -62,6 +64,9 @@ const haAdapter: PlatformAdapter = {
     registerNetworkRoutes(app);
     // Register user-asset upload / list / delete / raw routes
     registerAssetRoutes(app, storage);
+    // Register the guided Self-Host /config push proxy (POST /api/device/config).
+    // INGRESS APP ONLY — never the port-8000 image app (post-plan.md §3.4, HA3).
+    registerDeviceRoutes(app);
   },
 
   getBlockedHostnames() {
@@ -91,9 +96,9 @@ const { ingressApp, renderGuard, sourceHandler, markShuttingDown } = createIngre
 
 const { app: staticApp, setBuffer: setImageBuffer } = createOnDemandImageApp({
   renderGuard,
-  // Forward the slot tag through so the on-demand app can read either
-  // payload.json (primary) or payload.fullscreen.json (fullscreen).
-  readPayload: (slot) => storage.readPayload(slot),
+  // Forward the slot + deviceId through so the on-demand app reads the
+  // right device's payload.json / payload.fullscreen.json.
+  readPayload: (slot, deviceId) => storage.readPayload(slot, deviceId),
   runPipeline: (raw) => runPipeline(raw, sourceHandler, storage),
   cooldownMs: options.image_port_cooldown_ms,
   mode: options.image_port_mode,
@@ -141,51 +146,70 @@ function trackBackgroundTask(name: string, task: Promise<void>): void {
   backgroundTasks.add(tracked);
 }
 
-// Pre-render on startup so the in-memory buffer is warm for the first ESP32 request
-// Renders BOTH slots if both payloads exist; one slot's failure must not
+/**
+ * Render one device+slot and, on success, warm the in-memory buffer and
+ * persist the cached images to disk. Shared by both the startup warm-up and
+ * the periodic re-render timer — the only differences between the two
+ * callers are the `surface` log tag and elapsed-time logging. A failure (or
+ * a missing payload) for one device/slot must never block any other
+ * (ENGINEERING_CONSTRAINTS §15 graceful failure).
+ */
+async function renderAndWarmOne(deviceId: DeviceId, slot: "primary" | "fullscreen", surface: "startup" | "scheduler"): Promise<void> {
+  let release: (() => void) | null = null;
+  const t0 = Date.now();
+  try {
+    const payload = await storage.readPayload(slot, deviceId);
+    if (!payload) return;
+
+    release = renderGuard.tryAcquire();
+    if (!release) {
+      logInfo(surface === "startup" ? "startup.prerender.skip" : "render.skip", { surface, slot, deviceId, reason: "render_busy" });
+      return;
+    }
+
+    logInfo("render.start", { surface, slot, deviceId });
+    const { pngBuffer, binBuffer, meta } = await runPipeline(payload, sourceHandler, storage);
+    setImageBuffer(pngBuffer, binBuffer, meta, slot, deviceId);
+
+    // Also persist to disk so the cached files survive container restarts
+    // (SD-card safe compare-before-write).
+    await Promise.all([
+      storage.writeCachedImage("png", pngBuffer, slot, deviceId),
+      storage.writeCachedImage("bin", binBuffer, slot, deviceId),
+    ]);
+
+    logInfo("render.finish", {
+      surface,
+      slot,
+      deviceId,
+      elapsedMs: Date.now() - t0,
+      renderTimeMs: meta.renderTimeMs,
+      sourceErrorCount: meta.sourceErrors.length,
+      renderErrorCount: meta.renderErrors.length,
+    });
+    if (meta.sourceErrors.length > 0) {
+      logWarn("source.fetch.failure", {
+        surface,
+        slot,
+        deviceId,
+        count: meta.sourceErrors.length,
+        errors: meta.sourceErrors,
+      });
+    }
+  } catch (err) {
+    logWarn("render.failed", { surface, slot, deviceId, error: err });
+  } finally {
+    release?.();
+  }
+}
+
+// Pre-render on startup so the in-memory buffer is warm for the first ESP32
+// request. Warms the single device × both slots; one slot's failure must not
 // block the other (ENGINEERING_CONSTRAINTS §15 graceful failure).
 async function warmStartupBuffers(): Promise<void> {
   for (const slot of ["primary", "fullscreen"] as const) {
-    if (isShuttingDown) break;
-    let release: (() => void) | null = null;
-    try {
-      const startupPayload = await storage.readPayload(slot);
-      if (!startupPayload) continue;
-      release = renderGuard.tryAcquire();
-      if (!release) {
-        logInfo("startup.prerender.skip", { slot, reason: "render_busy" });
-        continue;
-      }
-      logInfo("render.start", { surface: "startup", slot });
-      const { pngBuffer, binBuffer, meta } = await runPipeline(startupPayload, sourceHandler, storage);
-      setImageBuffer(pngBuffer, binBuffer, slot);
-
-      // Also persist to disk so the cached files survive container restarts
-      await Promise.all([
-        storage.writeCachedImage("png", pngBuffer, slot),
-        storage.writeCachedImage("bin", binBuffer, slot),
-      ]);
-
-      logInfo("render.finish", {
-        surface: "startup",
-        slot,
-        renderTimeMs: meta.renderTimeMs,
-        sourceErrorCount: meta.sourceErrors.length,
-        renderErrorCount: meta.renderErrors.length,
-      });
-      if (meta.sourceErrors.length > 0) {
-        logWarn("source.fetch.failure", {
-          surface: "startup",
-          slot,
-          count: meta.sourceErrors.length,
-          errors: meta.sourceErrors,
-        });
-      }
-    } catch (err) {
-      logWarn("render.failed", { surface: "startup", slot, error: err });
-    } finally {
-      release?.();
-    }
+    if (isShuttingDown) return;
+    await renderAndWarmOne(DEFAULT_DEVICE_ID, slot, "startup");
   }
 }
 
@@ -196,57 +220,12 @@ trackBackgroundTask("startup-prerender", warmStartupBuffers());
 const RE_RENDER_INTERVAL_MS = options.re_render_minutes * 60 * 1000;
 
 async function runScheduledRerender(): Promise<void> {
-  // Re-render every existing slot. We process slots sequentially so the
-  // single RenderGuard lock is held only for one render at a time
-  // (ENGINEERING_CONSTRAINTS §12). A failure on one slot must not block the other
-  // (ENGINEERING_CONSTRAINTS §15).
+  // Re-render both slots. Sequential (not parallel) so the single RenderGuard
+  // lock is held only for one render at a time (ENGINEERING_CONSTRAINTS §12).
+  // A failure on one must not block the other (ENGINEERING_CONSTRAINTS §15).
   for (const slot of ["primary", "fullscreen"] as const) {
-    if (isShuttingDown) break;
-    let release: (() => void) | null = null;
-    const t0 = Date.now();
-    try {
-      const payload = await storage.readPayload(slot);
-      if (!payload) continue;
-
-      release = renderGuard.tryAcquire();
-      if (!release) {
-        logInfo("render.skip", { surface: "scheduler", slot, reason: "render_busy" });
-        continue;
-      }
-
-      logInfo("render.start", { surface: "scheduler", slot });
-      const { pngBuffer, binBuffer, meta } = await runPipeline(payload, sourceHandler, storage);
-
-      // Update in-memory buffer so port 8000 picks up the fresh render
-      setImageBuffer(pngBuffer, binBuffer, slot);
-
-      // Persist to disk (SD-card safe compare-before-write)
-      await Promise.all([
-        storage.writeCachedImage("png", pngBuffer, slot),
-        storage.writeCachedImage("bin", binBuffer, slot),
-      ]);
-
-      logInfo("render.finish", {
-        surface: "scheduler",
-        slot,
-        elapsedMs: Date.now() - t0,
-        renderTimeMs: meta.renderTimeMs,
-        sourceErrorCount: meta.sourceErrors.length,
-        renderErrorCount: meta.renderErrors.length,
-      });
-      if (meta.sourceErrors.length > 0) {
-        logWarn("source.fetch.failure", {
-          surface: "scheduler",
-          slot,
-          count: meta.sourceErrors.length,
-          errors: meta.sourceErrors,
-        });
-      }
-    } catch (err) {
-      logWarn("render.failed", { surface: "scheduler", slot, error: err });
-    } finally {
-      release?.();
-    }
+    if (isShuttingDown) return;
+    await renderAndWarmOne(DEFAULT_DEVICE_ID, slot, "scheduler");
   }
 }
 
