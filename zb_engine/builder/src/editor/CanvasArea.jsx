@@ -22,6 +22,7 @@ import BitmapText from '../components/BitmapText.jsx';
 import ImagePreview from '../components/ImagePreview.jsx';
 import CanvasToolbox from './CanvasToolbox.jsx';
 import GraphPreview from './GraphPreview.jsx';
+import CalendarListPreview from './CalendarListPreview.jsx';
 import PreviewOverlay from './PreviewOverlay.jsx';
 import { screenToWorld as toWorldCoords, snapToGrid, snapSizeToGrid } from './canvasUtils.js';
 import { ditherPercentToGray, getFill, getStroke, getStrokeProps, getEndpointCaps } from './elementRenderHelpers.js';
@@ -1260,6 +1261,17 @@ export default function CanvasArea() {
                 return (
                   <Group key={element.id} {...getCommonNodeProps(element)} opacity={1}>
                     <GraphPreview element={element} sourceData={graphSourceData} />
+                  </Group>
+                );
+              }
+
+              if (element.type === 'calendarList') {
+                const calendarSourceData = element.sourceId
+                  ? bindingCtx[element.sourceId] ?? null
+                  : null;
+                return (
+                  <Group key={element.id} {...getCommonNodeProps(element)} opacity={1}>
+                    <CalendarListPreview element={element} sourceData={calendarSourceData} />
                   </Group>
                 );
               }

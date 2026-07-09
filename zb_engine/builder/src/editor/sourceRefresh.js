@@ -22,7 +22,7 @@ import { enqueueSourceTest } from './sourceTestQueue.js';
  */
 export function isSourceFetchable(source) {
   if (!source?.id) return false;
-  if ((source.kind === 'haState' || source.kind === 'haHistory') && !source.entity_id) {
+  if ((source.kind === 'haState' || source.kind === 'haHistory' || source.kind === 'haCalendar') && !source.entity_id) {
     return false;
   }
   return true;

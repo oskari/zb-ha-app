@@ -69,7 +69,45 @@ export interface HaStateSourceDef {
   dataFields?: DataFieldDef[];
 }
 
-export type AnySourceDef = SourceDef | HaHistorySourceDef | HaStateSourceDef;
+export interface HaCalendarSourceDef {
+  id: string;
+  kind: "haCalendar";
+  enabled?: unknown;
+  entity_id: string;
+  daysAhead: number;
+  maxEvents: number;
+  includeOngoing?: unknown;
+  locale: "en" | "fi";
+  eventFilter: "all" | "timed" | "all_day";
+  dataFields?: DataFieldDef[];
+}
+
+export type AnySourceDef =
+  | SourceDef
+  | HaHistorySourceDef
+  | HaStateSourceDef
+  | HaCalendarSourceDef;
+
+export interface HaCalendarEvent {
+  summary: string;
+  start: string;
+  end: string;
+  all_day: boolean;
+  start_ts: number;
+  end_ts: number;
+  label: string;
+  date_label: string;
+  time_label: string;
+  weekday_short: string;
+}
+
+export interface HaCalendarResult {
+  entity_id: string;
+  daysAhead: number;
+  count: number;
+  truncated: boolean;
+  events: HaCalendarEvent[];
+}
 
 /** A single state-change point returned by the HA history API. */
 export interface HaHistoryPoint {

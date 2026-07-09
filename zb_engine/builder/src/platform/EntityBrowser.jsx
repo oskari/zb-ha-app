@@ -155,6 +155,13 @@ export default function EntityBrowser({
   const filteredEntities = useMemo(() => {
     let list = entities;
 
+    if (kind === 'haCalendar') {
+      list = list.filter((e) => {
+        const dot = e.entity_id.indexOf('.');
+        return dot > 0 && e.entity_id.slice(0, dot) === 'calendar';
+      });
+    }
+
     if (localDomain) {
       list = list.filter((e) => {
         const dot = e.entity_id.indexOf('.');
@@ -173,7 +180,7 @@ export default function EntityBrowser({
     }
 
     return list;
-  }, [entities, localSearch, localDomain]);
+  }, [entities, localSearch, localDomain, kind]);
 
   // Domain list for the filter dropdown
   const domainList = useMemo(() => Object.keys(domains).sort(), [domains]);

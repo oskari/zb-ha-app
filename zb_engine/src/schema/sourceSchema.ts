@@ -7,7 +7,12 @@
  */
 
 import { z } from "zod";
-import { MAX_SOURCE_TIMEOUT_MS, MAX_SOURCE_RETRIES } from "../limits";
+import {
+  MAX_SOURCE_TIMEOUT_MS,
+  MAX_SOURCE_RETRIES,
+  MAX_HA_CALENDAR_EVENTS,
+  MAX_HA_CALENDAR_DAYS,
+} from "../limits";
 
 export const dataFieldSchema = z.object({
   id: z.string(),
@@ -113,5 +118,30 @@ export const haStateSourceSchema = z.object({
   dataFields: z.array(dataFieldSchema).max(100).default([]),
 });
 
+// HA Calendar source — fetches upcoming events from a calendar.* entity via
+// the Supervisor calendar.get_events service at render time.
+export const haCalendarSourceSchema = z.object({
+  id: sourceIdSchema,
+  name: z.string().max(200).optional(),
+  kind: z.literal("haCalendar"),
+  enabled: z.unknown().default(true),
+  entity_id: z.string().regex(/^[a-z][a-z0-9_]*\.[a-z0-9_-]+$/, {
+    message: "entity_id must match HA format: domain.object_id (e.g. calendar.family)",
+  }).refine((id) => id.startsWith("calendar."), {
+    message: "haCalendar entity_id must be a calendar.* entity",
+  }),
+  daysAhead: z.number().int().min(1).max(MAX_HA_CALENDAR_DAYS).default(14),
+  maxEvents: z.number().int().min(1).max(MAX_HA_CALENDAR_EVENTS).default(10),
+  includeOngoing: z.unknown().default(true),
+  locale: z.enum(["en", "fi"]).default("fi"),
+  eventFilter: z.enum(["all", "timed", "all_day"]).default("all"),
+  dataFields: z.array(dataFieldSchema).max(100).default([]),
+});
+
 // Union — existing payloads without "kind" match httpSourceSchema
-export const sourceSchema = z.union([haStateSourceSchema, haHistorySourceSchema, httpSourceSchema]);
+export const sourceSchema = z.union([
+  haStateSourceSchema,
+  haHistorySourceSchema,
+  haCalendarSourceSchema,
+  httpSourceSchema,
+]);

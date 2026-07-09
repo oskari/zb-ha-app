@@ -17,6 +17,7 @@ import TablerIcon from '../components/TablerIcon.jsx';
 import BindingExpressionEditor from '../components/BindingExpressionEditor.jsx';
 import { isBinding, isExpression, composePipeSyntax, buildPipeExpression } from '@zb/expressions';
 import GraphInspectorPanel from './GraphInspectorPanel.jsx';
+import CalendarListInspectorPanel from './CalendarListInspectorPanel.jsx';
 import IconPickerModal from '../components/IconPickerModal.jsx';
 import { toSvgString, parseIconRef } from '../utils/iconRegistry.js';
 import {
@@ -27,6 +28,7 @@ import {
 
 function CommonFields({ element, updateElement }) {
   const isLine = element.type === 'line';
+  const hideSize = isLine || element.type === 'calendarList';
   const isLocked = useUiStore((s) => !!s.lockedElementIds[element.id]);
   const toggleLock = useUiStore((s) => s.toggleElementLock);
 
@@ -103,7 +105,7 @@ function CommonFields({ element, updateElement }) {
         />
       </Field>
 
-      {!isLine && (
+      {!hideSize && (
         <div className="field-row">
           <Field label="Width" row>
             <ValueEditor
@@ -883,6 +885,10 @@ export default function InspectorPanel() {
 
       {element.type === 'graph' && (
         <GraphInspectorPanel element={element} updateElement={updateElement} />
+      )}
+
+      {element.type === 'calendarList' && (
+        <CalendarListInspectorPanel element={element} updateElement={updateElement} />
       )}
     </div>
   );

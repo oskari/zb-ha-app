@@ -8,6 +8,7 @@ export const typeDisplayNames = {
   img: 'Image',
   svg: 'SVG',
   graph: 'Graph',
+  calendarList: 'Calendar List',
 };
 
 function mergeElement(base, partialOverrides) {
@@ -176,6 +177,20 @@ export function createElement(type, partialOverrides) {
         gridDither: 40,
         gridDash: [2, 3],
         labelDither: 100,
+      };
+      break;
+
+    case 'calendarList':
+      typedDefaults = {
+        sourceId: '',
+        lineHeight: 36,
+        maxLines: 5,
+        fontSize: 16,
+        fontWeight: 400,
+        textAlign: 'left',
+        enableFill: true,
+        fill: 100,
+        emptyText: 'Ei tulevia tapahtumia',
       };
       break;
 

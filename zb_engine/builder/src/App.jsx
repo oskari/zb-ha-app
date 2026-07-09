@@ -13,6 +13,7 @@ import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitma
 import { useEntityStore } from './platform/entityStore.js';
 import HaStateSourceFields from './platform/HaStateSourceFields.jsx';
 import HaHistorySourceFields from './platform/HaHistorySourceFields.jsx';
+import HaCalendarSourceFields from './platform/HaCalendarSourceFields.jsx';
 import { useUiStore } from './store/uiStore.js';
 import { useDisplayConfigStore } from './store/displayConfigStore.js';
 import { useWidgetStore } from './platform/widgetStore.js';
@@ -136,6 +137,7 @@ function App() {
     // Register HA-specific source field renderers (platform → core injection).
     store.setSourceFieldRenderer('haState', HaStateSourceFields);
     store.setSourceFieldRenderer('haHistory', HaHistorySourceFields);
+    store.setSourceFieldRenderer('haCalendar', HaCalendarSourceFields);
 
     // Kick off background entity loading — non-blocking, builder is usable
     // immediately while the entity list fetches in the background.

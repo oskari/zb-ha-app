@@ -70,7 +70,8 @@ POST http://<your-ha-ip>:8000/image.bin   # framed 1-bit device reply
   │   │   ├── haStorage.ts      (Filesystem + writeIfChanged)
   │   │   ├── haEntities.ts     (Entity & history proxy routes)
   │   │   ├── haNetwork.ts      (Host LAN IP route — /api/host-ip)
-  │   │   ├── haSources.ts      (haState + haHistory source handlers)
+  │   │   ├── haSources.ts      (haState + haHistory + haCalendar handlers)
+  │   │   ├── calendarEvent.ts  (Calendar parse/format helpers)
   │   │   └── haOptions.ts      (/data/options.json loader)
   │   ├── schema/           (Zod schemas)
   │   │   ├── payloadSchema.ts  (Top-level payload validation)
@@ -82,6 +83,8 @@ POST http://<your-ha-ip>:8000/image.bin   # framed 1-bit device reply
   │   │   ├── featureResolver.ts    (Feature variable resolution)
   │   │   ├── textAutoSize.ts       (Auto-sizing text helper)
   │   │   ├── urlValidator.ts       (SSRF protection)
+  │   │   ├── calendar/             (calendarList element expansion)
+  │   │   │   └── expander.ts       (calendarList -> text expansion)
   │   │   └── graph/                (Graph element expansion)
   │   │       ├── normalizer.ts     (Data normalization)
   │   │       ├── layout.ts         (Graph layout calculations)
@@ -163,7 +166,8 @@ POST http://<your-ha-ip>:8000/image.bin   # framed 1-bit device reply
   │       │   ├── WelcomeScreen.jsx (First-run welcome)
   │       │   ├── EntityBrowser.jsx (Entity picker)
   │       │   ├── HaStateSourceFields.jsx  (haState config fields)
-  │       │   └── HaHistorySourceFields.jsx(haHistory config fields)
+  │       │   ├── HaHistorySourceFields.jsx(haHistory config fields)
+  │       │   └── HaCalendarSourceFields.jsx(haCalendar config fields)
   │       └── utils/         (Shared utilities)
   │           ├── expressionContext.js (Expression context builder)
   │           ├── bitmapFont.js    (Font rendering)
@@ -451,9 +455,56 @@ Fetches state history directly from the HA Supervisor API at render time using
 - Binding: `"{{temp.latest}}°C"`
 - Graph: use `temp.points` array in a graph element.
 
+### HA calendar sources (`kind: "haCalendar"`)
+
+Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
+`calendar.get_events` service at render time.
+
+**Required fields:**
+
+- `entity_id` — must be `calendar.<object_id>`, e.g. `calendar.family`
+
+**Optional fields:**
+
+- `daysAhead` — forward window in days (1–60, default 14)
+- `maxEvents` — cap after filter/sort (1–20, default 10)
+- `includeOngoing` — include events that started but have not ended (default true)
+- `locale` — `"fi"` (default) or `"en"` for label formatting
+- `eventFilter` — `"all"` \| `"timed"` \| `"all_day"`
+
+**Data context** exposed as `{sourceId.*}`:
+
+- `count` — number of events after cap
+- `truncated` — `true` if more events existed than `maxEvents`
+- `events[]` — each with `summary`, `start`, `end`, `all_day`, `start_ts`,
+  `end_ts`, `label`, `date_label`, `time_label`, `weekday_short`
+
+**Example:**
+
+```json
+{ "id": "family_cal", "kind": "haCalendar",
+  "entity_id": "calendar.family", "daysAhead": 14, "maxEvents": 5, "locale": "fi" }
+```
+
+Binding: `"{{family_cal.events.0.label}}"` or use a `calendarList` element.
+
+### `calendarList` element
+
+Composite element expanded into `text` primitives before render (never reaches
+the frozen draw engine). Binds to an `haCalendar` source.
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `sourceId` | — | `haCalendar` source id |
+| `lineHeight` | 36 | Vertical spacing between lines |
+| `maxLines` | 5 | Max rows (1–20) |
+| `fontSize` / `fontWeight` | 16 / 400 | Text styling |
+| `emptyText` | `Ei tulevia tapahtumia` | Shown when no upcoming events |
+
 ### `elements`
 
-- Supported types: `rect`, `circle`, `line`, `text`, `img`, `svg`, `group`
+- Supported types: `rect`, `circle`, `line`, `text`, `img`, `svg`, `graph`,
+  `calendarList`, `group`
 - All types support: `pos`, `rotationDeg`, `scale`, `origin`, `opacity`, `visible`
 - Drawn in order — first element is the bottom layer.
 

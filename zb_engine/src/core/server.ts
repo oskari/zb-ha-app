@@ -22,6 +22,7 @@ import {
   sourceSchema,
   haStateSourceSchema,
   haHistorySourceSchema,
+  haCalendarSourceSchema,
   httpSourceSchema,
 } from "../schema/sourceSchema";
 import {
@@ -216,7 +217,9 @@ function describeSourceSchemaError(
       ? haStateSourceSchema
       : kind === "haHistory"
         ? haHistorySourceSchema
-        : httpSourceSchema;
+        : kind === "haCalendar"
+          ? haCalendarSourceSchema
+          : httpSourceSchema;
   const branchResult = branch.safeParse(sourceConfig);
   const issues = branchResult.success ? unionError.issues : branchResult.error.issues;
   const fields = issues
