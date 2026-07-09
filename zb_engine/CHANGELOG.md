@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Widget file import / export (Builder).** Export the active widget as a
+  versioned JSON envelope (`exportVersion: 1`) from the top bar; import via the
+  welcome screen or widget dropdown (always creates a new widget). Missing
+  uploaded asset references (`asset:<filename>`) are detected and the user can
+  proceed with a warning. JSON tab adds slot-level Download / Upload; file I/O
+  for the JSON tab is injected via `JsonSlotTransferProvider` so core panels
+  stay platform-agnostic.
+- **Agent widget authoring guide.** [`AGENT_WIDGET_AUTHORING.md`](AGENT_WIDGET_AUTHORING.md)
+  documents the import file format, runtime payload shape, sources, elements,
+  bindings, and validation checklist for AI agents and offline generators.
+  Sample import files live in [`examples/agent-widgets/`](examples/agent-widgets/).
+
 - **Version identification** — Dev builds use `X.Y.Z-dev.YYYYMMDD` in `config.yaml`
   (visible in HA add-on Info). Runtime `/health` and Settings tab also report the
   semver plus optional git commit from the Docker build.
