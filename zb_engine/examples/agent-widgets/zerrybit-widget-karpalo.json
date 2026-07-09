@@ -1,12 +1,12 @@
 {
   "exportVersion": 1,
   "exportedAt": 1783617000000,
-  "name": "Karpalo",
+  "name": "Outdoor panel",
   "doc": {
     "misc": {
       "size": { "width": 720, "height": 480 },
       "format": "png",
-      "name": "Karpalo",
+      "name": "Outdoor panel",
       "gridSize": "3x2",
       "type": "",
       "subcategory": "",
