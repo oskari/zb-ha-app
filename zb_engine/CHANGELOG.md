@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- **`haCalendar` HTTP 400** — `calendar.get_events` now calls the REST API with
+  `?return_response` and parses events from the `service_response` envelope.
+
 ### Added
 
 - **Widget file import / export (Builder).** Export the active widget as a
