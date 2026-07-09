@@ -136,6 +136,24 @@ export default function SourcesPanel() {
     setView('list');
   };
 
+  const handleAddHaCalendar = () => {
+    const id = createId();
+    addSource({
+      id,
+      name: 'New Calendar',
+      kind: 'haCalendar',
+      entity_id: '',
+      daysAhead: 14,
+      maxEvents: 5,
+      includeOngoing: true,
+      locale: 'fi',
+      eventFilter: 'all',
+    });
+    setSelectedId(id);
+    setSelectedSourceId(id);
+    setView('list');
+  };
+
   const handleAdd = () => {
     // If no entity catalog is available, skip the type picker and add HTTP directly
     if (!hasEntityCatalog) {
@@ -243,6 +261,22 @@ export default function SourcesPanel() {
                   Time-series data for graphs and statistics
                 </div>
               </button>
+
+              <button
+                className="btn"
+                onClick={handleAddHaCalendar}
+                style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  border: '1px solid var(--c-border)',
+                  borderRadius: 'var(--radius)',
+                }}
+              >
+                <div style={{ fontWeight: 600 }}>HA Calendar Events</div>
+                <div style={{ fontSize: 'var(--text-xs)', opacity: 0.6 }}>
+                  Upcoming events from a Home Assistant calendar
+                </div>
+              </button>
             </>
           )}
         </div>
@@ -329,13 +363,17 @@ export default function SourcesPanel() {
           <button className="btn btn-primary" onClick={handleTest} disabled={testing}>
             {testing ? 'Testing...' : 'Test Source'}
           </button>
-          {/* Add to Canvas: haState → text element, haHistory → graph element, http → hidden (data too varied) */}
+          {/* Add to Canvas: haState → text, haHistory → graph, haCalendar → calendarList */}
           {sourceKind !== 'http' && (
             <button
               className="btn"
-              title={sourceKind === 'haState'
-                ? 'Add a text element bound to this entity state'
-                : 'Add a graph element bound to this source'}
+              title={
+                sourceKind === 'haState'
+                  ? 'Add a text element bound to this entity state'
+                  : sourceKind === 'haCalendar'
+                    ? 'Add a calendar list element bound to this source'
+                    : 'Add a graph element bound to this source'
+              }
               onClick={() => {
                 const w = size?.width ?? 240;
                 const h = size?.height ?? 240;
@@ -352,6 +390,19 @@ export default function SourcesPanel() {
                       : `{{${selectedSource.id}.state}}`,
                     fallbackText: '(no data)',
                     pos: { x: w / 2 - 30, y: h / 2 - 15 },
+                  });
+                } else if (sourceKind === 'haCalendar') {
+                  const maxLines = Math.min(selectedSource.maxEvents || 5, 5);
+                  addElement('calendarList', {
+                    sourceId: selectedSource.id,
+                    pos: { x: 24, y: h / 2 - 40 },
+                    maxLines,
+                    lineHeight: 36,
+                    fontSize: 16,
+                    fontWeight: 400,
+                    emptyText: 'Ei tulevia tapahtumia',
+                    enableFill: true,
+                    fill: 100,
                   });
                 } else {
                   // haHistory — graph with pre-matched data paths
@@ -454,6 +505,9 @@ function sourceSubtitle(source) {
   }
   if (kind === 'haHistory') {
     return `HA History · ${source.entity_id || '(no entity)'} · ${source.hoursBack || 24}h`;
+  }
+  if (kind === 'haCalendar') {
+    return `HA Calendar · ${source.entity_id || '(no entity)'} · ${source.daysAhead || 14}d`;
   }
   return `${source.method || 'GET'} ${source.url || ''}`;
 }

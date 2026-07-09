@@ -67,7 +67,7 @@ function LayerItem({
       onDragOver={(e) => onDragOver(e, index)}
       onDrop={(e) => onDrop(e, index)}
     >
-      <span className="layer-icon">{element.type === 'graph' ? <TablerIcon name="chart-bar-popular" size={14} /> : (TYPE_ICONS[element.type] ?? '?')}</span>
+      <span className="layer-icon">{element.type === 'graph' ? <TablerIcon name="chart-bar-popular" size={14} /> : element.type === 'calendarList' ? <TablerIcon name="calendar" size={14} /> : (TYPE_ICONS[element.type] ?? '?')}</span>
       {isOffCanvas && (
         <span className="layer-offcanvas-badge" title="Element is off-canvas">⚠</span>
       )}

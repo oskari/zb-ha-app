@@ -228,6 +228,10 @@ const ELEMENT_KNOWN_KEYS = new Set([
   'titleFontWeight',
   'titleDither',
 
+  // CalendarList-specific (consumed by calendar expander at render time)
+  'maxLines',
+  'emptyText',
+
   'extra',
 ]);
 
@@ -253,6 +257,11 @@ const SOURCE_KNOWN_KEYS = new Set([
   'entity_id',
   'hoursBack',
   'attribute',
+  'daysAhead',
+  'maxEvents',
+  'includeOngoing',
+  'locale',
+  'eventFilter',
 ]);
 
 /**

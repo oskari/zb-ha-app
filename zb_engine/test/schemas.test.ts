@@ -197,6 +197,41 @@ describe("sourceSchema: haHistory", () => {
   });
 });
 
+// ── Source schema: HA Calendar ─────────────────────────────────
+
+describe("sourceSchema: haCalendar", () => {
+  it("accepts valid haCalendar source", () => {
+    const result = sourceSchema.safeParse({
+      id: "family_cal",
+      kind: "haCalendar",
+      entity_id: "calendar.family",
+      daysAhead: 14,
+      maxEvents: 5,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-calendar entity_id", () => {
+    const result = sourceSchema.safeParse({
+      id: "bad",
+      kind: "haCalendar",
+      entity_id: "sensor.temp",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("keeps name on an haCalendar source", () => {
+    const result = sourceSchema.safeParse({
+      id: "family_cal",
+      name: "Family Calendar",
+      kind: "haCalendar",
+      entity_id: "calendar.family",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.name).toBe("Family Calendar");
+  });
+});
+
 // ── Source name preservation (regression) ──────────────────────
 //
 // z.object() strips unknown keys, so a source's user-facing `name` is only

@@ -528,4 +528,48 @@ describe('export → import round-trip stability', () => {
     expect(reExported.sources[0].body.type).toBe('json');
     expect(reExported.sources[0].body.json).toEqual({ a: 1 });
   });
+
+  it('round-trip preserves haCalendar source and calendarList element', () => {
+    const original = {
+      misc: { gridSize: '1x1' },
+      sources: [{
+        id: 'family_cal',
+        name: 'Family',
+        kind: 'haCalendar',
+        entity_id: 'calendar.family',
+        daysAhead: 14,
+        maxEvents: 5,
+        includeOngoing: true,
+        locale: 'fi',
+        eventFilter: 'all',
+      }],
+      elements: [{
+        type: 'calendarList',
+        id: 'cl1',
+        name: 'Events',
+        sourceId: 'family_cal',
+        pos: { x: 24, y: 224 },
+        lineHeight: 36,
+        maxLines: 5,
+        emptyText: 'Ei tulevia tapahtumia',
+      }],
+    };
+    const exported = exportRuntimeJson(original);
+    const imported = importRuntimeJson(exported);
+    const reExported = exportRuntimeJson(imported);
+
+    expect(reExported.sources[0]).toMatchObject({
+      kind: 'haCalendar',
+      entity_id: 'calendar.family',
+      daysAhead: 14,
+      maxEvents: 5,
+      locale: 'fi',
+    });
+    expect(reExported.elements[0]).toMatchObject({
+      type: 'calendarList',
+      sourceId: 'family_cal',
+      maxLines: 5,
+      emptyText: 'Ei tulevia tapahtumia',
+    });
+  });
 });

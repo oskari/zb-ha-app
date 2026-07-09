@@ -91,4 +91,18 @@ describe("POST /render/test-source — schema error detail", () => {
     expect(res.body.error).not.toBe("Invalid source config schema.");
     expect(res.body.error).toContain("entity_id");
   });
+
+  it("names entity_id for haCalendar with a non-calendar entity", async () => {
+    const { ingressApp } = createIngressApp(createAdapter());
+    ingressApp.set("trust proxy", true);
+
+    const res = await request(ingressApp)
+      .post("/render/test-source")
+      .set("X-Forwarded-For", "198.51.100.34")
+      .send({ id: "s5", kind: "haCalendar", entity_id: "sensor.x", daysAhead: 14 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("entity_id");
+    expect(fieldNames(res.body)).toContain("entity_id");
+  });
 });

@@ -13,6 +13,7 @@ import { createDataContext, type DataContext } from "@zb/expressions";
 import { resolveFeatures } from "../data/featureResolver";
 import { fetchAllSources, AnySourceDef } from "../data/sourceFetcher";
 import { expandGraphElements } from "../data/graph/expander";
+import { expandCalendarListElements } from "../data/calendar/expander";
 import { expandTextBounds } from "../data/textAutoSize";
 import {
   preRasterizeRotatedText,
@@ -347,18 +348,20 @@ async function preparePipeline(
   // elements keep their reference, so byte-identical renders stay cached.
   const clampedElements = clampElementGeometry(elementsAfterAssets, ctx);
 
-  const expandResult = expandGraphElements(clampedElements, ctx);
-  if (expandResult.elements.length > MAX_EXPANDED_ELEMENTS) {
+  const graphExpandResult = expandGraphElements(clampedElements, ctx);
+  const calendarExpandResult = expandCalendarListElements(graphExpandResult.elements, ctx);
+  const expandedElements = calendarExpandResult.elements;
+  if (expandedElements.length > MAX_EXPANDED_ELEMENTS) {
     throw new Error(
-      `Element count after graph expansion (${expandResult.elements.length}) exceeds the ${MAX_EXPANDED_ELEMENTS} limit.`,
+      `Element count after expansion (${expandedElements.length}) exceeds the ${MAX_EXPANDED_ELEMENTS} limit.`,
     );
   }
 
   return {
     payload,
     ctx,
-    expandedElements: expandResult.elements,
-    expandErrors: expandResult.errors,
+    expandedElements,
+    expandErrors: [...graphExpandResult.errors, ...calendarExpandResult.errors],
     sourceErrors: sourceResult.errors.map((e) => JSON.stringify(e)),
     userAssetBitmaps: userAssetResult.preLoaded,
     userAssetErrors: userAssetResult.errors,

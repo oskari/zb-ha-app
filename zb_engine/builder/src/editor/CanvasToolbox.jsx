@@ -21,6 +21,7 @@ const TOOLS = [
   { type: 'img',    icon: 'polaroid',      title: 'Image' },
   { type: 'svg',    icon: 'svg',           title: 'SVG' },
   { type: 'graph',  icon: 'chart-sankey',  title: 'Graph' },
+  { type: 'calendarList', icon: 'calendar', title: 'Calendar List' },
 ];
 
 const GRID_STEPS = [1, 2, 5, 10, 20, 50];

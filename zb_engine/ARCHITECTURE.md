@@ -193,7 +193,7 @@ Directory: `builder/src/platform/`.
 | Auth / session | Ingress cookies (implicit) | OAuth login + token refresh |
 | Navigation | `TopBar.jsx` (widget dropdown + save/deploy) | Add user menu, sharing, etc. |
 | Welcome screen | `WelcomeScreen.jsx` (initial setup / grid select) | Cloud onboarding flow |
-| HA source fields | `HaStateSourceFields.jsx`, `HaHistorySourceFields.jsx` | Cloud-specific source UI |
+| HA source fields | `HaStateSourceFields.jsx`, `HaHistorySourceFields.jsx`, `HaCalendarSourceFields.jsx` | Cloud-specific source UI |
 | Entity browser | `EntityBrowser.jsx` (HA entity picker) | Cloud data source picker |
 
 > **Note:** `ConfirmModal.jsx` lives in `builder/src/components/` (core), not platform — it is platform-agnostic.
@@ -265,6 +265,7 @@ Step-by-step instructions for common extension tasks.
 5. **Export/import mapping** — Update `ELEMENT_KNOWN_KEYS` in `builder/src/models/mapper.js` with all new property names. Add any type-specific normalization inline within `exportRuntimeJson()` and `importRuntimeJson()` (e.g. the circle pos top-left/center conversion).
 6. **Engine constraint** — `src/engine/` is frozen (ENGINEERING_CONSTRAINTS.md §1). New element types MUST be composable from existing engine primitives: `rect`, `circle`, `line`, `text`, `img`, `svg`, `group` (ENGINEERING_CONSTRAINTS.md §6).
     The existing `graph` element follows this pattern: it is a builder/schema element expanded into primitives before it reaches the frozen renderer.
+    The `calendarList` element follows the same pattern: expanded into `text` primitives by `src/data/calendar/expander.ts`.
 
 ### Adding a Source Type
 

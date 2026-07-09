@@ -410,6 +410,61 @@ Fetches the state history of an entity for the given time window. Use this for g
 
 > **Array indexing in bindings:** `{id}.points.0.v` resolves to the first point's value. Useful for fixed-structure bar charts (`points.0.v` through `points.6.v` for a 7-bar weekly chart).
 
+#### `haCalendar` source — Upcoming HA calendar events
+
+Fetches upcoming events from a `calendar.*` entity via `calendar.get_events`.
+
+```json
+{
+  "id": "family_cal",
+  "kind": "haCalendar",
+  "entity_id": "calendar.family",
+  "daysAhead": 14,
+  "maxEvents": 5,
+  "includeOngoing": true,
+  "locale": "fi",
+  "eventFilter": "all"
+}
+```
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `entity_id` | `string` | — | Must be `calendar.*` |
+| `daysAhead` | `number` | 14 | 1–60 |
+| `maxEvents` | `number` | 10 | 1–20 |
+| `includeOngoing` | `boolean` | true | Include in-progress events |
+| `locale` | `"fi" \| "en"` | `"fi"` | Label formatting |
+| `eventFilter` | `"all" \| "timed" \| "all_day"` | `"all"` | |
+
+**Data context exposed as `{id.*}`:**
+
+| Binding path | Type | Description |
+|-------------|------|-------------|
+| `{id}.count` | `number` | Events returned after cap |
+| `{id}.truncated` | `boolean` | More events existed than `maxEvents` |
+| `{id}.events.N.label` | `string` | Preformatted line, e.g. `pe 10.07. 13:00 Team standup` |
+| `{id}.events.N.summary` | `string` | Event title |
+| `{id}.events.N.all_day` | `boolean` | All-day flag |
+| `{id}.events.N.start_ts` | `number` | Unix ms |
+
+**Example widget fragment:**
+
+```json
+{
+  "sources": [
+    { "id": "family_cal", "kind": "haCalendar", "entity_id": "calendar.family", "daysAhead": 14, "maxEvents": 5, "locale": "fi" }
+  ],
+  "elements": [
+    { "type": "text", "pos": { "x": 24, "y": 188 }, "text": "Perhekalenteri", "fontSize": 16, "fontWeight": 600, "enableFill": true, "fill": 100 },
+    { "type": "calendarList", "sourceId": "family_cal", "pos": { "x": 24, "y": 224 }, "lineHeight": 36, "maxLines": 5, "fontSize": 16, "emptyText": "Ei tulevia tapahtumia", "enableFill": true, "fill": 100 }
+  ]
+}
+```
+
+#### `calendarList` element
+
+Expanded into `text` primitives at render time (like `graph`). Fields: `sourceId`, `lineHeight`, `maxLines`, `fontSize`, `fontWeight`, `emptyText`, `enableFill`, `fill`.
+
 ---
 
 ### `elements` — Drawing commands
@@ -420,7 +475,7 @@ Common fields on all element types:
 
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
-| `type` | `string` | — | `rect` \| `circle` \| `line` \| `text` \| `img` \| `svg` \| `group` |
+| `type` | `string` | — | `rect` \| `circle` \| `line` \| `text` \| `img` \| `svg` \| `graph` \| `calendarList` \| `group` |
 | `pos` | `{x, y}` | `{0,0}` | Top-left position (or center for circle) |
 | `visible` | `boolean` \| binding | `true` | Hides element if false |
 | `opacity` | `number` \| binding | `100` | 0–100 dither mask |

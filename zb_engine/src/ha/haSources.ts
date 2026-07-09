@@ -9,6 +9,9 @@
 import { fetchWithTimeout, readResponseJsonWithLimit } from "../data/safeFetch";
 import { downsampleLTTB } from "../data/downsampling";
 import { buildHistoryResult } from "./historyResult";
+import { buildHaCalendarResult, type RawHaCalendarEvent } from "./calendarEvent";
+import { SourceError } from "../errors/sourceError";
+import { resolveValue } from "@zb/expressions";
 import {
   MAX_HA_HISTORY_RESPONSE_BYTES,
   MAX_HA_HISTORY_POINTS_PER_ENTITY,
@@ -19,8 +22,10 @@ import type {
   AnySourceDef,
   HaStateSourceDef,
   HaHistorySourceDef,
+  HaCalendarSourceDef,
   HaStateResult,
   HaHistoryResult,
+  HaCalendarResult,
   HaHistoryPoint,
 } from "../data/sourceFetcher";
 
@@ -167,6 +172,66 @@ async function fetchHaHistorySource(
   return buildHistoryResult(source.entity_id, source.hoursBack, points, truncated);
 }
 
+// ── HA Calendar source ─────────────────────────────────────────
+
+async function fetchHaCalendarSource(
+  source: HaCalendarSourceDef,
+  ctx: DataContext,
+  signal?: AbortSignal,
+): Promise<HaCalendarResult> {
+  const token = process.env.SUPERVISOR_TOKEN;
+  if (!token) {
+    throw new SourceError(
+      source.id,
+      "SUPERVISOR_TOKEN not available — cannot fetch HA calendar outside of the add-on environment.",
+    );
+  }
+
+  const url = "http://supervisor/core/api/services/calendar/get_events";
+
+  const res = await fetchWithTimeout(url, 10_000, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      entity_id: source.entity_id,
+      duration: { days: source.daysAhead },
+    }),
+  }, signal);
+
+  if (!res.ok) {
+    throw new SourceError(
+      source.id,
+      `HA calendar.get_events returned HTTP ${res.status} for entity "${source.entity_id}".`,
+      res.status,
+    );
+  }
+
+  const raw = await readResponseJsonWithLimit<Record<string, { events?: RawHaCalendarEvent[] }>>(
+    res,
+    MAX_HA_HISTORY_RESPONSE_BYTES,
+    MAX_SOURCE_TOTAL_TIMEOUT_MS,
+    `[haCalendar:${source.id}] response body`,
+    signal,
+  );
+
+  const bucket = raw[source.entity_id];
+  const rawEvents = Array.isArray(bucket?.events) ? bucket.events : [];
+
+  const includeOngoing = resolveValue(source.includeOngoing ?? true, ctx) !== false;
+
+  return buildHaCalendarResult(rawEvents, {
+    entity_id: source.entity_id,
+    daysAhead: source.daysAhead,
+    maxEvents: source.maxEvents,
+    includeOngoing,
+    locale: source.locale,
+    eventFilter: source.eventFilter,
+  });
+}
+
 // ── Unified source handler ─────────────────────────────────────
 
 /**
@@ -178,7 +243,7 @@ async function fetchHaHistorySource(
  */
 export async function haSourceHandler(
   source: AnySourceDef,
-  _ctx: DataContext,
+  ctx: DataContext,
   signal?: AbortSignal,
 ): Promise<unknown> {
   const kind = (source as { kind?: string }).kind;
@@ -187,6 +252,9 @@ export async function haSourceHandler(
   }
   if (kind === "haHistory") {
     return fetchHaHistorySource(source as HaHistorySourceDef, signal);
+  }
+  if (kind === "haCalendar") {
+    return fetchHaCalendarSource(source as HaCalendarSourceDef, ctx, signal);
   }
   throw new Error(`Unknown HA source kind: ${kind}`);
 }

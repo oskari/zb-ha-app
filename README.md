@@ -189,6 +189,8 @@ Deploy via the builder or `PUT /payload`. The HA adapter persists the active pri
 | `sources` | HTTP APIs, HA state, or HA entity history — fetched at render time |
 | `elements` | Ordered drawing commands (index 0 = bottom layer) |
 
+**AI agents** generating importable widget files: see [`zb_engine/AGENT_WIDGET_AUTHORING.md`](zb_engine/AGENT_WIDGET_AUTHORING.md) and sample JSON in [`zb_engine/examples/agent-widgets/`](zb_engine/examples/agent-widgets/).
+
 ---
 
 ## Element Types
@@ -236,6 +238,46 @@ Exposes `{{temp.state}}` and all entity attributes (e.g. `{{temp.unit_of_measure
 ```
 
 Exposes bindings like `{{temp_hist.latest}}`, `{{temp_hist.min}}`, `{{temp_hist.max}}`, `{{temp_hist.avg}}`, and `temp_hist.points` (full time-series array for graphs).
+
+### `haCalendar` — Upcoming calendar events
+
+```json
+{
+  "id": "family_cal",
+  "kind": "haCalendar",
+  "entity_id": "calendar.family",
+  "daysAhead": 14,
+  "maxEvents": 5,
+  "locale": "fi"
+}
+```
+
+Fetches upcoming events via HA `calendar.get_events` at render time. Bindings:
+
+| Binding | Example |
+|---------|---------|
+| `{id}.count` | `5` |
+| `{id}.events.0.label` | `pe 10.07. 13:00 Team standup` |
+| `{id}.events.0.summary` | `Team standup` |
+| `{id}.events.0.all_day` | `false` |
+
+Use a **`calendarList`** element (see below) instead of placing multiple text lines manually.
+
+### `calendarList` — Auto-expanded event list
+
+```json
+{
+  "type": "calendarList",
+  "sourceId": "family_cal",
+  "pos": { "x": 24, "y": 224 },
+  "lineHeight": 36,
+  "maxLines": 5,
+  "fontSize": 16,
+  "emptyText": "Ei tulevia tapahtumia"
+}
+```
+
+Expanded into text primitives before render (same pattern as `graph`). Replaces the `input_text` + automation workaround for family calendars on e-ink displays.
 
 ---
 
@@ -349,7 +391,7 @@ src/
 │   ├── haStorage.ts      # Filesystem storage + writeIfChanged
 │   ├── haAssets.ts       # Authenticated user-asset routes
 │   ├── haEntities.ts     # HA entity/history proxy
-│   ├── haSources.ts      # haState + haHistory source handlers
+│   ├── haSources.ts      # haState + haHistory + haCalendar source handlers
 │   └── haOptions.ts      # /data/options.json loader
 ├── engine/         # Render engine — FROZEN (do not modify)
 ├── data/           # Generic data layer
@@ -379,7 +421,8 @@ builder/src/
 │   ├── WelcomeScreen.jsx     # First-run welcome screen
 │   ├── EntityBrowser.jsx     # Entity picker UI
 │   ├── HaStateSourceFields.jsx   # haState config fields
-│   └── HaHistorySourceFields.jsx # haHistory config fields
+│   ├── HaHistorySourceFields.jsx # haHistory config fields
+│   └── HaCalendarSourceFields.jsx # haCalendar config fields
 ├── models/         # Document model, element defaults, import/export
 ├── store/          # docStore, uiStore, displayConfigStore (Zustand)
 ├── editor/         # Konva canvas, toolbox, graph preview

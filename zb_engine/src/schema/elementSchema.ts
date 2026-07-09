@@ -261,6 +261,25 @@ const graphSchema = z.object({
   labelDither: z.unknown().default(100),
 });
 
+// CalendarList: expanded into text primitives at render time (never reaches draw engine)
+const calendarListSchema = z.object({
+  type: z.literal("calendarList"),
+  ...identityFields,
+  ...visibilityField,
+  pos: pointSchema,
+  ...opacityField,
+
+  sourceId: z.unknown().default(""),
+  lineHeight: z.unknown().default(36),
+  maxLines: z.unknown().default(5),
+  fontSize: z.unknown().default(16),
+  fontWeight: z.unknown().default(400),
+  textAlign: z.unknown().default("left"),
+  enableFill: z.unknown().default(true),
+  fill: z.unknown().default(100),
+  emptyText: z.unknown().default("Ei tulevia tapahtumia"),
+});
+
 // ── Discriminated union (with lazy for group recursion) ────────
 
 export const elementSchema: z.ZodType<Record<string, unknown>> = z.lazy(() =>
@@ -272,6 +291,7 @@ export const elementSchema: z.ZodType<Record<string, unknown>> = z.lazy(() =>
     imgSchema,
     svgSchema,
     graphSchema,
+    calendarListSchema,
     baseGroupSchema.extend({
       children: z.array(elementSchema).default([]),
     }),

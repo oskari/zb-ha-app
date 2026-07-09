@@ -172,6 +172,17 @@ export const MAX_GRAPH_GRID_LINES = 100;
 /** Maximum manually requested X-axis label ticks per graph. */
 export const MAX_GRAPH_X_AXIS_LABELS = 500;
 
+// ── HA Calendar sources ────────────────────────────────────────
+
+/** Maximum events returned by a haCalendar source after filtering. */
+export const MAX_HA_CALENDAR_EVENTS = 20;
+
+/** Maximum days-ahead window for haCalendar source queries. */
+export const MAX_HA_CALENDAR_DAYS = 60;
+
+/** Maximum lines a calendarList element can expand into. */
+export const MAX_CALENDAR_LIST_LINES = 20;
+
 // ── Widget storage ─────────────────────────────────────────────
 // Bound the number and aggregate size of stored widget documents so an
 // authenticated user cannot exhaust the /data volume (host disk DoS).
