@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { sourceSchema } from "../src/schema/sourceSchema";
 import {
   buildHaCalendarResult,
+  extractCalendarEventsFromServiceResponse,
   normalizeRawCalendarEvent,
   parseHaCalendarTimestamp,
 } from "../src/ha/calendarEvent";
@@ -173,7 +174,10 @@ describe("haSourceHandler: haCalendar", () => {
   it("routes haCalendar and returns normalized events", async () => {
     mockFetch.mockResolvedValueOnce(
       mockResponseFromJson({
-        "calendar.family": { events: fixture },
+        changed_states: [],
+        service_response: {
+          "calendar.family": { events: fixture },
+        },
       }),
     );
 
@@ -198,12 +202,20 @@ describe("haSourceHandler: haCalendar", () => {
     expect(Array.isArray((result as { events: unknown[] }).events)).toBe(true);
 
     const [url, , opts] = mockFetch.mock.calls[0] as [string, number, RequestInit];
-    expect(url).toContain("/services/calendar/get_events");
+    expect(url).toContain("/services/calendar/get_events?return_response");
     expect(opts.method).toBe("POST");
     expect(JSON.parse(String(opts.body))).toEqual({
       entity_id: "calendar.family",
       duration: { days: 14 },
     });
+  });
+
+  it("parses direct automation-style response shape", () => {
+    const events = extractCalendarEventsFromServiceResponse(
+      { "calendar.family": { events: fixture } },
+      "calendar.family",
+    );
+    expect(events).toHaveLength(fixture.length);
   });
 
   it("returns empty result for missing events key", async () => {
