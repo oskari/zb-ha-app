@@ -1,8 +1,8 @@
 /**
  * deviceId.test.ts — Tests for the multi-device `DeviceId` axis (adapters.ts)
  *
- * Security-critical: deviceId is used in filesystem paths (multi-device-plan
- * D7). Path traversal and malformed-id attacks must be blocked before a
+ * Security-critical: deviceId is used in filesystem paths. Path traversal
+ * and malformed-id attacks must be blocked before a
  * deviceId ever reaches storage.
  */
 

@@ -102,7 +102,7 @@ describe("image app security headers", () => {
 
 describe("image app method rejection", () => {
   // createImageApp() itself no longer enforces a blanket "GET/HEAD only"
-  // middleware — multi-device-plan.md Phase 2 moved method handling to a
+  // middleware — the multi-device design moved method handling to a
   // per-route get+all-405-catchall pattern (see imageApp.ts
   // registerImageRoutes), since POST is now valid on `.bin` paths and must
   // stay invalid on `.png` paths. This registers that same pattern here to

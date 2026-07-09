@@ -1,12 +1,12 @@
 /**
- * deviceConfigRoute.test.ts — POST /api/device/config guided proxy route (§Phase 2)
+ * deviceConfigRoute.test.ts — POST /api/device/config guided proxy route
  *
  * Exercises the route end-to-end against a MOCKED device (fetchWithTimeout is
  * mocked, so no real network). Proves: it forwards the device reply, validates
  * the body/IP/config at the boundary (400 before any dial), canonicalizes the
  * IP so the exact host dialed is byte-identical to the validated one, degrades
  * to 502 on a device failure, is rate-limited, and — the hard invariant — is
- * absent from the unauthenticated image app / port 8000 (post-plan.md §3.4).
+ * absent from the unauthenticated image app / port 8000.
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -74,7 +74,7 @@ const VALID_CONFIG = {
 };
 
 // Each test uses a distinct X-Forwarded-For IP so it gets its own module-global
-// rate-limit bucket (the limiter keys per ip:label — see the §Phase 2 note).
+// rate-limit bucket (the limiter keys per ip:label).
 // These are limiter keys only; the device target is the body's deviceIp.
 function post(app: ReturnType<typeof makeApp>, body: unknown, clientIp: string) {
   return request(app).post("/api/device/config").set("X-Forwarded-For", clientIp).send(body);

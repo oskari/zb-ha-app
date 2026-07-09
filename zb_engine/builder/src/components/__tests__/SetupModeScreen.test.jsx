@@ -1,6 +1,6 @@
 /**
  * SetupModeScreen.test.jsx — end-to-end walkthrough of the "How do you want to
- * set up?" flow (post-plan.md Phase 8 manual walkthrough, automated).
+ * set up?" flow (the manual setup walkthrough, automated).
  *
  * No tile is pre-selected; a click selects a tile (highlight) and opens its
  * dialog. Both the app guide's OK and the self-host dialog's Close return to the
@@ -149,7 +149,7 @@ describe('SetupModeScreen — Self-Host Send paths (through the real dialog)', (
     expect(arg.deviceIp).toBe('192.168.1.42');
     expect(arg).not.toHaveProperty('port');
     expect(arg.config).not.toHaveProperty('port');
-    // §3.3 defaults forwarded, with the URL auto-filled from the host endpoint.
+    // Config defaults forwarded, with the URL auto-filled from the host endpoint.
     expect(arg.config).toMatchObject({ url: AUTO_URL, sidebar: true, sleepSec: 900 });
   });
 

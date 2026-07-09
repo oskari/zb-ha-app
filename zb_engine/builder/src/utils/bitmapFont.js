@@ -211,7 +211,6 @@ export function registerFontPack(key, rawJson) {
 export function markFontsReady() {
   initialized = true;
   availableFamilies.sort();
-  console.log(`[bitmapFont] Ready — ${fontCache.size} font packs registered`);
 }
 
 /** @returns {boolean} Whether fonts have been fully loaded and registered. */

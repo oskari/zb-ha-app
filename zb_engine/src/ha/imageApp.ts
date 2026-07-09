@@ -12,10 +12,10 @@
  *   - GET/HEAD only on `.png` (preview); POST only on `.bin` (device reply).
  *     Method handling is per-route (see `registerImageRoutes`) — the bare
  *     app from `createImageApp()` no longer enforces a blanket method
- *     guard, since Phase 2 of multi-device-plan.md requires POST to be
+ *     guard, since the multi-device design requires POST to be
  *     valid on some paths and not others.
  *   - The `.bin` POST body is never parsed for meaning (no telemetry→render
- *     channel) — it is only bounded and discarded (Phase 2.2).
+ *     channel) — it is only bounded and discarded.
  */
 
 import express from "express";
@@ -120,7 +120,7 @@ function bufferKey(deviceId: DeviceId, slot: Slot): string {
  * both the primary and fullscreen slots (a single device on port 8000).
  *
  * `GET .png` is the read-only builder/ESP32 preview path. `POST .bin` is the
- * device-facing framed reply (Self-host-mode.md §5): the *cached* rendered
+ * device-facing framed reply: the *cached* rendered
  * bin buffer is wrapped with a fresh 25-byte header (including the live
  * clock) on every response — never cached itself, and never subject to a
  * 304, since the clock makes every response body unique.
@@ -165,8 +165,8 @@ export function createOnDemandImageApp(deps: OnDemandDeps): OnDemandImageApp {
 
   /**
    * Bound and discard the `.bin` POST body. The ESP32 sends a small JSON
-   * telemetry payload (Self-host-mode.md §4), but this add-on has no
-   * telemetry→render-context channel (multi-device-plan.md Phase 2.2) —
+   * telemetry payload, but this add-on has no
+   * telemetry→render-context channel —
    * `type: () => true` accepts any (or no) Content-Type so the body is
    * always captured up to the cap and never left to grow unbounded; it is
    * never read from `req.body` afterward.

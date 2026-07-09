@@ -43,7 +43,7 @@ function createTestApp(overrides: Partial<OnDemandDeps> = {}) {
   return { ...createOnDemandImageApp(deps), renderGuard };
 }
 
-/** Parse the 25-byte framed header (Self-host-mode.md §5.1) from a response body. */
+/** Parse the 25-byte framed header from a response body. */
 function parseFrame(body: Buffer) {
   return {
     magic: body.readUInt16LE(0),
@@ -304,7 +304,7 @@ describe("image port — route isolation", () => {
   });
 
   it("mutation methods on paths that don't match any image route 404 (no matching route), same as GET would", async () => {
-    // Phase 2 (multi-device-plan.md) replaced the old blanket "non-GET/HEAD
+    // The multi-device design replaced the old blanket "non-GET/HEAD
     // -> 405" middleware with per-route method handling scoped to the 4
     // known image path shapes, since POST is now valid on `.bin` routes.
     // Paths that were never image routes to begin with fall through to

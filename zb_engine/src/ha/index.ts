@@ -65,7 +65,7 @@ const haAdapter: PlatformAdapter = {
     // Register user-asset upload / list / delete / raw routes
     registerAssetRoutes(app, storage);
     // Register the guided Self-Host /config push proxy (POST /api/device/config).
-    // INGRESS APP ONLY — never the port-8000 image app (post-plan.md §3.4, HA3).
+    // INGRESS APP ONLY — never the port-8000 image app (HA3).
     registerDeviceRoutes(app);
   },
 

@@ -1,8 +1,8 @@
 /**
  * imageFrame.ts — ESP32 self-host framed reply (serve-time only)
  *
- * Builds the 25-byte framed header from `ignore/Self-host-mode.md` §5.1 and
- * wraps it around a rendered 1-bit image buffer for the device-facing
+ * Builds the 25-byte framed header defined by the ESP32 self-host framing spec,
+ * and wraps it around a rendered 1-bit image buffer for the device-facing
  * `POST /image.bin` endpoint.
  *
  * This is a serve-time concern only — `src/encoder/binEncoder.ts` is shared
@@ -14,13 +14,13 @@
 const MAGIC = 0x5a46;
 const HEADER_BYTES = 25;
 
-/** `mode = 3` — leave the sidebar clock unchanged (Self-host-mode.md §5.4). */
+/** `mode = 3` — leave the sidebar clock unchanged. */
 const NO_CLOCK = Buffer.from([0xc0, 0x00, 0x00, 0x00, 0x00]);
 
 /**
  * This codebase's `Canvas` packs bit `1` = black, `0` = white (see
  * `engine/canvas.ts`). The ESP32 wire format is the opposite — bit `1` =
- * white (Self-host-mode.md §5.3). A full byte-wise NOT converts one
+ * white. A full byte-wise NOT converts one
  * convention to the other; unset (padding) bits default to 0 in `Canvas`
  * (white in its convention), which correctly becomes 1 (white in the wire
  * convention) after inversion, so no special-casing is needed for the
@@ -35,11 +35,11 @@ export function invertBitPolarity(bin: Buffer): Buffer {
 }
 
 /**
- * Pack the 5-byte sidebar clock (Self-host-mode.md §5.4), most-significant
+ * Pack the 5-byte sidebar clock, most-significant
  * byte first. Always emits 24-hour mode (`mode = 0`) — this add-on has no
  * concept of a per-user 12h preference yet.
  *
- * // TODO: make 12h configurable (§5.4 supports mode 1/2 = AM/PM).
+ * // TODO: make 12h configurable (the wire format supports mode 1/2 = AM/PM).
  *
  * Falls back to `NO_CLOCK` (mode 3 = leave the clock unchanged) rather than
  * ever emit a nonsensical time, if `date` is invalid.
@@ -74,7 +74,7 @@ export function packLocalTime(date: Date): Buffer {
 }
 
 /**
- * Build the 25-byte framed header (Self-host-mode.md §5.1). All fields
+ * Build the 25-byte framed header. All fields
  * except `localTime` are little-endian; `localTime` is 5 bytes, already
  * big-endian (see {@link packLocalTime}).
  */

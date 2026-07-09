@@ -73,7 +73,7 @@ export function artifactBasename(format: "payload" | "png" | "bin", slot: Slot):
  * Absolute path to a device's artifact file. Pure function of
  * `(deviceId, format, slot)`. The sole chokepoint where a `deviceId` turns
  * into a filesystem path — validated here so no call path can reach storage
- * with an unchecked id (plan D7).
+ * with an unchecked id.
  */
 export function deviceArtifactPath(deviceId: DeviceId, format: "payload" | "png" | "bin", slot: Slot): string {
   assertValidDeviceId(deviceId);
@@ -241,7 +241,7 @@ export class HaStorageAdapter implements StorageAdapter {
 
     // Multi-device migration: fold the pre-existing single-device flat
     // layout into the default device's directory — exactly once, exactly
-    // the default device (plan D2/D5). This runs per SLOT, never per
+    // the default device. This runs per SLOT, never per
     // device — there is no device list to iterate at this layer. Idempotent
     // via migrateLegacyFile's existing "skip if target exists" guard.
     try {

@@ -1,10 +1,10 @@
 /**
  * haDevice.test.ts — pure validators behind the guided Self-Host /config proxy
  *
- * Covers the two pure functions the route relies on for its SSRF containment
- * (post-plan.md §3.5): `assertReachableDeviceIp` (dotted-quad RFC1918 allow-list
+ * Covers the two pure functions the route relies on for its SSRF containment:
+ * `assertReachableDeviceIp` (dotted-quad RFC1918 allow-list
  * + canonicalize-then-dial, infra carve-outs, leading-zero/octal rejection) and
- * `validateSelfHostConfig` (§3 field schema + strict keys + ≤1024-byte cap).
+ * `validateSelfHostConfig` (field schema + strict keys + ≤1024-byte cap).
  * These are where the security-relevant logic lives, so they are tested
  * directly — no Express, no network.
  */
@@ -73,7 +73,7 @@ const DEFAULT_CONFIG = {
 };
 
 describe("validateSelfHostConfig", () => {
-  it("accepts the §3 default config and returns strict JSON", () => {
+  it("accepts the default config and returns strict JSON", () => {
     const json = validateSelfHostConfig(DEFAULT_CONFIG);
     expect(typeof json).toBe("string");
     expect(JSON.parse(json)).toEqual(DEFAULT_CONFIG);

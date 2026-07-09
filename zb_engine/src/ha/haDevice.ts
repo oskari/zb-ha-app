@@ -1,18 +1,18 @@
 /**
- * haDevice.ts — guided Self-Host §3 `/config` push proxy (Ingress port only)
+ * haDevice.ts — guided Self-Host `/config` push proxy (Ingress port only)
  *
  * Exposes `POST /api/device/config` on the Ingress port (8099). It lets an
  * already-authenticated HA user have the server POST a fixed-shape self-host
- * config (Self-host-mode.md §3) to an ESP32 sitting on the LAN, so the browser
+ * config to an ESP32 sitting on the LAN, so the browser
  * never talks to the device directly.
  *
  * SECURITY: this is a scoped, authenticated SSRF-by-design. Its whole purpose is
  * to reach a PRIVATE LAN IP, so the outbound fetch intentionally bypasses the
  * urlValidator SSRF layer (which blocks RFC1918) — exactly like haNetwork.ts's
  * hardcoded Supervisor-host bypass. That is only safe because of the
- * compensating controls this module enforces (post-plan.md §3.5):
+ * compensating controls this module enforces:
  *   - Auth gate: reachable ONLY through the session-authed Ingress port. It must
- *     NEVER be registered on the unauthenticated image app / port 8000 (§3.4).
+ *     NEVER be registered on the unauthenticated image app / port 8000.
  *   - Allow-list + canonicalize-then-dial: accepts only well-formed dotted-quad
  *     RFC1918, then rebuilds the dotted-quad from the parsed integer and dials
  *     that canonical value — so the address we validate and the address fetch()
@@ -49,7 +49,7 @@ function ipv4ToInt(ip: string): number | null {
   // Reject leading-zero octets ("010"): the WHATWG URL parser that fetch()
   // uses treats them as OCTAL (010 -> 8) while Number() reads them as decimal
   // (010 -> 10). Validating one value and dialing another is the SEC5 hazard,
-  // so forbid the ambiguity outright (see assertReachableDeviceIp / §3.5).
+  // so forbid the ambiguity outright (see assertReachableDeviceIp).
   if (parts.some((p) => p.length > 1 && p[0] === "0")) return null;
   const o = parts.map(Number);
   if (o.some((n) => n > 255)) return null;
@@ -98,7 +98,7 @@ const selfHostConfigSchema = z
   })
   .strict(); // reject unknown keys — the device is strict & case-sensitive
 
-/** Validate against §3 and return the exact strict-JSON string to send. */
+/** Validate against the self-host config schema and return the exact strict-JSON string to send. */
 export function validateSelfHostConfig(raw: unknown): string {
   const parsed = selfHostConfigSchema.safeParse(raw);
   if (!parsed.success) {
@@ -117,9 +117,9 @@ export function validateSelfHostConfig(raw: unknown): string {
 
 export interface DeviceConfigResult { status: number; configured?: boolean; body?: unknown; }
 
-// The device setup server is fixed at :80 by the firmware contract
-// (Self-host-mode.md §3). It is a constant, NOT a user-supplied field — a
-// caller-chosen port would turn this proxy into an internal port scanner.
+// The device setup server is fixed at :80 by the firmware contract. It is a
+// constant, NOT a user-supplied field — a caller-chosen port would turn this
+// proxy into an internal port scanner.
 const DEVICE_SETUP_PORT = 80;
 
 /**
@@ -156,14 +156,14 @@ export async function postConfigToDevice(
 
 // Boundary schema (Constraint SEC1 — validate the whole body with Zod first).
 // NOTE: no `port` — the device port is fixed at :80 (DEVICE_SETUP_PORT). A
-// user-supplied port would widen the SSRF blast radius the §3.5 exception
+// user-supplied port would widen the SSRF blast radius this exception
 // relies on being narrow (fixed `:80/config` target only).
 const deviceConfigRequestSchema = z.object({
   deviceIp: z.string().min(1).max(45),          // form/range checked by assertReachableDeviceIp
   config: z.unknown(),                           // shape checked by validateSelfHostConfig
 }).strict();
 
-/** Register POST /api/device/config. INGRESS APP ONLY — never port 8000 (§3.4, HA3). */
+/** Register POST /api/device/config. INGRESS APP ONLY — never port 8000 (HA3). */
 export function registerDeviceRoutes(app: Application): void {
   const limiter = rateLimit("device-config", RATE_LIMIT_WINDOW_MS, RATE_LIMIT_DEVICE_CONFIG);
   app.post("/api/device/config", limiter, async (req: Request, res: Response) => {
@@ -171,10 +171,10 @@ export function registerDeviceRoutes(app: Application): void {
       const parsed = deviceConfigRequestSchema.safeParse(req.body);
       if (!parsed.success) throw badRequest("Invalid request body.");
 
-      // Canonical dotted-quad RFC1918 allow-list (§3.5). The returned value is
+      // Canonical dotted-quad RFC1918 allow-list. The returned value is
       // rebuilt from the validated integer, so it is exactly what we dial.
       const deviceIp = assertReachableDeviceIp(parsed.data.deviceIp);
-      const jsonBody = validateSelfHostConfig(parsed.data.config); // §3 schema + ≤1024 bytes
+      const jsonBody = validateSelfHostConfig(parsed.data.config); // self-host config schema + ≤1024 bytes
 
       try {
         const result = await postConfigToDevice(deviceIp, jsonBody);

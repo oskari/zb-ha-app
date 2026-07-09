@@ -1,9 +1,9 @@
 /**
  * imageFrame.test.ts — Pure unit tests for the ESP32 framed-reply builder
  *
- * Covers Self-host-mode.md §5.1 (header), §5.3 (bit polarity), §5.4
- * (localTime packing) — including the exact worked example from §5.6, used
- * here as a golden test vector.
+ * Covers the ESP32 self-host framing spec's header, bit polarity, and
+ * localTime packing — including the exact worked example from that spec,
+ * used here as a golden test vector.
  */
 
 import { describe, it, expect } from "vitest";
@@ -37,7 +37,7 @@ describe("invertBitPolarity", () => {
 });
 
 describe("packLocalTime", () => {
-  it("matches the exact worked example from Self-host-mode.md §5.6 (2026-07-06 14:30:00, 24h)", () => {
+  it("matches the exact worked example from the self-host framing spec (2026-07-06 14:30:00, 24h)", () => {
     const date = new Date(2026, 6, 6, 14, 30, 0); // JS months are 0-indexed: 6 = July
     const packed = packLocalTime(date);
     expect([...packed]).toEqual([0x1c, 0xf0, 0x0f, 0xd4, 0xe6]);

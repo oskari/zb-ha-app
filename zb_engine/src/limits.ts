@@ -16,11 +16,11 @@ export const MAX_REQUEST_BODY = "2mb";
 
 /**
  * Maximum body size accepted on the device-facing `POST /image.bin`
- * endpoint (port 8000). The ESP32 self-host contract (Self-host-mode.md §4)
- * sends a small JSON telemetry body, but this add-on has no telemetry→render
+ * endpoint (port 8000). The ESP32 self-host contract sends a small JSON
+ * telemetry body, but this add-on has no telemetry→render
  * channel — the body is never parsed for meaning, only drained up to this
  * bound to prevent a large POST from exhausting resources on the
- * unauthenticated port (multi-device-plan.md Phase 2.2).
+ * unauthenticated port.
  */
 export const MAX_DEVICE_REQUEST_BODY_BYTES = 4 * 1024; // 4 KiB
 

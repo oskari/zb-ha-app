@@ -26,8 +26,7 @@ import { HttpError } from "../errors/httpError";
 export type Slot = "primary" | "fullscreen";
 
 /**
- * Device identity for multi-device storage addressing (see
- * `ignore/multi-device-plan.md` D2/D3).
+ * Device identity for multi-device storage addressing.
  *
  * A "device" is a widget document — `deviceId` IS the widget id, not a
  * separate registry entity. This is a NEW axis, orthogonal to `Slot`: the
@@ -41,14 +40,13 @@ const DEVICE_ID_RE = /^[a-z0-9_-]+$/;
 
 /**
  * The implicit device that pre-multi-device singleton storage migrates to,
- * and that bare (non-prefixed) routes serve for single-device convenience
- * (plan decision D5).
+ * and that bare (non-prefixed) routes serve for single-device convenience.
  */
 export const DEFAULT_DEVICE_ID: DeviceId = "default";
 
 /**
  * Validate a `deviceId`'s charset before it is allowed to reach storage or a
- * route (plan decision D7). `deviceId` flows directly into filesystem
+ * route. `deviceId` flows directly into filesystem
  * paths, so an unvalidated value is a path-traversal vector.
  */
 export function assertValidDeviceId(id: string): asserts id is DeviceId {

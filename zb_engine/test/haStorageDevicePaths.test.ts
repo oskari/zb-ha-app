@@ -7,9 +7,8 @@
  * `/data` (resolves outside the repo, e.g. to `C:\data` on Windows) and
  * would create real directories on the host as a constructor side effect.
  * Full read/write/migration behavior against the real data volume is a
- * manual verification step (see multi-device-plan.md Phase 1 "Verify"),
- * run inside the actual add-on container where `/data` is a safe, ephemeral
- * mount.
+ * manual verification step, run inside the actual add-on container where
+ * `/data` is a safe, ephemeral mount.
  */
 
 import { describe, it, expect } from "vitest";

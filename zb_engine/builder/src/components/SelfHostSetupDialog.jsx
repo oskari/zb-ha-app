@@ -1,7 +1,7 @@
 /**
- * SelfHostSetupDialog.jsx — guided Self-Host §3 `/config` push (Postman-style)
+ * SelfHostSetupDialog.jsx — guided Self-Host `/config` push (Postman-style)
  *
- * Reproduces the Self-host-mode.md §3 config form pre-filled with sensible
+ * Reproduces the self-host config form pre-filled with sensible
  * defaults. The user enters the ESP32's LAN IP and presses Send; the config is
  * POSTed to the device THROUGH the add-on backend proxy (`deviceConfigPusher`)
  * — the browser never talks to the device directly. There is no device-port
@@ -19,10 +19,10 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useUiStore } from '../store/uiStore.js';
 
-// §3 pre-fill. The device IP is a SEPARATE field, not part of this JSON. We
+// Default config pre-fill. The device IP is a SEPARATE field, not part of this JSON. We
 // deliberately suggest `sidebar: true` (the device clock/battery/temp column —
 // a useful default) even though the device's own default is false; with the
-// sidebar on the drawable image area is 720×480, not 800×480. See §3.3.
+// sidebar on the drawable image area is 720×480, not 800×480.
 // `url` starts blank and is auto-filled from the resolved HA host endpoint
 // (`http://<ha-ip>:<image-port>/image.bin`) so, by default, the device polls
 // this add-on directly — see the auto-fill effect in the component.

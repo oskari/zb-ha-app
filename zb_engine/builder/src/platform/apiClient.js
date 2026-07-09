@@ -391,11 +391,11 @@ export async function fetchHostIp() {
 
 // ── Device config push API ─────────────────────────────────────
 // Route mounted by the HA platform adapter on the Ingress port only
-// (`src/ha/haDevice.ts`). Proxies the self-host §3 `/config` POST to a LAN
+// (`src/ha/haDevice.ts`). Proxies the self-host `/config` POST to a LAN
 // device so the browser never talks to the ESP32 directly.
 
 /**
- * Proxy a self-host §3 config POST to a LAN device via the add-on backend.
+ * Proxy a self-host config POST to a LAN device via the add-on backend.
  * No `port`: the device setup server is fixed at :80 server-side.
  *
  * `apiFetch` throws a typed Error on any non-2xx proxy response (400 for a
