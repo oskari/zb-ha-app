@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`haCalendar` source** — Fetches upcoming events from a `calendar.*` entity
   via HA `calendar.get_events` at render time. Finnish/English label formatting,
   configurable window (`daysAhead`), event cap (`maxEvents`), and filters.
-  Replaces the `input_text` + automation workaround for e-ink calendar displays.
 - **`calendarList` element** — Composite element expanded into stacked `text`
   lines before render (same pattern as `graph`). Binds to an `haCalendar` source.
 - **Builder UI** — HA Calendar source type in Sources panel, entity browser

@@ -277,7 +277,7 @@ Use a **`calendarList`** element (see below) instead of placing multiple text li
 }
 ```
 
-Expanded into text primitives before render (same pattern as `graph`). Replaces the `input_text` + automation workaround for family calendars on e-ink displays.
+Expanded into text primitives before render (same pattern as `graph`).
 
 ---
 
