@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Version identification** — Dev builds use `X.Y.Z-dev.YYYYMMDD` in `config.yaml`
+  (visible in HA add-on Info). Runtime `/health` and Settings tab also report the
+  semver plus optional git commit from the Docker build.
+
 - **`haCalendar` source** — Fetches upcoming events from a `calendar.*` entity
   via HA `calendar.get_events` at render time. Finnish/English label formatting,
   configurable window (`daysAhead`), event cap (`maxEvents`), and filters.

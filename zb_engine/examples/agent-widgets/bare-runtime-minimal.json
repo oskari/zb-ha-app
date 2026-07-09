@@ -1,0 +1,25 @@
+{
+  "misc": {
+    "size": { "width": 267, "height": 240 },
+    "format": "png",
+    "name": "Bare runtime import",
+    "gridSize": "1x1"
+  },
+  "features": {},
+  "sources": [],
+  "elements": [
+    {
+      "type": "text",
+      "pos": { "x": 20, "y": 100 },
+      "sizeX": 227,
+      "sizeY": 40,
+      "text": "Bare payload import works too",
+      "fontFamily": "Sora",
+      "fontSize": 16,
+      "fontWeight": 600,
+      "textAlign": "center",
+      "enableFill": true,
+      "fill": 100
+    }
+  ]
+}

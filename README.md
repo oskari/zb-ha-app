@@ -1,6 +1,6 @@
 # ZerryBit Engine
 
-**Version 0.1.2 (Beta)** · Home Assistant Add-on for E-ink Displays
+**Version 0.1.3-dev.20260709 (Beta)** · Home Assistant Add-on for E-ink Displays
 
 > ⚠️ **Beta software.** ZerryBit Engine — including the Widget Builder — is in **beta**. Expect rough edges, breaking changes between releases, and APIs/payload formats that may change without notice. Not yet recommended for unattended production use. Please [report issues](https://github.com/ZerryGit/zb-ha-app/issues) and back up any widgets you create.
 
@@ -76,7 +76,7 @@ A local-first Home Assistant add-on that renders **1-bit dithered images** from 
 | `GET` | `/` | Widget Builder entrypoint (SPA fallback) |
 | `GET` | `/panel/` | Management panel static UI |
 | `GET` | `/builder/` | Widget Builder — visual dashboard designer |
-| `GET` | `/health` | Ingress readiness and renderer status |
+| `GET` | `/health` | Ingress readiness, renderer status, and engine version |
 | `GET` | `/entities` | Proxy HA entity list |
 | `GET` | `/history` | Batch-fetch HA state history |
 | `GET` | `/api/widgets` | List all saved widgets (metadata) |

@@ -1,0 +1,249 @@
+{
+  "exportVersion": 1,
+  "exportedAt": 1783617000000,
+  "name": "Karpalo",
+  "doc": {
+    "misc": {
+      "size": { "width": 720, "height": 480 },
+      "format": "png",
+      "name": "Karpalo",
+      "gridSize": "3x2",
+      "type": "",
+      "subcategory": "",
+      "tags": []
+    },
+    "features": {},
+    "sources": [
+      {
+        "id": "outdoor",
+        "name": "Ulkona",
+        "kind": "haState",
+        "enabled": true,
+        "entity_id": "sensor.outdoor_temperature"
+      },
+      {
+        "id": "weather",
+        "name": "Sää",
+        "kind": "haState",
+        "enabled": true,
+        "entity_id": "weather.home"
+      },
+      {
+        "id": "temp_hist",
+        "name": "Lämpöhistoria",
+        "kind": "haHistory",
+        "enabled": true,
+        "entity_id": "sensor.outdoor_temperature",
+        "hoursBack": 20
+      },
+      {
+        "id": "family_cal",
+        "name": "Perhekalenteri",
+        "kind": "haCalendar",
+        "enabled": true,
+        "entity_id": "calendar.family",
+        "daysAhead": 14,
+        "maxEvents": 5,
+        "includeOngoing": true,
+        "locale": "fi",
+        "eventFilter": "all"
+      }
+    ],
+    "elements": [
+      {
+        "type": "rect",
+        "id": "bg",
+        "name": "Background",
+        "visible": true,
+        "pos": { "x": 0, "y": 0 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 720,
+        "sizeY": 480,
+        "enableFill": true,
+        "fill": 0
+      },
+      {
+        "type": "text",
+        "id": "hdr_outdoor",
+        "name": "Outdoor header",
+        "visible": true,
+        "pos": { "x": 24, "y": 20 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 200,
+        "sizeY": 24,
+        "enableFill": true,
+        "fill": 100,
+        "text": "Ulkona",
+        "fallbackText": "Ulkona",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 600,
+        "textAlign": "left",
+        "lineHeight": 1.2,
+        "opacity": 100
+      },
+      {
+        "type": "text",
+        "id": "temp_main",
+        "name": "Temperature",
+        "visible": true,
+        "pos": { "x": 24, "y": 52 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 260,
+        "sizeY": 70,
+        "enableFill": true,
+        "fill": 100,
+        "text": "{{outdoor.state}}°",
+        "fallbackText": "--°",
+        "fontFamily": "Sora",
+        "fontSize": 56,
+        "fontWeight": 600,
+        "textAlign": "left",
+        "lineHeight": 1.1,
+        "opacity": 100
+      },
+      {
+        "type": "text",
+        "id": "weather_cond",
+        "name": "Weather condition",
+        "visible": true,
+        "pos": { "x": 300, "y": 72 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 380,
+        "sizeY": 30,
+        "enableFill": true,
+        "fill": 100,
+        "text": {
+          "if": [
+            { "==": [{ "$": "weather.state" }, "rainy"] },
+            "Sateista",
+            {
+              "if": [
+                { "==": [{ "$": "weather.state" }, "sunny"] },
+                "Aurinkoista",
+                {
+                  "if": [
+                    { "==": [{ "$": "weather.state" }, "partlycloudy"] },
+                    "Puolipilvistä",
+                    {
+                      "if": [
+                        { "==": [{ "$": "weather.state" }, "cloudy"] },
+                        "Pilvistä",
+                        {
+                          "if": [
+                            { "==": [{ "$": "weather.state" }, "pouring"] },
+                            "Kaatosade",
+                            {
+                              "if": [
+                                { "==": [{ "$": "weather.state" }, "fog"] },
+                                "Sumua",
+                                { "$": "weather.state" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "fallbackText": "",
+        "fontFamily": "Sora",
+        "fontSize": 20,
+        "fontWeight": 400,
+        "textAlign": "left",
+        "lineHeight": 1.2,
+        "opacity": 100
+      },
+      {
+        "type": "text",
+        "id": "temp_range",
+        "name": "High low",
+        "visible": true,
+        "pos": { "x": 24, "y": 132 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 400,
+        "sizeY": 24,
+        "enableFill": true,
+        "fill": 100,
+        "text": "Ylin {{temp_hist.max}}°  Alin {{temp_hist.min}}°",
+        "fallbackText": "",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 400,
+        "textAlign": "left",
+        "lineHeight": 1.2,
+        "opacity": 100
+      },
+      {
+        "type": "line",
+        "id": "divider",
+        "name": "Divider",
+        "visible": true,
+        "pos": { "x": 0, "y": 0 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "points": [[24, 172], [696, 172]],
+        "enableStroke": true,
+        "strokeDither": 100,
+        "strokeWidth": 2
+      },
+      {
+        "type": "text",
+        "id": "hdr_cal",
+        "name": "Calendar header",
+        "visible": true,
+        "pos": { "x": 24, "y": 188 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sizeX": 300,
+        "sizeY": 24,
+        "enableFill": true,
+        "fill": 100,
+        "text": "Perhekalenteri",
+        "fallbackText": "Perhekalenteri",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 600,
+        "textAlign": "left",
+        "lineHeight": 1.2,
+        "opacity": 100
+      },
+      {
+        "type": "calendarList",
+        "id": "family_events",
+        "name": "Family events",
+        "visible": true,
+        "pos": { "x": 24, "y": 224 },
+        "rotationDeg": 0,
+        "scale": { "x": 1, "y": 1 },
+        "origin": { "x": 0, "y": 0 },
+        "sourceId": "family_cal",
+        "lineHeight": 36,
+        "maxLines": 5,
+        "fontSize": 16,
+        "fontWeight": 400,
+        "textAlign": "left",
+        "enableFill": true,
+        "fill": 100,
+        "emptyText": "Ei tulevia tapahtumia"
+      }
+    ]
+  },
+  "fullscreen": null
+}

@@ -1,6 +1,6 @@
 {
   "name": "zb-ha-app",
-  "version": "0.1.2",
+  "version": "0.1.3-dev.20260709",
   "description": "ZerryBit E-ink Engine — Home Assistant Add-on with 1-bit rendering engine",
   "license": "MIT",
   "author": "ZerryBit",
@@ -12,6 +12,7 @@
   "bugs": "https://github.com/ZerryGit/zb-ha-app/issues",
   "main": "dist/ha/index.js",
   "scripts": {
+    "prebuild": "node scripts/stamp-version.mjs",
     "build": "npm run build:expressions && tsc",
     "build:expressions": "npm run build -w @zb/expressions",
     "build:server": "tsc",

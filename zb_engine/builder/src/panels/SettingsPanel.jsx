@@ -11,7 +11,7 @@
  * This component is platform-agnostic (core).
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDisplayConfigStore, DISPLAY_PRESETS } from '../store/displayConfigStore.js';
 import { useDocStore } from '../store/docStore.js';
 import DeviceEndpointSettings from './DeviceEndpointSettings.jsx';
@@ -19,6 +19,7 @@ import SetupModeScreen from '../components/SetupModeScreen.jsx';
 
 export default function SettingsPanel() {
   const [showSetup, setShowSetup] = useState(false);
+  const [engineVersion, setEngineVersion] = useState(null);
   const displayMode = useDisplayConfigStore((s) => s.displayMode);
   const setDisplayMode = useDisplayConfigStore((s) => s.setDisplayMode);
   const widgetMode = useDisplayConfigStore((s) => s.widgetMode);
@@ -59,6 +60,20 @@ export default function SettingsPanel() {
     setCustomSize(customWidth, val);
     queueMicrotask(() => { refreshCompanionSizes(); });
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/health')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.version) return;
+        const parts = [data.version];
+        if (data.build?.commit) parts.push(data.build.commit);
+        setEngineVersion(parts.join(' · '));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="panel-body">
@@ -154,6 +169,15 @@ export default function SettingsPanel() {
             Set up a device / send config…
           </button>
         </div>
+
+        {engineVersion && (
+          <p
+            className="settings-hint"
+            style={{ marginTop: '24px', marginBottom: 0, opacity: 0.7 }}
+          >
+            Engine {engineVersion}
+          </p>
+        )}
       </div>
 
       {/* Embedded two-tile setup modal. We're already in the editor, so nothing

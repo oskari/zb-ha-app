@@ -52,13 +52,13 @@ describe("ingress observability", () => {
     const res = await request(ingressApp).get("/health");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({
-      status: "ok",
-      components: {
-        ingress: "ready",
-        renderer: "ready",
-        storage: "configured",
-      },
+    expect(res.body.status).toBe("ok");
+    expect(typeof res.body.version).toBe("string");
+    expect(res.body.version.length).toBeGreaterThan(0);
+    expect(res.body.components).toEqual({
+      ingress: "ready",
+      renderer: "ready",
+      storage: "configured",
     });
     const bodyText = JSON.stringify(res.body);
     expect(bodyText).not.toContain("/data");

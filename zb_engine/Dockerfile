@@ -33,10 +33,11 @@ RUN npm ci --ignore-scripts
 COPY packages/zb-expressions/ ./packages/zb-expressions/
 RUN npm -w @zb/expressions run build
 
-# Copy TypeScript source & config, compile
+# Copy TypeScript source & config, stamp build identity, compile
 COPY tsconfig.json ./
+COPY scripts/stamp-version.mjs ./scripts/
 COPY src/ ./src/
-RUN npx tsc
+RUN node scripts/stamp-version.mjs && npx tsc
 
 # ── Stage 3: Runtime ───────────────────────────────────────────
 FROM node:20-alpine AS runner

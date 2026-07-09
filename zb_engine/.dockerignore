@@ -5,6 +5,7 @@
 **/node_modules/
 dist/
 builder/dist/
+src/version.json
 *.tsbuildinfo
 
 # ── Source (compiled in Dockerfile Stage 1) ────────────────────

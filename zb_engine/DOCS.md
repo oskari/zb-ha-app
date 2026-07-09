@@ -1,6 +1,6 @@
 # ZerryBit Engine — Documentation
 
-**Version 0.1.2**
+**Version 0.1.3-dev.20260709**
 
 > **Note.** For the builder SPA API, see [`BUILDER_API.md`](BUILDER_API.md).
 > Port `8000` is read-only (image serving for ESP32 devices). All write
@@ -10,7 +10,7 @@
 
 ## Overview
 
-ZerryBit Engine (v0.1.2) is a self-contained TypeScript rendering pipeline
+ZerryBit Engine (v0.1.3-dev.20260709) is a self-contained TypeScript rendering pipeline
 built into a Home Assistant Add-on. It accepts a declarative JSON payload,
 optionally fetches live data from HA entities and external APIs, and renders a
 1-bit dithered image for E-ink displays (ESP32 and similar devices). Includes a
@@ -630,3 +630,18 @@ cd builder && npx vitest run  # run builder tests
 - Ports: 8099 (ingress UI + builder), 8000 (ESP32 endpoint)
 - Fonts: loaded from `fonts/latin/` at startup
 - Payload: edit `payload.json`, then hit `/image.png`
+
+### Versioning
+
+Home Assistant reads the add-on **Version** from `config.yaml` in the repository
+(Settings → Add-ons → ZerryBit Engine → Info). Use:
+
+| Kind | Example | When |
+|------|---------|------|
+| Release | `0.1.3` | Tagged release; bump `config.yaml`, `package.json`, and `CHANGELOG.md` together |
+| Dev build | `0.1.3-dev.20260709` | Unreleased work pushed to the repo; date suffix makes builds identifiable in HA |
+| Runtime detail | `GET /health` → `{ version, build: { builtAt, commit } }` | Exact image identity inside the container (Settings tab shows this too) |
+
+`npm run build` and the Docker image run `scripts/stamp-version.mjs`, which writes
+`src/version.json` (gitignored) with build time and an optional git short SHA when
+`.git` is available.

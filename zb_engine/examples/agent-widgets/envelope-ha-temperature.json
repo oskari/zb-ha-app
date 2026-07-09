@@ -1,0 +1,77 @@
+{
+  "exportVersion": 1,
+  "exportedAt": 1739123456789,
+  "name": "Agent demo — temperature",
+  "doc": {
+    "misc": {
+      "size": { "width": 400, "height": 240 },
+      "format": "png",
+      "name": "Agent demo — temperature",
+      "gridSize": "2x1"
+    },
+    "features": {
+      "label": "Indoor"
+    },
+    "sources": [
+      {
+        "id": "temp",
+        "kind": "haState",
+        "entity_id": "sensor.living_room_temperature",
+        "enabled": true
+      }
+    ],
+    "elements": [
+      {
+        "type": "rect",
+        "pos": { "x": 0, "y": 0 },
+        "sizeX": 400,
+        "sizeY": 240,
+        "enableFill": true,
+        "fill": 0,
+        "enableStroke": true,
+        "strokeWidth": 2,
+        "strokeDither": 100
+      },
+      {
+        "type": "text",
+        "pos": { "x": 16, "y": 24 },
+        "sizeX": 368,
+        "sizeY": 28,
+        "text": "{{features.label}}",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 400,
+        "textAlign": "left",
+        "enableFill": true,
+        "fill": 100
+      },
+      {
+        "type": "text",
+        "pos": { "x": 16, "y": 72 },
+        "sizeX": 368,
+        "sizeY": 80,
+        "text": "{{temp.state}}",
+        "fontFamily": "Sora",
+        "fontSize": 44,
+        "fontWeight": 600,
+        "textAlign": "left",
+        "enableFill": true,
+        "fill": 100
+      },
+      {
+        "type": "text",
+        "pos": { "x": 16, "y": 168 },
+        "sizeX": 368,
+        "sizeY": 24,
+        "text": "{{temp.attributes.unit_of_measurement}}",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 300,
+        "textAlign": "left",
+        "enableFill": true,
+        "fill": 100
+      }
+    ]
+  },
+  "fullscreen": null
+}

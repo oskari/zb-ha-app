@@ -18,6 +18,7 @@ import * as crypto from "crypto";
 import { z } from "zod";
 
 import { payloadSchema, fullscreenPayloadSchema } from "../schema/payloadSchema";
+import { BUILD_INFO } from "../version";
 import {
   sourceSchema,
   haStateSourceSchema,
@@ -319,6 +320,15 @@ export function createIngressApp(adapter: PlatformAdapter): AppContext {
     const status = shuttingDown ? "shutting_down" : "ok";
     res.status(shuttingDown ? 503 : 200).json({
       status,
+      version: BUILD_INFO.version,
+      ...(BUILD_INFO.builtAt || BUILD_INFO.commit
+        ? {
+            build: {
+              ...(BUILD_INFO.builtAt ? { builtAt: BUILD_INFO.builtAt } : {}),
+              ...(BUILD_INFO.commit ? { commit: BUILD_INFO.commit } : {}),
+            },
+          }
+        : {}),
       components: {
         ingress: shuttingDown ? "stopping" : "ready",
         renderer: renderGuard.isLocked() ? "busy" : "ready",
