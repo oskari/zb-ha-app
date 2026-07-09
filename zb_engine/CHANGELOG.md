@@ -5,43 +5,6 @@ All notable changes to ZerryBit Engine are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Fixed
-
-- **Dev version bumps for HA updates** — use `0.1.3.devN` (not
-  `0.1.3-dev.YYYYMMDD.N`); Supervisor's AwesomeVersion parser treats an extra
-  dot suffix as incomparable and will not offer an update.
-- **`haCalendar` HTTP 400** — `calendar.get_events` now calls the REST API with
-  `?return_response` and parses events from the `service_response` envelope.
-
-### Added
-
-- **Widget file import / export (Builder).** Export the active widget as a
-  versioned JSON envelope (`exportVersion: 1`) from the top bar; import via the
-  welcome screen or widget dropdown (always creates a new widget). Missing
-  uploaded asset references (`asset:<filename>`) are detected and the user can
-  proceed with a warning. JSON tab adds slot-level Download / Upload; file I/O
-  for the JSON tab is injected via `JsonSlotTransferProvider` so core panels
-  stay platform-agnostic.
-- **Agent widget authoring guide.** [`AGENT_WIDGET_AUTHORING.md`](AGENT_WIDGET_AUTHORING.md)
-  documents the import file format, runtime payload shape, sources, elements,
-  bindings, and validation checklist for AI agents and offline generators.
-  Sample import files live in [`examples/agent-widgets/`](examples/agent-widgets/).
-
-- **Version identification** — Dev builds use `X.Y.Z.devN` in `config.yaml`
-  (visible in HA add-on Info). Runtime `/health` and Settings tab also report the
-  semver plus optional git commit from the Docker build.
-
-- **`haCalendar` source** — Fetches upcoming events from a `calendar.*` entity
-  via HA `calendar.get_events` at render time. Finnish/English label formatting,
-  configurable window (`daysAhead`), event cap (`maxEvents`), and filters.
-  Replaces the `input_text` + automation workaround for e-ink calendar displays.
-- **`calendarList` element** — Composite element expanded into stacked `text`
-  lines before render (same pattern as `graph`). Binds to an `haCalendar` source.
-- **Builder UI** — HA Calendar source type in Sources panel, entity browser
-  filtered to `calendar.*`, calendar list inspector, and canvas preview.
-
 ## 0.1.2
 
 ### Added
