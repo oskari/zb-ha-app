@@ -35,14 +35,35 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
         />
       </Field>
 
+      <Field label="Layout">
+        <Dropdown
+          value={element.layout === 'compact' ? 'compact' : 'card'}
+          onChange={(val) => {
+            const lineHeight = element.lineHeight ?? 36;
+            const maxLines = element.maxLines ?? 5;
+            const linesPerEvent = val === 'card' ? 2 : 1;
+            updateElement(element.id, {
+              layout: val,
+              sizeY: lineHeight * linesPerEvent * maxLines,
+            });
+          }}
+          options={[
+            { value: 'card', label: 'Card (HA-style date + subtitle)' },
+            { value: 'compact', label: 'Compact (single line)' },
+          ]}
+        />
+      </Field>
+
       <Field label="Max Lines">
         <NumberInput
           value={element.maxLines ?? 5}
           onChange={(val) => {
             const lineHeight = element.lineHeight ?? 36;
+            const layout = element.layout === 'compact' ? 'compact' : 'card';
+            const linesPerEvent = layout === 'card' ? 2 : 1;
             updateElement(element.id, {
               maxLines: val,
-              sizeY: lineHeight * val,
+              sizeY: lineHeight * linesPerEvent * val,
             });
           }}
           min={1}
@@ -56,9 +77,11 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
           value={element.lineHeight ?? 36}
           onChange={(val) => {
             const maxLines = element.maxLines ?? 5;
+            const layout = element.layout === 'compact' ? 'compact' : 'card';
+            const linesPerEvent = layout === 'card' ? 2 : 1;
             updateElement(element.id, {
               lineHeight: val,
-              sizeY: val * maxLines,
+              sizeY: val * linesPerEvent * maxLines,
             });
           }}
           min={8}

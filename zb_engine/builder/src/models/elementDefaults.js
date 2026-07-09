@@ -183,7 +183,8 @@ export function createElement(type, partialOverrides) {
     case 'calendarList':
       typedDefaults = {
         sizeX: 400,
-        sizeY: 180,
+        sizeY: 360,
+        layout: 'card',
         sourceId: '',
         lineHeight: 36,
         maxLines: 5,

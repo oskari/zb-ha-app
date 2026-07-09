@@ -21,6 +21,9 @@ const sampleSourceData: HaCalendarResult = {
       start_ts: 1,
       end_ts: 2,
       label: "pe 10.07. 13:00 A",
+      subtitle: "13:00 - 15:00",
+      relative_label: "",
+      date_heading: "pe 10.7.",
       date_label: "10.07.",
       time_label: "13:00",
       weekday_short: "pe",
@@ -33,6 +36,9 @@ const sampleSourceData: HaCalendarResult = {
       start_ts: 3,
       end_ts: 4,
       label: "la 11.07. 10:00 B",
+      subtitle: "10:00 - 11:00",
+      relative_label: "",
+      date_heading: "la 11.7.",
       date_label: "11.07.",
       time_label: "10:00",
       weekday_short: "la",
@@ -45,6 +51,9 @@ const sampleSourceData: HaCalendarResult = {
       start_ts: 5,
       end_ts: 6,
       label: "su 12.07. 09:00 C",
+      subtitle: "09:00 - 10:00",
+      relative_label: "",
+      date_heading: "su 12.7.",
       date_label: "12.07.",
       time_label: "09:00",
       weekday_short: "su",
@@ -53,7 +62,7 @@ const sampleSourceData: HaCalendarResult = {
 };
 
 describe("expandCalendarListElements", () => {
-  it("expands 3 events into text primitives at correct y offsets", () => {
+  it("expands card layout into title + subtitle lines", () => {
     const ctx = createDataContext();
     ctx.family_cal = sampleSourceData;
 
@@ -65,6 +74,7 @@ describe("expandCalendarListElements", () => {
         pos: { x: 24, y: 224 },
         lineHeight: 36,
         maxLines: 5,
+        layout: "card",
         fontSize: 16,
         enableFill: true,
         fill: 100,
@@ -73,6 +83,29 @@ describe("expandCalendarListElements", () => {
     );
 
     expect(errors).toEqual([]);
+    expect(elements).toHaveLength(6);
+    expect(elements[0]).toMatchObject({ type: "text", text: "pe 10.07. 13:00 A", pos: { x: 24, y: 224 } });
+    expect(elements[1]).toMatchObject({ type: "text", text: "13:00 - 15:00", pos: { x: 24, y: 260 } });
+    expect(elements[2]).toMatchObject({ type: "text", pos: { x: 24, y: 296 } });
+    expect(elements[3]).toMatchObject({ type: "text", pos: { x: 24, y: 332 } });
+  });
+
+  it("expands compact layout into one line per event", () => {
+    const ctx = createDataContext();
+    ctx.family_cal = sampleSourceData;
+
+    const { elements } = expandCalendarListElements(
+      [{
+        type: "calendarList",
+        sourceId: "family_cal",
+        pos: { x: 24, y: 224 },
+        lineHeight: 36,
+        maxLines: 5,
+        layout: "compact",
+      }],
+      ctx,
+    );
+
     expect(elements).toHaveLength(3);
     expect(elements[0]).toMatchObject({ type: "text", text: "pe 10.07. 13:00 A", pos: { x: 24, y: 224 } });
     expect(elements[1]).toMatchObject({ type: "text", pos: { x: 24, y: 260 } });
@@ -108,6 +141,7 @@ describe("expandCalendarListElements", () => {
         pos: { x: 0, y: 0 },
         maxLines: 2,
         lineHeight: 20,
+        layout: "compact",
       }],
       ctx,
     );
