@@ -79,6 +79,7 @@ export interface HaCalendarSourceDef {
   includeOngoing?: unknown;
   locale: "en" | "fi";
   eventFilter: "all" | "timed" | "all_day";
+  labelFormat?: "compact" | "card";
   dataFields?: DataFieldDef[];
 }
 
@@ -96,6 +97,9 @@ export interface HaCalendarEvent {
   start_ts: number;
   end_ts: number;
   label: string;
+  subtitle: string;
+  relative_label: string;
+  date_heading: string;
   date_label: string;
   time_label: string;
   weekday_short: string;

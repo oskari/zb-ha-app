@@ -8,7 +8,7 @@
 import { resolveValue, type DataContext } from "@zb/expressions";
 import { logError } from "../../core/logger";
 import { MAX_CALENDAR_LIST_LINES } from "../../limits";
-import type { HaCalendarResult } from "../sourceFetcher";
+import type { HaCalendarEvent, HaCalendarResult } from "../sourceFetcher";
 
 function num(v: unknown, fallback: number): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -31,6 +31,38 @@ export interface ExpandResult {
   errors: string[];
 }
 
+function pushTextLine(
+  out: Record<string, unknown>[],
+  baseX: number,
+  baseY: number,
+  text: string,
+  fontSize: number,
+  fontWeight: number,
+  textAlign: string,
+  enableFill: boolean,
+  fill: number,
+  opacity: number,
+): void {
+  if (!text) return;
+  out.push({
+    type: "text",
+    visible: true,
+    pos: { x: baseX, y: baseY },
+    sizeX: 0,
+    sizeY: 0,
+    text,
+    fallbackText: "",
+    fontFamily: "sans-serif",
+    fontSize,
+    fontWeight,
+    textAlign,
+    lineHeight: 1.2,
+    enableFill,
+    fill,
+    opacity,
+  });
+}
+
 function expandCalendarListElement(
   raw: Record<string, unknown>,
   ctx: DataContext,
@@ -47,12 +79,17 @@ function expandCalendarListElement(
   const baseX = num(resolveValue(posRaw?.x, ctx), 0);
   const baseY = num(resolveValue(posRaw?.y, ctx), 0);
   const lineHeight = num(resolveValue(raw.lineHeight, ctx), 36);
+  const layout = str(resolveValue(raw.layout, ctx), "card") === "compact" ? "compact" : "card";
+  const linesPerEvent = layout === "card" ? 2 : 1;
+  const blockHeight = lineHeight * linesPerEvent;
   const maxLines = Math.min(
     num(resolveValue(raw.maxLines, ctx), 5),
     MAX_CALENDAR_LIST_LINES,
   );
   const fontSize = num(resolveValue(raw.fontSize, ctx), 16);
   const fontWeight = num(resolveValue(raw.fontWeight, ctx), 400);
+  const subtitleFontSizeRaw = num(resolveValue(raw.subtitleFontSize, ctx), 0);
+  const subtitleFontSize = subtitleFontSizeRaw > 0 ? subtitleFontSizeRaw : Math.max(8, fontSize - 2);
   const textAlign = str(resolveValue(raw.textAlign, ctx), "left");
   const enableFill = bool(resolveValue(raw.enableFill, ctx), true);
   const fill = num(resolveValue(raw.fill, ctx), 100);
@@ -61,34 +98,35 @@ function expandCalendarListElement(
 
   const sourceData = sourceId ? (ctx[sourceId] as HaCalendarResult | undefined) : undefined;
   const events = Array.isArray(sourceData?.events) ? sourceData.events : [];
-  const lineCount = events.length === 0 ? 1 : Math.min(maxLines, events.length);
+  const eventCount = events.length === 0 ? 1 : Math.min(maxLines, events.length);
 
   const out: Record<string, unknown>[] = [];
 
-  for (let i = 0; i < lineCount; i++) {
-    const text = events.length === 0
-      ? (i === 0 ? emptyText : "")
-      : (events[i]?.label ?? "");
+  for (let i = 0; i < eventCount; i++) {
+    const y = baseY + i * blockHeight;
 
-    if (!text && events.length > 0) continue;
+    if (events.length === 0) {
+      pushTextLine(out, baseX, y, emptyText, fontSize, fontWeight, textAlign, enableFill, fill, opacity);
+      continue;
+    }
 
-    out.push({
-      type: "text",
-      visible: true,
-      pos: { x: baseX, y: baseY + i * lineHeight },
-      sizeX: 0,
-      sizeY: 0,
-      text,
-      fallbackText: "",
-      fontFamily: "sans-serif",
-      fontSize,
-      fontWeight,
-      textAlign,
-      lineHeight: 1.2,
-      enableFill,
-      fill,
-      opacity,
-    });
+    const event = events[i] as HaCalendarEvent;
+    pushTextLine(out, baseX, y, event.label ?? "", fontSize, fontWeight, textAlign, enableFill, fill, opacity);
+
+    if (layout === "card" && event.subtitle) {
+      pushTextLine(
+        out,
+        baseX,
+        y + lineHeight,
+        event.subtitle,
+        subtitleFontSize,
+        300,
+        textAlign,
+        enableFill,
+        fill,
+        opacity,
+      );
+    }
   }
 
   return out;

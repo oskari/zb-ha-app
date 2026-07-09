@@ -94,6 +94,17 @@ export default function HaCalendarSourceFields({ source, sourceId, updateSource,
         />
       </Field>
 
+      <Field label="Label Format">
+        <Dropdown
+          value={source.labelFormat === 'compact' ? 'compact' : 'card'}
+          onChange={(val) => updateSource(sourceId, { labelFormat: val })}
+          options={[
+            { value: 'card', label: 'Card (HA-style)' },
+            { value: 'compact', label: 'Compact (single line)' },
+          ]}
+        />
+      </Field>
+
       <Field label="Event Filter">
         <Dropdown
           value={source.eventFilter || 'all'}

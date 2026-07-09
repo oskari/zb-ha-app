@@ -89,13 +89,28 @@ describe("calendarEvent normalization", () => {
     expect(timed.all_day).toBe(false);
   });
 
-  it("formats Finnish timed label", () => {
+  it("formats Finnish timed label (compact)", () => {
     const ts = parseHaCalendarTimestamp("2026-07-10T13:00:00+03:00", "start", false);
-    const event = normalizeRawCalendarEvent(fixture[1], "fi");
+    const event = normalizeRawCalendarEvent(fixture[1], "fi", "compact");
     expect(event.summary).toBe("Team standup");
     expect(event.label).toContain("Team standup");
     expect(event.time_label).toMatch(/^\d{2}:\d{2}$/);
     expect(event.start_ts).toBe(ts);
+  });
+
+  it("formats English card-style labels like HA calendar", () => {
+    const now = Date.parse("2026-07-09T12:00:00+03:00");
+    const holiday = normalizeRawCalendarEvent(fixture[0], "en", "card", now);
+    expect(holiday.date_heading).toBe("Mon 22 Jun");
+    expect(holiday.label).toContain("Summer holiday");
+    expect(holiday.subtitle).toMatch(/^All Day, until /);
+    expect(holiday.relative_label).toBe("");
+
+    const timed = normalizeRawCalendarEvent(fixture[1], "en", "card", now);
+    expect(timed.date_heading).toBe("Fri 10 Jul");
+    expect(timed.label).toContain("Team standup");
+    expect(timed.label).toContain("(in a day)");
+    expect(timed.subtitle).toBe("13:00 - 15:00");
   });
 
   it("excludes past-ended events", () => {
