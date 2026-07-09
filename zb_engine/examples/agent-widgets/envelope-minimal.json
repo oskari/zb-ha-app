@@ -1,0 +1,47 @@
+{
+  "exportVersion": 1,
+  "exportedAt": 1739123456789,
+  "name": "Agent demo — static",
+  "doc": {
+    "misc": {
+      "size": { "width": 296, "height": 128 },
+      "format": "png",
+      "name": "Agent demo — static",
+      "gridSize": "1x1"
+    },
+    "features": {},
+    "sources": [],
+    "elements": [
+      {
+        "type": "rect",
+        "pos": { "x": 0, "y": 0 },
+        "sizeX": 296,
+        "sizeY": 128,
+        "enableFill": true,
+        "fill": 0
+      },
+      {
+        "type": "line",
+        "pos": { "x": 10, "y": 40 },
+        "points": [[0, 0], [276, 0]],
+        "enableStroke": true,
+        "strokeWidth": 1,
+        "strokeDither": 100
+      },
+      {
+        "type": "text",
+        "pos": { "x": 10, "y": 52 },
+        "sizeX": 276,
+        "sizeY": 60,
+        "text": "Imported from agent JSON",
+        "fontFamily": "Sora",
+        "fontSize": 16,
+        "fontWeight": 600,
+        "textAlign": "center",
+        "enableFill": true,
+        "fill": 100
+      }
+    ]
+  },
+  "fullscreen": null
+}

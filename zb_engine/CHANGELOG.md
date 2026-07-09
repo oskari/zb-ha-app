@@ -5,6 +5,22 @@ All notable changes to ZerryBit Engine are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Widget file import / export (Builder).** Export the active widget as a
+  versioned JSON envelope (`exportVersion: 1`) from the top bar; import via the
+  welcome screen or widget dropdown (always creates a new widget). Missing
+  uploaded asset references (`asset:<filename>`) are detected and the user can
+  proceed with a warning. JSON tab adds slot-level Download / Upload; file I/O
+  for the JSON tab is injected via `JsonSlotTransferProvider` so core panels
+  stay platform-agnostic.
+- **Agent widget authoring guide.** [`AGENT_WIDGET_AUTHORING.md`](AGENT_WIDGET_AUTHORING.md)
+  documents the import file format, runtime payload shape, sources, elements,
+  bindings, and validation checklist for AI agents and offline generators.
+  Sample import files live in [`examples/agent-widgets/`](examples/agent-widgets/).
+
 ## 0.1.2
 
 ### Added

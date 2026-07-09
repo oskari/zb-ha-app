@@ -223,6 +223,8 @@ Downloads a versioned envelope:
 
 The JSON panel also offers **Download** / **Upload** for the currently focused slot (primary or fullscreen). Upload replaces the open slot in the editor; Top-bar import creates a new widget.
 
+**AI / agent authoring:** See [`AGENT_WIDGET_AUTHORING.md`](AGENT_WIDGET_AUTHORING.md) and [`examples/agent-widgets/`](examples/agent-widgets/) for a machine-oriented format guide and sample import files.
+
 ---
 
 ## 3. Entity Data Flow

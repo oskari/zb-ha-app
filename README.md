@@ -189,6 +189,8 @@ Deploy via the builder or `PUT /payload`. The HA adapter persists the active pri
 | `sources` | HTTP APIs, HA state, or HA entity history — fetched at render time |
 | `elements` | Ordered drawing commands (index 0 = bottom layer) |
 
+**AI agents** generating importable widget files: see [`zb_engine/AGENT_WIDGET_AUTHORING.md`](zb_engine/AGENT_WIDGET_AUTHORING.md) and sample JSON in [`zb_engine/examples/agent-widgets/`](zb_engine/examples/agent-widgets/).
+
 ---
 
 ## Element Types
