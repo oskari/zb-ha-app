@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sized to the full device screen from the sidebar toggle — 720×480 with the
   sidebar column reserved, 800×480 without.
 
+### Fixed
+
+- **Auto-save no longer wedges after a skipped save.** An internal "saving"
+  flag could stay stuck on when a save was skipped mid-flight, silently
+  disabling auto-save until the page was reloaded; it now clears correctly.
+
 ### Documentation
 
 - Brought the ESP32 `.bin` endpoint documentation in line with the
