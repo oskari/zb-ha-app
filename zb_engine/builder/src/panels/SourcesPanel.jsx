@@ -393,11 +393,14 @@ export default function SourcesPanel() {
                   });
                 } else if (sourceKind === 'haCalendar') {
                   const maxLines = Math.min(selectedSource.maxEvents || 5, 5);
+                  const lineHeight = 36;
                   addElement('calendarList', {
                     sourceId: selectedSource.id,
                     pos: { x: 24, y: h / 2 - 40 },
+                    sizeX: Math.max(200, w - 48),
+                    sizeY: lineHeight * maxLines,
                     maxLines,
-                    lineHeight: 36,
+                    lineHeight,
                     fontSize: 16,
                     fontWeight: 400,
                     emptyText: 'Ei tulevia tapahtumia',

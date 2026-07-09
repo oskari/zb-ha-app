@@ -28,7 +28,7 @@ import {
 
 function CommonFields({ element, updateElement }) {
   const isLine = element.type === 'line';
-  const hideSize = isLine || element.type === 'calendarList';
+  const hideSize = isLine;
   const isLocked = useUiStore((s) => !!s.lockedElementIds[element.id]);
   const toggleLock = useUiStore((s) => s.toggleElementLock);
 

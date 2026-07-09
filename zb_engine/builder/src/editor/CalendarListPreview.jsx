@@ -2,8 +2,9 @@
  * CalendarListPreview.jsx — Konva preview for calendarList elements
  */
 
-import { Text } from 'react-konva';
+import { Rect, Text } from 'react-konva';
 import BitmapText from '../components/BitmapText.jsx';
+import { getCalendarListBounds } from './calendarListBounds.js';
 
 function num(v, fallback) {
   const n = Number(v);
@@ -11,8 +12,7 @@ function num(v, fallback) {
 }
 
 export default function CalendarListPreview({ element, sourceData }) {
-  const baseX = num(element.pos?.x, 0);
-  const baseY = num(element.pos?.y, 0);
+  const { width, height } = getCalendarListBounds(element);
   const lineHeight = num(element.lineHeight, 36);
   const maxLines = Math.min(num(element.maxLines, 5), 20);
   const fontSize = num(element.fontSize, 16);
@@ -33,8 +33,8 @@ export default function CalendarListPreview({ element, sourceData }) {
     lines.push(
       <BitmapText
         key={`cal-line-${i}`}
-        x={baseX}
-        y={baseY + i * lineHeight}
+        x={0}
+        y={i * lineHeight}
         text={label}
         fontSize={fontSize}
         fontWeight={fontWeight}
@@ -46,18 +46,37 @@ export default function CalendarListPreview({ element, sourceData }) {
   }
 
   if (lines.length === 0) {
-    return (
+    lines.push(
       <Text
-        x={baseX}
-        y={baseY}
+        key="cal-empty"
+        x={0}
+        y={0}
+        width={width}
         text={emptyText}
         fontSize={fontSize}
         fontStyle={fontWeight >= 600 ? 'bold' : 'normal'}
         opacity={opacity}
         listening={false}
-      />
+      />,
     );
   }
 
-  return <>{lines}</>;
+  return (
+    <>
+      {/* Hit area — parent Group receives clicks/drags; text does not listen */}
+      <Rect x={0} y={0} width={width} height={height} fill="transparent" />
+      {/* Builder outline so the layer box is visible before selection */}
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        stroke="#999"
+        strokeWidth={1}
+        dash={[4, 4]}
+        listening={false}
+      />
+      {lines}
+    </>
+  );
 }

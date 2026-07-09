@@ -38,7 +38,13 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
       <Field label="Max Lines">
         <NumberInput
           value={element.maxLines ?? 5}
-          onChange={(val) => updateElement(element.id, { maxLines: val })}
+          onChange={(val) => {
+            const lineHeight = element.lineHeight ?? 36;
+            updateElement(element.id, {
+              maxLines: val,
+              sizeY: lineHeight * val,
+            });
+          }}
           min={1}
           max={20}
           step={1}
@@ -48,7 +54,13 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
       <Field label="Line Height">
         <NumberInput
           value={element.lineHeight ?? 36}
-          onChange={(val) => updateElement(element.id, { lineHeight: val })}
+          onChange={(val) => {
+            const maxLines = element.maxLines ?? 5;
+            updateElement(element.id, {
+              lineHeight: val,
+              sizeY: val * maxLines,
+            });
+          }}
           min={8}
           max={120}
           step={1}
