@@ -81,6 +81,8 @@ describe("sourceSchema: haCalendar", () => {
 });
 
 describe("calendarEvent normalization", () => {
+  const now = Date.parse("2026-07-09T12:00:00+03:00");
+
   it("detects all-day vs timed events", () => {
     const allDay = normalizeRawCalendarEvent(fixture[0], "fi");
     expect(allDay.all_day).toBe(true);
@@ -89,28 +91,45 @@ describe("calendarEvent normalization", () => {
     expect(timed.all_day).toBe(false);
   });
 
-  it("formats Finnish timed label (compact)", () => {
+  it("formats Finnish timed standalone label and detail", () => {
     const ts = parseHaCalendarTimestamp("2026-07-10T13:00:00+03:00", "start", false);
-    const event = normalizeRawCalendarEvent(fixture[1], "fi", "compact");
+    const event = normalizeRawCalendarEvent(fixture[1], "fi");
     expect(event.summary).toBe("Team standup");
-    expect(event.label).toContain("Team standup");
+    expect(event.label).toBe("pe 10. 13:00 Team standup");
+    expect(event.detail_label).toBe("13:00 Team standup");
     expect(event.time_label).toMatch(/^\d{2}:\d{2}$/);
     expect(event.start_ts).toBe(ts);
   });
 
-  it("formats English card-style labels like HA calendar", () => {
-    const now = Date.parse("2026-07-09T12:00:00+03:00");
-    const holiday = normalizeRawCalendarEvent(fixture[0], "en", "card", now);
+  it("formats English labels and detail without days-until by default", () => {
+    const holiday = normalizeRawCalendarEvent(fixture[0], "en", false, now);
     expect(holiday.date_heading).toBe("Mon 22 Jun");
     expect(holiday.label).toContain("Summer holiday");
-    expect(holiday.subtitle).toMatch(/^All Day, until /);
+    expect(holiday.detail_label).toContain("Summer holiday");
+    expect(holiday.subtitle).toBe("");
     expect(holiday.relative_label).toBe("");
 
-    const timed = normalizeRawCalendarEvent(fixture[1], "en", "card", now);
+    const timed = normalizeRawCalendarEvent(fixture[1], "en", false, now);
     expect(timed.date_heading).toBe("Fri 10 Jul");
-    expect(timed.label).toContain("Team standup");
-    expect(timed.label).toContain("(in a day)");
-    expect(timed.subtitle).toBe("13:00 - 15:00");
+    expect(timed.label).toBe("Fri 10 13:00 Team standup");
+    expect(timed.detail_label).toBe("13:00 Team standup");
+  });
+
+  it("appends short days-until suffix on standalone label when enabled", () => {
+    const timedFi = normalizeRawCalendarEvent(fixture[1], "fi", true, now);
+    expect(timedFi.relative_label).toBe("(+1pv)");
+    expect(timedFi.label).toBe("pe 10. 13:00 Team standup (+1pv)");
+    expect(timedFi.detail_label).toBe("13:00 Team standup");
+
+    const timedEn = normalizeRawCalendarEvent(fixture[1], "en", true, now);
+    expect(timedEn.relative_label).toBe("(+1d)");
+    expect(timedEn.label).toBe("Fri 10 13:00 Team standup (+1d)");
+  });
+
+  it("omits suffix for today or past start days", () => {
+    const today = normalizeRawCalendarEvent(fixture[1], "fi", true, Date.parse("2026-07-10T08:00:00+03:00"));
+    expect(today.relative_label).toBe("");
+    expect(today.label).toBe("pe 10. 13:00 Team standup");
   });
 
   it("excludes past-ended events", () => {

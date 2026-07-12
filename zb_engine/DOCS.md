@@ -471,13 +471,23 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
 - `includeOngoing` — include events that started but have not ended (default true)
 - `locale` — `"fi"` (default) or `"en"` for label formatting
 - `eventFilter` — `"all"` \| `"timed"` \| `"all_day"`
+- `showDaysUntil` — append short suffix `(+Npv)` / `(+Nd)` on date heading or standalone line (default false)
+
+**Label format** (dense, e-ink friendly):
+
+- Timed: `pe 10. 13:00 Team standup` (FI) / `Fri 10 13:00 Team standup` (EN)
+- All-day: no time segment — `pe 10. Summer holiday`
+- Multi-day all-day: compact range — `pe 10.–10.8. Summer holiday`
+- Same start day (2+ events): one date heading, then detail lines without repeated date
+- Optional days-until: on heading when grouped, on standalone line when alone
 
 **Data context** exposed as `{sourceId.*}`:
 
 - `count` — number of events after cap
 - `truncated` — `true` if more events existed than `maxEvents`
 - `events[]` — each with `summary`, `start`, `end`, `all_day`, `start_ts`,
-  `end_ts`, `label`, `date_label`, `time_label`, `weekday_short`
+  `end_ts`, `label`, `detail_label`, `date_heading`, `relative_label`,
+  `date_label`, `time_label`, `weekday_short`
 
 **Example:**
 
@@ -496,9 +506,9 @@ the frozen draw engine). Binds to an `haCalendar` source.
 | Field | Default | Notes |
 |-------|---------|-------|
 | `sourceId` | — | `haCalendar` source id |
-| `lineHeight` | 36 | Vertical spacing between lines |
-| `maxLines` | 5 | Max rows (1–20) |
-| `fontSize` / `fontWeight` | 16 / 400 | Text styling |
+| `lineHeight` | 20 | Vertical spacing between rendered lines |
+| `maxLines` | 5 | Max rendered rows including group headings (1–20) |
+| `fontSize` / `fontWeight` | 12 / 400 | Text styling (date headings render at weight 600) |
 | `emptyText` | `Ei tulevia tapahtumia` | Shown when no upcoming events |
 
 ### `elements`

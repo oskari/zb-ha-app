@@ -135,7 +135,7 @@ export const haCalendarSourceSchema = z.object({
   includeOngoing: z.unknown().default(true),
   locale: z.enum(["en", "fi"]).default("fi"),
   eventFilter: z.enum(["all", "timed", "all_day"]).default("all"),
-  labelFormat: z.enum(["compact", "card"]).default("card"),
+  showDaysUntil: z.unknown().default(false),
   dataFields: z.array(dataFieldSchema).max(100).default([]),
 });
 

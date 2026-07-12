@@ -279,8 +279,6 @@ const calendarListSchema = z.object({
   enableFill: z.unknown().default(true),
   fill: z.unknown().default(100),
   emptyText: z.unknown().default("Ei tulevia tapahtumia"),
-  layout: z.enum(["compact", "card"]).default("card"),
-  subtitleFontSize: z.unknown().default(0),
 });
 
 // ── Discriminated union (with lazy for group recursion) ────────

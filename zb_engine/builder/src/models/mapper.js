@@ -231,8 +231,6 @@ const ELEMENT_KNOWN_KEYS = new Set([
   // CalendarList-specific (consumed by calendar expander at render time)
   'maxLines',
   'emptyText',
-  'layout',
-  'subtitleFontSize',
 
   'extra',
 ]);
@@ -264,7 +262,7 @@ const SOURCE_KNOWN_KEYS = new Set([
   'includeOngoing',
   'locale',
   'eventFilter',
-  'labelFormat',
+  'showDaysUntil',
 ]);
 
 /**

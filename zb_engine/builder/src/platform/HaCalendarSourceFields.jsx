@@ -94,13 +94,13 @@ export default function HaCalendarSourceFields({ source, sourceId, updateSource,
         />
       </Field>
 
-      <Field label="Label Format">
+      <Field label="Show Days Until">
         <Dropdown
-          value={source.labelFormat === 'compact' ? 'compact' : 'card'}
-          onChange={(val) => updateSource(sourceId, { labelFormat: val })}
+          value={source.showDaysUntil === true ? 'true' : 'false'}
+          onChange={(val) => updateSource(sourceId, { showDaysUntil: val === 'true' })}
           options={[
-            { value: 'card', label: 'Card (HA-style)' },
-            { value: 'compact', label: 'Compact (single line)' },
+            { value: 'false', label: 'No' },
+            { value: 'true', label: 'Yes (+Npv / +Nd)' },
           ]}
         />
       </Field>
