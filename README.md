@@ -248,16 +248,18 @@ Exposes bindings like `{{temp_hist.latest}}`, `{{temp_hist.min}}`, `{{temp_hist.
   "entity_id": "calendar.family",
   "daysAhead": 14,
   "maxEvents": 5,
-  "locale": "fi"
+  "locale": "fi",
+  "showDaysUntil": false
 }
 ```
 
-Fetches upcoming events via HA `calendar.get_events` at render time. Bindings:
+Fetches upcoming events via HA `calendar.get_events` at render time. Dense single-line labels with optional same-day grouping in `calendarList`. Bindings:
 
 | Binding | Example |
 |---------|---------|
 | `{id}.count` | `5` |
-| `{id}.events.0.label` | `pe 10.07. 13:00 Team standup` |
+| `{id}.events.0.label` | `pe 10. 13:00 Team standup` |
+| `{id}.events.0.detail_label` | `13:00 Team standup` |
 | `{id}.events.0.summary` | `Team standup` |
 | `{id}.events.0.all_day` | `false` |
 
@@ -270,14 +272,14 @@ Use a **`calendarList`** element (see below) instead of placing multiple text li
   "type": "calendarList",
   "sourceId": "family_cal",
   "pos": { "x": 24, "y": 224 },
-  "lineHeight": 36,
+  "lineHeight": 20,
   "maxLines": 5,
-  "fontSize": 16,
+  "fontSize": 12,
   "emptyText": "Ei tulevia tapahtumia"
 }
 ```
 
-Expanded into text primitives before render (same pattern as `graph`). Replaces the `input_text` + automation workaround for family calendars on e-ink displays.
+Expanded into text primitives before render. Events on the same day share one date heading; detail lines omit the repeated date. `maxLines` counts rendered lines (headings + details).
 
 ---
 

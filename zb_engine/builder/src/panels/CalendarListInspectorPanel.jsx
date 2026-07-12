@@ -35,35 +35,14 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
         />
       </Field>
 
-      <Field label="Layout">
-        <Dropdown
-          value={element.layout === 'compact' ? 'compact' : 'card'}
-          onChange={(val) => {
-            const lineHeight = element.lineHeight ?? 36;
-            const maxLines = element.maxLines ?? 5;
-            const linesPerEvent = val === 'card' ? 2 : 1;
-            updateElement(element.id, {
-              layout: val,
-              sizeY: lineHeight * linesPerEvent * maxLines,
-            });
-          }}
-          options={[
-            { value: 'card', label: 'Card (HA-style date + subtitle)' },
-            { value: 'compact', label: 'Compact (single line)' },
-          ]}
-        />
-      </Field>
-
       <Field label="Max Lines">
         <NumberInput
           value={element.maxLines ?? 5}
           onChange={(val) => {
-            const lineHeight = element.lineHeight ?? 36;
-            const layout = element.layout === 'compact' ? 'compact' : 'card';
-            const linesPerEvent = layout === 'card' ? 2 : 1;
+            const lineHeight = element.lineHeight ?? 20;
             updateElement(element.id, {
               maxLines: val,
-              sizeY: lineHeight * linesPerEvent * val,
+              sizeY: lineHeight * val,
             });
           }}
           min={1}
@@ -74,14 +53,12 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
 
       <Field label="Line Height">
         <NumberInput
-          value={element.lineHeight ?? 36}
+          value={element.lineHeight ?? 20}
           onChange={(val) => {
             const maxLines = element.maxLines ?? 5;
-            const layout = element.layout === 'compact' ? 'compact' : 'card';
-            const linesPerEvent = layout === 'card' ? 2 : 1;
             updateElement(element.id, {
               lineHeight: val,
-              sizeY: val * linesPerEvent * maxLines,
+              sizeY: val * maxLines,
             });
           }}
           min={8}
@@ -92,7 +69,7 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
 
       <Field label="Font Size">
         <NumberInput
-          value={element.fontSize ?? 16}
+          value={element.fontSize ?? 12}
           onChange={(val) => updateElement(element.id, { fontSize: val })}
           min={6}
           max={72}

@@ -14,8 +14,6 @@ export interface RawHaCalendarEvent {
   summary?: string;
 }
 
-export type CalendarLabelFormat = "compact" | "card";
-
 export interface NormalizeCalendarOptions {
   entity_id: string;
   daysAhead: number;
@@ -23,14 +21,13 @@ export interface NormalizeCalendarOptions {
   includeOngoing: boolean;
   locale: "en" | "fi";
   eventFilter: "all" | "timed" | "all_day";
-  labelFormat?: CalendarLabelFormat;
+  showDaysUntil?: boolean;
   now?: number;
 }
 
 const FI_WEEKDAYS = ["su", "ma", "ti", "ke", "to", "pe", "la"] as const;
 const EN_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const FI_MONTHS = ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu"] as const;
 
 function isAllDayStart(start: string): boolean {
   return !start.includes("T");
@@ -58,7 +55,7 @@ function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-function startOfDay(ts: number): number {
+export function startOfDay(ts: number): number {
   const d = new Date(ts);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
@@ -66,6 +63,29 @@ function startOfDay(ts: number): number {
 function formatTimeLocal(ts: number): string {
   const d = new Date(ts);
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function weekdayShort(ts: number, locale: "en" | "fi"): string {
+  const d = new Date(ts);
+  return locale === "fi" ? FI_WEEKDAYS[d.getDay()] : EN_WEEKDAYS[d.getDay()];
+}
+
+function formatShortDateFi(ts: number): string {
+  const d = new Date(ts);
+  return `${FI_WEEKDAYS[d.getDay()]} ${d.getDate()}.`;
+}
+
+function formatShortDateEn(ts: number): string {
+  const d = new Date(ts);
+  return `${EN_WEEKDAYS[d.getDay()]} ${d.getDate()}`;
+}
+
+function formatDateHeading(ts: number, locale: "en" | "fi"): string {
+  if (locale === "fi") {
+    return formatShortDateFi(ts);
+  }
+  const d = new Date(ts);
+  return `${EN_WEEKDAYS[d.getDay()]} ${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
 }
 
 function formatDateLabelFi(ts: number): string {
@@ -76,28 +96,6 @@ function formatDateLabelFi(ts: number): string {
 function formatDateLabelEn(ts: number): string {
   const d = new Date(ts);
   return `${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
-}
-
-function formatDateHeading(ts: number, locale: "en" | "fi"): string {
-  const d = new Date(ts);
-  const wd = locale === "fi" ? FI_WEEKDAYS[d.getDay()] : EN_WEEKDAYS[d.getDay()];
-  if (locale === "fi") {
-    return `${wd} ${d.getDate()}.${d.getMonth() + 1}.`;
-  }
-  return `${wd} ${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
-}
-
-function formatUntilDate(ts: number, locale: "en" | "fi"): string {
-  const d = new Date(ts);
-  if (locale === "fi") {
-    return `${d.getDate()}. ${FI_MONTHS[d.getMonth()]}`;
-  }
-  return `${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
-}
-
-function weekdayShort(ts: number, locale: "en" | "fi"): string {
-  const d = new Date(ts);
-  return locale === "fi" ? FI_WEEKDAYS[d.getDay()] : EN_WEEKDAYS[d.getDay()];
 }
 
 function sameCalendarDay(a: number, b: number): boolean {
@@ -111,25 +109,8 @@ export function formatRelativeLabel(
 ): string {
   const days = Math.round((startOfDay(startTs) - startOfDay(now)) / 86_400_000);
   if (days <= 0) return "";
-  if (days === 1) return locale === "fi" ? "(huomenna)" : "(in a day)";
-  if (locale === "fi") return `(${days} päivän päästä)`;
-  return `(in ${days} days)`;
-}
-
-function formatSubtitle(
-  allDay: boolean,
-  startTs: number,
-  endTs: number,
-  locale: "en" | "fi",
-): string {
-  if (allDay) {
-    if (sameCalendarDay(startTs, endTs)) {
-      return locale === "fi" ? "Koko päivä" : "All Day";
-    }
-    const until = formatUntilDate(endTs, locale);
-    return locale === "fi" ? `Koko päivä, asti ${until}` : `All Day, until ${until}`;
-  }
-  return `${formatTimeLocal(startTs)} - ${formatTimeLocal(endTs)}`;
+  const unit = locale === "fi" ? "pv" : "d";
+  return `(+${days}${unit})`;
 }
 
 export function formatCalendarEventLabel(
@@ -138,40 +119,66 @@ export function formatCalendarEventLabel(
   endTs: number,
   allDay: boolean,
   locale: "en" | "fi",
-  labelFormat: CalendarLabelFormat = "card",
+  showDaysUntil: boolean,
   now?: number,
-): Pick<HaCalendarEvent, "label" | "subtitle" | "relative_label" | "date_heading" | "date_label" | "time_label" | "weekday_short"> {
+): Pick<HaCalendarEvent, "label" | "detail_label" | "subtitle" | "relative_label" | "date_heading" | "date_label" | "time_label" | "weekday_short"> {
   const wd = weekdayShort(startTs, locale);
   const date_label = locale === "fi" ? formatDateLabelFi(startTs) : formatDateLabelEn(startTs);
   const time_label = allDay ? "" : formatTimeLocal(startTs);
   const date_heading = formatDateHeading(startTs, locale);
-  const subtitle = labelFormat === "card" ? formatSubtitle(allDay, startTs, endTs, locale) : "";
-  const relative_label = labelFormat === "card" && now != null
+  const relative_label = showDaysUntil && now != null
     ? formatRelativeLabel(startTs, now, locale)
     : "";
 
-  let label: string;
-  if (labelFormat === "card") {
-    label = relative_label
-      ? `${date_heading}  ${summary}  ${relative_label}`
-      : `${date_heading}  ${summary}`;
-  } else if (locale === "fi") {
-    label = allDay
-      ? `${wd} ${date_label} ${summary}`
-      : `${wd} ${date_label} ${time_label} ${summary}`;
+  const multiDayAllDay = allDay && !sameCalendarDay(startTs, endTs);
+
+  let body: string;
+  let detail: string;
+
+  if (allDay) {
+    if (multiDayAllDay) {
+      const startD = new Date(startTs);
+      const endD = new Date(endTs);
+      if (locale === "fi") {
+        const range = `${startD.getDate()}.–${endD.getDate()}.${pad2(endD.getMonth() + 1)}.`;
+        body = `${FI_WEEKDAYS[startD.getDay()]} ${range} ${summary}`;
+        detail = `${range} ${summary}`;
+      } else {
+        const range = `${startD.getDate()}–${endD.getDate()} ${EN_MONTHS[endD.getMonth()]}`;
+        body = `${EN_WEEKDAYS[startD.getDay()]} ${range} ${summary}`;
+        detail = `${range} ${summary}`;
+      }
+    } else {
+      body = locale === "fi"
+        ? `${formatShortDateFi(startTs)} ${summary}`
+        : `${formatShortDateEn(startTs)} ${summary}`;
+      detail = summary;
+    }
   } else {
-    label = allDay
-      ? `${wd} ${date_label} ${summary}`
-      : `${wd} ${date_label} ${time_label} ${summary}`;
+    body = locale === "fi"
+      ? `${formatShortDateFi(startTs)} ${time_label} ${summary}`
+      : `${formatShortDateEn(startTs)} ${time_label} ${summary}`;
+    detail = `${time_label} ${summary}`;
   }
 
-  return { label, subtitle, relative_label, date_heading, date_label, time_label, weekday_short: wd };
+  const label = relative_label ? `${body} ${relative_label}` : body;
+
+  return {
+    label,
+    detail_label: detail,
+    subtitle: "",
+    relative_label,
+    date_heading,
+    date_label,
+    time_label,
+    weekday_short: wd,
+  };
 }
 
 export function normalizeRawCalendarEvent(
   raw: RawHaCalendarEvent,
   locale: "en" | "fi",
-  labelFormat: CalendarLabelFormat = "card",
+  showDaysUntil = false,
   now?: number,
 ): HaCalendarEvent {
   const summary = String(raw.summary ?? "").trim();
@@ -180,7 +187,7 @@ export function normalizeRawCalendarEvent(
   const all_day = isAllDayStart(start);
   const start_ts = parseHaCalendarTimestamp(start, "start", all_day);
   const end_ts = parseHaCalendarTimestamp(end, "end", all_day);
-  const formatted = formatCalendarEventLabel(summary, start_ts, end_ts, all_day, locale, labelFormat, now);
+  const formatted = formatCalendarEventLabel(summary, start_ts, end_ts, all_day, locale, showDaysUntil, now);
 
   return {
     summary,
@@ -199,10 +206,10 @@ export function buildHaCalendarResult(
 ): HaCalendarResult {
   const now = options.now ?? Date.now();
   const includeOngoing = options.includeOngoing;
-  const labelFormat = options.labelFormat ?? "card";
+  const showDaysUntil = options.showDaysUntil ?? false;
 
   let events = rawEvents.map((raw) =>
-    normalizeRawCalendarEvent(raw, options.locale, labelFormat, now),
+    normalizeRawCalendarEvent(raw, options.locale, showDaysUntil, now),
   );
 
   events = events.filter((e) => e.end_ts > now);

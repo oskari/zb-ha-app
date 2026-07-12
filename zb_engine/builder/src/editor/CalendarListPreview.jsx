@@ -5,6 +5,7 @@
 import { Rect, Text } from 'react-konva';
 import BitmapText from '../components/BitmapText.jsx';
 import { getCalendarListLayoutMetrics } from './calendarListBounds.js';
+import { buildCalendarListRows } from './calendarListLayout.js';
 
 function num(v, fallback) {
   const n = Number(v);
@@ -12,78 +13,40 @@ function num(v, fallback) {
 }
 
 export default function CalendarListPreview({ element, sourceData }) {
-  const { width, height, lineHeight, maxLines, layout, blockHeight } = getCalendarListLayoutMetrics(element);
-  const fontSize = num(element.fontSize, 16);
+  const events = Array.isArray(sourceData?.events) ? sourceData.events : [];
+  const { width, lineHeight, maxLines } = getCalendarListLayoutMetrics(element, events);
+  const fontSize = num(element.fontSize, 12);
   const fontWeight = num(element.fontWeight, 400);
-  const subtitleFontSizeRaw = num(element.subtitleFontSize, 0);
-  const subtitleFontSize = subtitleFontSizeRaw > 0 ? subtitleFontSizeRaw : Math.max(8, fontSize - 2);
   const emptyText = typeof element.emptyText === 'string' ? element.emptyText : 'Ei tulevia tapahtumia';
   const fill = num(element.fill, 100);
   const opacity = num(element.opacity, 100) / 100;
 
-  const events = Array.isArray(sourceData?.events) ? sourceData.events : [];
-  const eventCount = events.length === 0 ? 1 : Math.min(maxLines, events.length);
+  const rows = events.length === 0
+    ? [{ kind: 'standalone', text: emptyText, fontWeight }]
+    : buildCalendarListRows(events, maxLines);
 
-  const rows = [];
-  for (let i = 0; i < eventCount; i++) {
-    const y = i * blockHeight;
+  const previewRows = rows.map((row, index) => {
+    const y = index * lineHeight;
+    const weight = row.fontWeight > 0 ? row.fontWeight : fontWeight;
+    return (
+      <BitmapText
+        key={`cal-row-${index}-${row.kind}`}
+        x={0}
+        y={y}
+        text={row.text}
+        fontSize={fontSize}
+        fontWeight={weight}
+        fill={fill}
+        opacity={opacity}
+        listening={false}
+      />
+    );
+  });
 
-    if (events.length === 0) {
-      rows.push(
-        <BitmapText
-          key={`cal-empty-${i}`}
-          x={0}
-          y={y}
-          text={emptyText}
-          fontSize={fontSize}
-          fontWeight={fontWeight}
-          fill={fill}
-          opacity={opacity}
-          listening={false}
-        />,
-      );
-      continue;
-    }
+  const height = lineHeight * Math.max(previewRows.length, 1);
 
-    const event = events[i];
-    const label = event?.label ?? '';
-    const subtitle = event?.subtitle ?? '';
-
-    if (label) {
-      rows.push(
-        <BitmapText
-          key={`cal-label-${i}`}
-          x={0}
-          y={y}
-          text={label}
-          fontSize={fontSize}
-          fontWeight={fontWeight}
-          fill={fill}
-          opacity={opacity}
-          listening={false}
-        />,
-      );
-    }
-
-    if (layout === 'card' && subtitle) {
-      rows.push(
-        <BitmapText
-          key={`cal-sub-${i}`}
-          x={0}
-          y={y + lineHeight}
-          text={subtitle}
-          fontSize={subtitleFontSize}
-          fontWeight={300}
-          fill={fill}
-          opacity={opacity * 0.85}
-          listening={false}
-        />,
-      );
-    }
-  }
-
-  if (rows.length === 0) {
-    rows.push(
+  if (previewRows.length === 0) {
+    previewRows.push(
       <Text
         key="cal-fallback"
         x={0}
@@ -111,7 +74,7 @@ export default function CalendarListPreview({ element, sourceData }) {
         dash={[4, 4]}
         listening={false}
       />
-      {rows}
+      {previewRows}
     </>
   );
 }

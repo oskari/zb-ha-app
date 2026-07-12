@@ -230,7 +230,7 @@ async function fetchHaCalendarSource(
     includeOngoing,
     locale: source.locale,
     eventFilter: source.eventFilter,
-    labelFormat: source.labelFormat ?? "card",
+    showDaysUntil: resolveValue(source.showDaysUntil ?? false, ctx) === true,
   });
 }
 

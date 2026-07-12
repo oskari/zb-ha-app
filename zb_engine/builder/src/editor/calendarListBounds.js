@@ -3,29 +3,32 @@
  * The server expander ignores sizeX/sizeY and lays out lines from pos + lineHeight.
  */
 
+import { countCalendarListRows } from './calendarListLayout.js';
+
 function num(v, fallback) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
-export function getCalendarListLayoutMetrics(element) {
-  const layout = element?.layout === 'compact' ? 'compact' : 'card';
-  const lineHeight = num(element?.lineHeight, 36);
+export function getCalendarListLayoutMetrics(element, events = null) {
+  const lineHeight = num(element?.lineHeight, 20);
   const maxLines = Math.min(num(element?.maxLines, 5), 20);
-  const linesPerEvent = layout === 'card' ? 2 : 1;
-  const blockHeight = lineHeight * linesPerEvent;
+  const eventList = Array.isArray(events) ? events : [];
+  const renderedLines = eventList.length === 0
+    ? 1
+    : countCalendarListRows(eventList, maxLines);
+
   return {
-    layout,
     lineHeight,
     maxLines,
-    linesPerEvent,
-    blockHeight,
+    renderedLines,
     width: num(element?.sizeX, 400),
-    height: num(element?.sizeY, blockHeight * maxLines),
+    height: num(element?.sizeY, lineHeight * maxLines),
   };
 }
 
-export function getCalendarListBounds(element) {
-  const metrics = getCalendarListLayoutMetrics(element);
-  return { width: metrics.width, height: metrics.height };
+export function getCalendarListBounds(element, events = null) {
+  const metrics = getCalendarListLayoutMetrics(element, events);
+  const height = metrics.lineHeight * (events?.length ? metrics.renderedLines : metrics.maxLines);
+  return { width: metrics.width, height };
 }
