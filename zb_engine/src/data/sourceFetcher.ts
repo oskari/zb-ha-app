@@ -79,7 +79,7 @@ export interface HaCalendarSourceDef {
   includeOngoing?: unknown;
   locale: "en" | "fi";
   eventFilter: "all" | "timed" | "all_day";
-  showDaysUntil?: boolean;
+  showDaysUntil?: unknown;
   dataFields?: DataFieldDef[];
 }
 
