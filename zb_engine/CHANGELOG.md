@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`haCalendar` source** — Fetches upcoming events from a `calendar.*` entity
-  via HA `calendar.get_events` at render time. Dense Finnish/English labels with
-  optional `showDaysUntil` suffix, configurable window (`daysAhead`), event cap
+  via HA `calendar.get_events` at render time. Two-row Finnish/English labels
+  (date line + detail with optional until), optional `showDaysUntil` relative
+  phrase on the date line, configurable window (`daysAhead`), event cap
   (`maxEvents`), and filters.
 - **`calendarList` element** — Composite element expanded into stacked `text`
-  lines before render (same pattern as `graph`). Groups same-day events under one
-  date heading; binds to an `haCalendar` source.
+  lines before render (same pattern as `graph`). Two lines per event (date +
+  detail); groups same-day events under one date line; binds to an `haCalendar`
+  source.
 - **Builder UI** — HA Calendar source type in Sources panel, entity browser
   filtered to `calendar.*`, calendar list inspector, and canvas preview.
 

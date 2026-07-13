@@ -7,17 +7,19 @@ import { createDataContext } from "@zb/expressions";
 import { expandCalendarListElements } from "../src/data/calendar/expander";
 import type { HaCalendarEvent, HaCalendarResult } from "../src/data/sourceFetcher";
 
-function makeEvent(partial: Partial<HaCalendarEvent> & Pick<HaCalendarEvent, "start_ts" | "label">): HaCalendarEvent {
+function makeEvent(partial: Partial<HaCalendarEvent> & Pick<HaCalendarEvent, "start_ts">): HaCalendarEvent {
   return {
     summary: partial.summary ?? "Event",
     start: partial.start ?? "",
     end: partial.end ?? "",
     all_day: partial.all_day ?? false,
     end_ts: partial.end_ts ?? partial.start_ts + 3_600_000,
-    detail_label: partial.detail_label ?? partial.label,
+    label: partial.label ?? "",
+    date_line: partial.date_line ?? partial.date_heading ?? "Pe 10.7",
+    detail_label: partial.detail_label ?? partial.label ?? "Event",
     subtitle: "",
     relative_label: partial.relative_label ?? "",
-    date_heading: partial.date_heading ?? "pe 10.",
+    date_heading: partial.date_heading ?? "Pe 10.7",
     date_label: partial.date_label ?? "10.07.",
     time_label: partial.time_label ?? "13:00",
     weekday_short: partial.weekday_short ?? "pe",
@@ -34,29 +36,27 @@ const sampleSourceData: HaCalendarResult = {
     makeEvent({
       summary: "A",
       start_ts: 1,
-      label: "pe 10.07. 13:00 A",
-      detail_label: "13:00 A",
-      date_heading: "pe 10.",
+      date_line: "Pe 10.7 13:00",
+      detail_label: "A",
+      label: "Pe 10.7 13:00  A",
     }),
     makeEvent({
       summary: "B",
       start_ts: 86_400_001,
-      label: "la 11.07. 10:00 B",
-      detail_label: "10:00 B",
-      date_heading: "la 11.",
+      date_line: "La 11.7 10:00",
+      detail_label: "B",
     }),
     makeEvent({
       summary: "C",
       start_ts: 172_800_001,
-      label: "su 12.07. 09:00 C",
-      detail_label: "09:00 C",
-      date_heading: "su 12.",
+      date_line: "Su 12.7 09:00",
+      detail_label: "C",
     }),
   ],
 };
 
 describe("expandCalendarListElements", () => {
-  it("expands one standalone line per event on different days", () => {
+  it("expands each event into date + detail lines on different days", () => {
     const ctx = createDataContext();
     ctx.family_cal = sampleSourceData;
 
@@ -67,7 +67,7 @@ describe("expandCalendarListElements", () => {
         sourceId: "family_cal",
         pos: { x: 24, y: 224 },
         lineHeight: 20,
-        maxLines: 5,
+        maxLines: 6,
         fontSize: 12,
         enableFill: true,
         fill: 100,
@@ -76,13 +76,13 @@ describe("expandCalendarListElements", () => {
     );
 
     expect(errors).toEqual([]);
-    expect(elements).toHaveLength(3);
-    expect(elements[0]).toMatchObject({ type: "text", text: "pe 10.07. 13:00 A", pos: { x: 24, y: 224 } });
-    expect(elements[1]).toMatchObject({ type: "text", pos: { x: 24, y: 244 } });
-    expect(elements[2]).toMatchObject({ type: "text", pos: { x: 24, y: 264 } });
+    expect(elements).toHaveLength(6);
+    expect(elements[0]).toMatchObject({ type: "text", text: "Pe 10.7 13:00", fontWeight: 600 });
+    expect(elements[1]).toMatchObject({ type: "text", text: "A", fontWeight: 400 });
+    expect(elements[2]).toMatchObject({ type: "text", text: "La 11.7 10:00", fontWeight: 600 });
   });
 
-  it("groups same-day events under one date heading", () => {
+  it("groups same-day events under one date line", () => {
     const ctx = createDataContext();
     const day = Date.parse("2026-07-10T00:00:00+03:00");
     ctx.family_cal = {
@@ -90,20 +90,16 @@ describe("expandCalendarListElements", () => {
       count: 2,
       events: [
         makeEvent({
-          summary: "Standup",
+          summary: "Team standup",
           start_ts: day + 13 * 3_600_000,
-          label: "pe 10. 13:00 Team standup",
-          detail_label: "13:00 Team standup",
-          date_heading: "pe 10.",
-          relative_label: "(+1pv)",
+          date_line: "Pe 10.7 13:00 (huomenna)",
+          detail_label: "Team standup",
         }),
         makeEvent({
           summary: "Dentist",
           start_ts: day + 15 * 3_600_000,
-          label: "pe 10. 15:00 Dentist",
-          detail_label: "15:00 Dentist",
-          date_heading: "pe 10.",
-          relative_label: "(+1pv)",
+          date_line: "Pe 10.7 15:00 (huomenna)",
+          detail_label: "Dentist",
         }),
       ],
     };
@@ -120,9 +116,9 @@ describe("expandCalendarListElements", () => {
     );
 
     expect(elements).toHaveLength(3);
-    expect(elements[0]).toMatchObject({ text: "pe 10. (+1pv)", fontWeight: 600 });
-    expect(elements[1]).toMatchObject({ text: "13:00 Team standup", fontWeight: 400 });
-    expect(elements[2]).toMatchObject({ text: "15:00 Dentist", fontWeight: 400 });
+    expect(elements[0]).toMatchObject({ text: "Pe 10.7 13:00 (huomenna)", fontWeight: 600 });
+    expect(elements[1]).toMatchObject({ text: "Team standup", fontWeight: 400 });
+    expect(elements[2]).toMatchObject({ text: "Dentist", fontWeight: 400 });
   });
 
   it("emits emptyText when count is 0", () => {
@@ -143,33 +139,24 @@ describe("expandCalendarListElements", () => {
     expect(elements[0]).toMatchObject({ type: "text", text: "Ei tulevia tapahtumia" });
   });
 
-  it("caps output to maxLines including group headings", () => {
+  it("caps output to maxLines including date rows", () => {
     const ctx = createDataContext();
     const day = Date.parse("2026-07-10T00:00:00+03:00");
     ctx.family_cal = {
       ...sampleSourceData,
-      count: 3,
+      count: 2,
       events: [
         makeEvent({
-          summary: "A",
-          start_ts: day + 3_600_000,
-          label: "pe 10. 10:00 A",
-          detail_label: "10:00 A",
-          date_heading: "pe 10.",
+          summary: "Holiday",
+          start_ts: day,
+          date_line: "Pe 10.7 (9 päivän päästä)",
+          detail_label: "Summer holiday (asti 10.8.)",
         }),
         makeEvent({
-          summary: "B",
-          start_ts: day + 7_200_000,
-          label: "pe 10. 11:00 B",
-          detail_label: "11:00 B",
-          date_heading: "pe 10.",
-        }),
-        makeEvent({
-          summary: "C",
-          start_ts: day + 86_400_000 + 3_600_000,
-          label: "la 11. 10:00 C",
-          detail_label: "10:00 C",
-          date_heading: "la 11.",
+          summary: "Other",
+          start_ts: day + 86_400_000,
+          date_line: "La 11.7",
+          detail_label: "Other",
         }),
       ],
     };
@@ -186,8 +173,8 @@ describe("expandCalendarListElements", () => {
     );
 
     expect(elements).toHaveLength(2);
-    expect(elements[0].text).toBe("pe 10.");
-    expect(elements[1].text).toBe("10:00 A");
+    expect(elements[0].text).toBe("Pe 10.7 (9 päivän päästä)");
+    expect(elements[1].text).toBe("Summer holiday (asti 10.8.)");
   });
 
   it("passes through non-calendarList elements", () => {

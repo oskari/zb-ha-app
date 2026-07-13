@@ -253,15 +253,15 @@ Exposes bindings like `{{temp_hist.latest}}`, `{{temp_hist.min}}`, `{{temp_hist.
 }
 ```
 
-Fetches upcoming events via HA `calendar.get_events` at render time. Dense single-line labels with optional same-day grouping in `calendarList`. Bindings:
+Fetches upcoming events via HA `calendar.get_events` at render time. Each event uses two lines in `calendarList`: a date line and a detail line. Bindings:
 
 | Binding | Example |
 |---------|---------|
 | `{id}.count` | `5` |
-| `{id}.events.0.label` | `pe 10. 13:00 Team standup` |
-| `{id}.events.0.detail_label` | `13:00 Team standup` |
-| `{id}.events.0.summary` | `Team standup` |
-| `{id}.events.0.all_day` | `false` |
+| `{id}.events.0.date_line` | `Ma 22.7 (huomenna)` |
+| `{id}.events.0.detail_label` | `Riikan kesäloma (asti 10.8.)` |
+| `{id}.events.0.summary` | `Riikan kesäloma` |
+| `{id}.events.0.all_day` | `true` |
 
 Use a **`calendarList`** element (see below) instead of placing multiple text lines manually.
 
@@ -279,7 +279,7 @@ Use a **`calendarList`** element (see below) instead of placing multiple text li
 }
 ```
 
-Expanded into text primitives before render. Events on the same day share one date heading; detail lines omit the repeated date. `maxLines` counts rendered lines (headings + details).
+Expanded into text primitives before render. Each event renders as a date line plus a detail line; same-day events share one date line. `maxLines` counts rendered lines (date + detail rows).
 
 ---
 

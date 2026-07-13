@@ -6,14 +6,14 @@ import { startOfDay } from "../../ha/calendarEvent";
 import type { HaCalendarEvent } from "../sourceFetcher";
 
 export interface CalendarListRow {
-  kind: "heading" | "detail" | "standalone";
+  kind: "date" | "detail";
   text: string;
   fontWeight: number;
 }
 
 /**
- * Build rendered text rows for a calendarList, grouping consecutive events
- * on the same start calendar day.
+ * Build rendered text rows for a calendarList.
+ * Each event uses two lines (date + detail). Same-day events share one date line.
  */
 export function buildCalendarListRows(
   events: HaCalendarEvent[],
@@ -30,17 +30,13 @@ export function buildCalendarListRows(
       j++;
     }
     const group = events.slice(i, j);
+    const remaining = maxLines - lineCount;
 
     if (group.length >= 2) {
-      const remaining = maxLines - lineCount;
       if (remaining < 2) break;
 
-      const headingSuffix = group[0].relative_label;
-      const headingText = headingSuffix
-        ? `${group[0].date_heading} ${headingSuffix}`
-        : group[0].date_heading;
-
-      rows.push({ kind: "heading", text: headingText, fontWeight: 600 });
+      const dateText = group[0].date_line || group[0].date_heading;
+      rows.push({ kind: "date", text: dateText, fontWeight: 600 });
       lineCount++;
 
       for (const ev of group) {
@@ -50,9 +46,20 @@ export function buildCalendarListRows(
         lineCount++;
       }
     } else {
+      if (remaining < 2) break;
+
       const ev = group[0];
-      rows.push({ kind: "standalone", text: ev.label, fontWeight: 400 });
+      rows.push({
+        kind: "date",
+        text: ev.date_line || ev.date_heading,
+        fontWeight: 600,
+      });
       lineCount++;
+
+      if (lineCount < maxLines && ev.detail_label) {
+        rows.push({ kind: "detail", text: ev.detail_label, fontWeight: 400 });
+        lineCount++;
+      }
     }
 
     i = j;

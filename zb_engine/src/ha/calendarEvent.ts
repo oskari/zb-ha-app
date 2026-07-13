@@ -70,22 +70,22 @@ function weekdayShort(ts: number, locale: "en" | "fi"): string {
   return locale === "fi" ? FI_WEEKDAYS[d.getDay()] : EN_WEEKDAYS[d.getDay()];
 }
 
-function formatShortDateFi(ts: number): string {
-  const d = new Date(ts);
-  return `${FI_WEEKDAYS[d.getDay()]} ${d.getDate()}.`;
+function capitalize(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function formatShortDateEn(ts: number): string {
+/** Compact calendar date for row 1: `Ma 22.7` / `Mon 22.7` */
+function formatDateShort(ts: number, locale: "en" | "fi"): string {
   const d = new Date(ts);
-  return `${EN_WEEKDAYS[d.getDay()]} ${d.getDate()}`;
+  const wd = locale === "fi"
+    ? capitalize(FI_WEEKDAYS[d.getDay()])
+    : EN_WEEKDAYS[d.getDay()];
+  return `${wd} ${d.getDate()}.${d.getMonth() + 1}`;
 }
 
 function formatDateHeading(ts: number, locale: "en" | "fi"): string {
-  if (locale === "fi") {
-    return formatShortDateFi(ts);
-  }
-  const d = new Date(ts);
-  return `${EN_WEEKDAYS[d.getDay()]} ${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
+  return formatDateShort(ts, locale);
 }
 
 function formatDateLabelFi(ts: number): string {
@@ -102,6 +102,7 @@ function sameCalendarDay(a: number, b: number): boolean {
   return startOfDay(a) === startOfDay(b);
 }
 
+/** Long relative phrase for row 1 when showDaysUntil is enabled. */
 export function formatRelativeLabel(
   startTs: number,
   now: number,
@@ -109,8 +110,17 @@ export function formatRelativeLabel(
 ): string {
   const days = Math.round((startOfDay(startTs) - startOfDay(now)) / 86_400_000);
   if (days <= 0) return "";
-  const unit = locale === "fi" ? "pv" : "d";
-  return `(+${days}${unit})`;
+  if (days === 1) return locale === "fi" ? "(huomenna)" : "(in a day)";
+  if (locale === "fi") return `(${days} päivän päästä)`;
+  return `(in ${days} days)`;
+}
+
+function formatUntilSuffix(endTs: number, locale: "en" | "fi"): string {
+  const d = new Date(endTs);
+  if (locale === "fi") {
+    return `(asti ${d.getDate()}.${d.getMonth() + 1}.)`;
+  }
+  return `(until ${d.getDate()}.${d.getMonth() + 1})`;
 }
 
 export function formatCalendarEventLabel(
@@ -121,7 +131,7 @@ export function formatCalendarEventLabel(
   locale: "en" | "fi",
   showDaysUntil: boolean,
   now?: number,
-): Pick<HaCalendarEvent, "label" | "detail_label" | "subtitle" | "relative_label" | "date_heading" | "date_label" | "time_label" | "weekday_short"> {
+): Pick<HaCalendarEvent, "label" | "date_line" | "detail_label" | "subtitle" | "relative_label" | "date_heading" | "date_label" | "time_label" | "weekday_short"> {
   const wd = weekdayShort(startTs, locale);
   const date_label = locale === "fi" ? formatDateLabelFi(startTs) : formatDateLabelEn(startTs);
   const time_label = allDay ? "" : formatTimeLocal(startTs);
@@ -132,39 +142,24 @@ export function formatCalendarEventLabel(
 
   const multiDayAllDay = allDay && !sameCalendarDay(startTs, endTs);
 
-  let body: string;
-  let detail: string;
-
-  if (allDay) {
-    if (multiDayAllDay) {
-      const startD = new Date(startTs);
-      const endD = new Date(endTs);
-      if (locale === "fi") {
-        const range = `${startD.getDate()}.–${endD.getDate()}.${pad2(endD.getMonth() + 1)}.`;
-        body = `${FI_WEEKDAYS[startD.getDay()]} ${range} ${summary}`;
-        detail = `${range} ${summary}`;
-      } else {
-        const range = `${startD.getDate()}–${endD.getDate()} ${EN_MONTHS[endD.getMonth()]}`;
-        body = `${EN_WEEKDAYS[startD.getDay()]} ${range} ${summary}`;
-        detail = `${range} ${summary}`;
-      }
-    } else {
-      body = locale === "fi"
-        ? `${formatShortDateFi(startTs)} ${summary}`
-        : `${formatShortDateEn(startTs)} ${summary}`;
-      detail = summary;
-    }
-  } else {
-    body = locale === "fi"
-      ? `${formatShortDateFi(startTs)} ${time_label} ${summary}`
-      : `${formatShortDateEn(startTs)} ${time_label} ${summary}`;
-    detail = `${time_label} ${summary}`;
+  let dateLine = formatDateShort(startTs, locale);
+  if (!allDay) {
+    dateLine = `${dateLine} ${time_label}`;
+  }
+  if (relative_label) {
+    dateLine = `${dateLine} ${relative_label}`;
   }
 
-  const label = relative_label ? `${body} ${relative_label}` : body;
+  let detail = summary;
+  if (multiDayAllDay) {
+    detail = `${summary} ${formatUntilSuffix(endTs, locale)}`;
+  }
+
+  const label = `${dateLine}  ${detail}`;
 
   return {
     label,
+    date_line: dateLine,
     detail_label: detail,
     subtitle: "",
     relative_label,

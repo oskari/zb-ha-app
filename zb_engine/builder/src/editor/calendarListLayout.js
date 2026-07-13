@@ -8,7 +8,7 @@ function startOfDay(ts) {
 }
 
 /**
- * @param {Array<{ start_ts: number, label: string, detail_label?: string, date_heading: string, relative_label?: string }>} events
+ * @param {Array<{ start_ts: number, date_line?: string, detail_label?: string, date_heading: string }>} events
  * @param {number} maxLines
  */
 export function buildCalendarListRows(events, maxLines) {
@@ -23,17 +23,13 @@ export function buildCalendarListRows(events, maxLines) {
       j++;
     }
     const group = events.slice(i, j);
+    const remaining = maxLines - lineCount;
 
     if (group.length >= 2) {
-      const remaining = maxLines - lineCount;
       if (remaining < 2) break;
 
-      const headingSuffix = group[0].relative_label || '';
-      const headingText = headingSuffix
-        ? `${group[0].date_heading} ${headingSuffix}`
-        : group[0].date_heading;
-
-      rows.push({ kind: 'heading', text: headingText, fontWeight: 600 });
+      const dateText = group[0].date_line || group[0].date_heading;
+      rows.push({ kind: 'date', text: dateText, fontWeight: 600 });
       lineCount++;
 
       for (const ev of group) {
@@ -44,8 +40,20 @@ export function buildCalendarListRows(events, maxLines) {
         lineCount++;
       }
     } else {
-      rows.push({ kind: 'standalone', text: group[0].label, fontWeight: 400 });
+      if (remaining < 2) break;
+
+      const ev = group[0];
+      rows.push({
+        kind: 'date',
+        text: ev.date_line || ev.date_heading,
+        fontWeight: 600,
+      });
       lineCount++;
+
+      if (lineCount < maxLines && ev.detail_label) {
+        rows.push({ kind: 'detail', text: ev.detail_label, fontWeight: 400 });
+        lineCount++;
+      }
     }
 
     i = j;
