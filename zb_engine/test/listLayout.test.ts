@@ -14,10 +14,11 @@ function ev(partial: Partial<HaCalendarEvent> & Pick<HaCalendarEvent, "start_ts"
     all_day: false,
     end_ts: partial.start_ts + 3_600_000,
     label: partial.label ?? "label",
+    date_line: partial.date_line ?? partial.date_heading ?? "Pe 10.7",
     detail_label: partial.detail_label ?? "detail",
     subtitle: "",
     relative_label: partial.relative_label ?? "",
-    date_heading: partial.date_heading ?? "pe 10.",
+    date_heading: partial.date_heading ?? "Pe 10.7",
     date_label: "10.07.",
     time_label: "13:00",
     weekday_short: "pe",
@@ -28,42 +29,43 @@ function ev(partial: Partial<HaCalendarEvent> & Pick<HaCalendarEvent, "start_ts"
 describe("buildCalendarListRows", () => {
   const day = Date.parse("2026-07-10T00:00:00+03:00");
 
-  it("uses standalone label for a single event on a day", () => {
-    const rows = buildCalendarListRows([
-      ev({ start_ts: day + 3_600_000, label: "pe 10. 13:00 A" }),
-    ], 5);
-    expect(rows).toEqual([
-      { kind: "standalone", text: "pe 10. 13:00 A", fontWeight: 400 },
-    ]);
-  });
-
-  it("groups two same-day events with suffix on heading", () => {
+  it("renders date + detail lines for a single event", () => {
     const rows = buildCalendarListRows([
       ev({
         start_ts: day + 3_600_000,
-        date_heading: "pe 10.",
-        detail_label: "13:00 A",
-        relative_label: "(+1pv)",
-      }),
-      ev({
-        start_ts: day + 7_200_000,
-        date_heading: "pe 10.",
-        detail_label: "15:00 B",
-        relative_label: "(+1pv)",
+        date_line: "Pe 10.7 13:00 (huomenna)",
+        detail_label: "Team standup",
       }),
     ], 5);
     expect(rows).toEqual([
-      { kind: "heading", text: "pe 10. (+1pv)", fontWeight: 600 },
-      { kind: "detail", text: "13:00 A", fontWeight: 400 },
-      { kind: "detail", text: "15:00 B", fontWeight: 400 },
+      { kind: "date", text: "Pe 10.7 13:00 (huomenna)", fontWeight: 600 },
+      { kind: "detail", text: "Team standup", fontWeight: 400 },
     ]);
   });
 
-  it("does not emit partial group when maxLines is too small", () => {
+  it("groups two same-day events under one date line", () => {
     const rows = buildCalendarListRows([
-      ev({ start_ts: day + 3_600_000, date_heading: "pe 10.", detail_label: "13:00 A" }),
-      ev({ start_ts: day + 7_200_000, date_heading: "pe 10.", detail_label: "15:00 B" }),
-      ev({ start_ts: day + 86_400_000 + 3_600_000, label: "la 11. 10:00 C" }),
+      ev({
+        start_ts: day + 3_600_000,
+        date_line: "Pe 10.7 (huomenna)",
+        detail_label: "Team standup",
+      }),
+      ev({
+        start_ts: day + 7_200_000,
+        date_line: "Pe 10.7 (huomenna)",
+        detail_label: "Dentist",
+      }),
+    ], 5);
+    expect(rows).toEqual([
+      { kind: "date", text: "Pe 10.7 (huomenna)", fontWeight: 600 },
+      { kind: "detail", text: "Team standup", fontWeight: 400 },
+      { kind: "detail", text: "Dentist", fontWeight: 400 },
+    ]);
+  });
+
+  it("does not emit partial event when maxLines is too small", () => {
+    const rows = buildCalendarListRows([
+      ev({ start_ts: day + 3_600_000, date_line: "Pe 10.7", detail_label: "A" }),
     ], 1);
     expect(rows).toHaveLength(0);
   });

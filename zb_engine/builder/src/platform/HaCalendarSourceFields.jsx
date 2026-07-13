@@ -100,7 +100,7 @@ export default function HaCalendarSourceFields({ source, sourceId, updateSource,
           onChange={(val) => updateSource(sourceId, { showDaysUntil: val === 'true' })}
           options={[
             { value: 'false', label: 'No' },
-            { value: 'true', label: 'Yes (+Npv / +Nd)' },
+            { value: 'true', label: 'Yes (huomenna / in N days)' },
           ]}
         />
       </Field>

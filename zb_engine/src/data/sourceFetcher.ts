@@ -97,6 +97,7 @@ export interface HaCalendarEvent {
   start_ts: number;
   end_ts: number;
   label: string;
+  date_line: string;
   detail_label: string;
   subtitle: string;
   relative_label: string;

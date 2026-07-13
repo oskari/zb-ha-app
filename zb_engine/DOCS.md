@@ -471,23 +471,21 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
 - `includeOngoing` — include events that started but have not ended (default true)
 - `locale` — `"fi"` (default) or `"en"` for label formatting
 - `eventFilter` — `"all"` \| `"timed"` \| `"all_day"`
-- `showDaysUntil` — append short suffix `(+Npv)` / `(+Nd)` on date heading or standalone line (default false)
+- `showDaysUntil` — append relative phrase on the date line, e.g. `(huomenna)` / `(in a day)` (default false)
 
-**Label format** (dense, e-ink friendly):
+**Label format** (two rows per event in `calendarList`):
 
-- Timed: `pe 10. 13:00 Team standup` (FI) / `Fri 10 13:00 Team standup` (EN)
-- All-day: no time segment — `pe 10. Summer holiday`
-- Multi-day all-day: compact range — `pe 10.–10.8. Summer holiday`
-- Same start day (2+ events): one date heading, then detail lines without repeated date
-- Optional days-until: on heading when grouped, on standalone line when alone
+- Row 1 (`date_line`): `Ma 22.7` + optional time + optional relative when `showDaysUntil`
+- Row 2 (`detail_label`): event title; multi-day all-day adds `(asti 10.8.)` / `(until 10.8)`
+- Same start day (2+ events): one shared date line, then one detail line per event
 
 **Data context** exposed as `{sourceId.*}`:
 
 - `count` — number of events after cap
 - `truncated` — `true` if more events existed than `maxEvents`
 - `events[]` — each with `summary`, `start`, `end`, `all_day`, `start_ts`,
-  `end_ts`, `label`, `detail_label`, `date_heading`, `relative_label`,
-  `date_label`, `time_label`, `weekday_short`
+  `end_ts`, `label`, `date_line`, `detail_label`, `date_heading`,
+  `relative_label`, `date_label`, `time_label`, `weekday_short`
 
 **Example:**
 
@@ -507,8 +505,8 @@ the frozen draw engine). Binds to an `haCalendar` source.
 |-------|---------|-------|
 | `sourceId` | — | `haCalendar` source id |
 | `lineHeight` | 20 | Vertical spacing between rendered lines |
-| `maxLines` | 5 | Max rendered rows including group headings (1–20) |
-| `fontSize` / `fontWeight` | 12 / 400 | Text styling (date headings render at weight 600) |
+| `maxLines` | 5 | Max rendered rows including date lines (1–20); two rows per event |
+| `fontSize` / `fontWeight` | 12 / 400 | Text styling (date lines render at weight 600) |
 | `emptyText` | `Ei tulevia tapahtumia` | Shown when no upcoming events |
 
 ### `elements`
