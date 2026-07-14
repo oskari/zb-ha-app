@@ -33,13 +33,13 @@ describe("buildCalendarListRows", () => {
     const rows = buildCalendarListRows([
       ev({
         start_ts: day + 3_600_000,
-        date_line: "Pe 10.7 13:00 (huomenna)",
-        detail_label: "Team standup",
+        date_line: "Pe 10.7 (huomenna)",
+        detail_label: "Team standup 13:00",
       }),
     ], 5);
     expect(rows).toEqual([
-      { kind: "date", text: "Pe 10.7 13:00 (huomenna)", fontWeight: 600 },
-      { kind: "detail", text: "Team standup", fontWeight: 400 },
+      { kind: "date", text: "Pe 10.7 (huomenna)", fontWeight: 600 },
+      { kind: "detail", text: "Team standup 13:00", fontWeight: 400 },
     ]);
   });
 
