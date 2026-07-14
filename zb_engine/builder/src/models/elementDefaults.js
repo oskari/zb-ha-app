@@ -193,6 +193,8 @@ export function createElement(type, partialOverrides) {
         enableFill: true,
         fill: 100,
         emptyText: 'Ei tulevia tapahtumia',
+        dateRowTemplate: '{{date_short}}{{relative_suffix}}',
+        detailRowTemplate: '{{summary}}{{time_suffix}}{{until_suffix}}',
       };
       break;
 

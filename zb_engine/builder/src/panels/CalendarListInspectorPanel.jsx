@@ -94,6 +94,22 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
         />
       </Field>
 
+      <Field label="Date Row Template">
+        <TextInput
+          value={element.dateRowTemplate ?? '{{date_short}}{{relative_suffix}}'}
+          onChange={(val) => updateElement(element.id, { dateRowTemplate: val })}
+          placeholder="{{date_short}}{{relative_suffix}}"
+        />
+      </Field>
+
+      <Field label="Detail Row Template">
+        <TextInput
+          value={element.detailRowTemplate ?? '{{summary}}{{time_suffix}}{{until_suffix}}'}
+          onChange={(val) => updateElement(element.id, { detailRowTemplate: val })}
+          placeholder="{{summary}}{{time_suffix}}{{until_suffix}}"
+        />
+      </Field>
+
       <Field label="Text Fill" row>
         <Toggle
           label="Enable Fill"

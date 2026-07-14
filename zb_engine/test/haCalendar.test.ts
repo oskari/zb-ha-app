@@ -95,6 +95,9 @@ describe("calendarEvent normalization", () => {
     const ts = parseHaCalendarTimestamp("2026-07-10T13:00:00+03:00", "start", false);
     const event = normalizeRawCalendarEvent(fixture[1], "fi");
     expect(event.summary).toBe("Team standup");
+    expect(event.date_short).toBe("Pe 10.7");
+    expect(event.days_until).toBeNull();
+    expect(event.time_suffix).toBe(" 13:00");
     expect(event.date_line).toBe("Pe 10.7");
     expect(event.detail_label).toBe("Team standup 13:00");
     expect(event.label).toContain("Team standup");
@@ -104,6 +107,9 @@ describe("calendarEvent normalization", () => {
 
   it("formats multi-day all-day event with until on detail row", () => {
     const holiday = normalizeRawCalendarEvent(fixture[0], "fi");
+    expect(holiday.multi_day).toBe(true);
+    expect(holiday.until_date_short).toBe("10.8.");
+    expect(holiday.until_suffix).toBe(" (10.8. asti)");
     expect(holiday.date_line).toBe("Ma 22.6");
     expect(holiday.detail_label).toBe("Summer holiday (10.8. asti)");
     expect(holiday.date_heading).toBe("Ma 22.6");
@@ -123,7 +129,9 @@ describe("calendarEvent normalization", () => {
 
   it("appends long relative phrase on date line when showDaysUntil is enabled", () => {
     const timedFi = normalizeRawCalendarEvent(fixture[1], "fi", true, now);
+    expect(timedFi.days_until).toBe(1);
     expect(timedFi.relative_label).toBe("(huomenna)");
+    expect(timedFi.relative_suffix).toBe(" (huomenna)");
     expect(timedFi.date_line).toBe("Pe 10.7 (huomenna)");
     expect(timedFi.detail_label).toBe("Team standup 13:00");
 

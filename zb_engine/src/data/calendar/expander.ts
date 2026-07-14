@@ -5,11 +5,15 @@
  * renderer runs. Mirrors the graph expander pattern.
  */
 
-import { resolveValue, type DataContext } from "@zb/expressions";
+import { resolveValue, isBinding, isExpression, type DataContext } from "@zb/expressions";
 import { logError } from "../../core/logger";
 import { MAX_CALENDAR_LIST_LINES } from "../../limits";
 import type { HaCalendarEvent, HaCalendarResult } from "../sourceFetcher";
 import { buildCalendarListRows } from "./listLayout";
+import {
+  DEFAULT_CALENDAR_DATE_ROW_TEMPLATE,
+  DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE,
+} from "./calendarTemplates";
 
 function num(v: unknown, fallback: number): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -24,6 +28,17 @@ function bool(v: unknown, fallback: boolean): boolean {
 
 function str(v: unknown, fallback: string): string {
   if (typeof v === "string") return v;
+  return fallback;
+}
+
+/** Resolve a row template; plain strings are applied per-event later. */
+function resolveRowTemplate(v: unknown, ctx: DataContext, fallback: string): string {
+  if (v == null || v === "") return fallback;
+  if (typeof v === "string") return v;
+  if (isBinding(v) || isExpression(v)) {
+    const resolved = resolveValue(v, ctx);
+    return typeof resolved === "string" && resolved.length > 0 ? resolved : fallback;
+  }
   return fallback;
 }
 
@@ -92,6 +107,16 @@ function expandCalendarListElement(
   const fill = num(resolveValue(raw.fill, ctx), 100);
   const opacity = num(resolveValue(raw.opacity, ctx), 100);
   const emptyText = str(resolveValue(raw.emptyText, ctx), "Ei tulevia tapahtumia");
+  const dateRowTemplate = resolveRowTemplate(
+    raw.dateRowTemplate,
+    ctx,
+    DEFAULT_CALENDAR_DATE_ROW_TEMPLATE,
+  );
+  const detailRowTemplate = resolveRowTemplate(
+    raw.detailRowTemplate,
+    ctx,
+    DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE,
+  );
 
   const sourceData = sourceId ? (ctx[sourceId] as HaCalendarResult | undefined) : undefined;
   const events = Array.isArray(sourceData?.events) ? sourceData.events : [];
@@ -103,7 +128,10 @@ function expandCalendarListElement(
     return out;
   }
 
-  const rows = buildCalendarListRows(events as HaCalendarEvent[], maxLines);
+  const rows = buildCalendarListRows(events as HaCalendarEvent[], maxLines, {
+    dateRowTemplate,
+    detailRowTemplate,
+  });
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const weight = row.fontWeight > 0 ? row.fontWeight : fontWeight;

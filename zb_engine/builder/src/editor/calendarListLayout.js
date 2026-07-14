@@ -2,16 +2,21 @@
  * Builder-only calendar list row layout (mirrors src/data/calendar/listLayout.ts).
  */
 
-function startOfDay(ts) {
-  const d = new Date(ts);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
+import {
+  applyCalendarRowTemplate,
+  DEFAULT_CALENDAR_DATE_ROW_TEMPLATE,
+  DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE,
+} from '@shared/calendar/calendarTemplates.ts';
+import { startOfDay } from '@shared/calendar/startOfDay.ts';
 
 /**
- * @param {Array<{ start_ts: number, date_line?: string, detail_label?: string, date_heading: string }>} events
+ * @param {Array<Record<string, unknown>>} events
  * @param {number} maxLines
+ * @param {{ dateRowTemplate?: string, detailRowTemplate?: string }} [templates]
  */
-export function buildCalendarListRows(events, maxLines) {
+export function buildCalendarListRows(events, maxLines, templates = {}) {
+  const dateTpl = templates.dateRowTemplate || DEFAULT_CALENDAR_DATE_ROW_TEMPLATE;
+  const detailTpl = templates.detailRowTemplate || DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE;
   const rows = [];
   let lineCount = 0;
 
@@ -28,13 +33,15 @@ export function buildCalendarListRows(events, maxLines) {
     if (group.length >= 2) {
       if (remaining < 2) break;
 
-      const dateText = group[0].date_line || group[0].date_heading;
-      rows.push({ kind: 'date', text: dateText, fontWeight: 600 });
-      lineCount++;
+      const dateText = applyCalendarRowTemplate(dateTpl, group[0]);
+      if (dateText) {
+        rows.push({ kind: 'date', text: dateText, fontWeight: 600 });
+        lineCount++;
+      }
 
       for (const ev of group) {
         if (lineCount >= maxLines) break;
-        const detail = ev.detail_label ?? '';
+        const detail = applyCalendarRowTemplate(detailTpl, ev);
         if (!detail) continue;
         rows.push({ kind: 'detail', text: detail, fontWeight: 400 });
         lineCount++;
@@ -43,16 +50,18 @@ export function buildCalendarListRows(events, maxLines) {
       if (remaining < 2) break;
 
       const ev = group[0];
-      rows.push({
-        kind: 'date',
-        text: ev.date_line || ev.date_heading,
-        fontWeight: 600,
-      });
-      lineCount++;
-
-      if (lineCount < maxLines && ev.detail_label) {
-        rows.push({ kind: 'detail', text: ev.detail_label, fontWeight: 400 });
+      const dateText = applyCalendarRowTemplate(dateTpl, ev);
+      if (dateText) {
+        rows.push({ kind: 'date', text: dateText, fontWeight: 600 });
         lineCount++;
+      }
+
+      if (lineCount < maxLines) {
+        const detail = applyCalendarRowTemplate(detailTpl, ev);
+        if (detail) {
+          rows.push({ kind: 'detail', text: detail, fontWeight: 400 });
+          lineCount++;
+        }
       }
     }
 
@@ -62,6 +71,6 @@ export function buildCalendarListRows(events, maxLines) {
   return rows;
 }
 
-export function countCalendarListRows(events, maxLines) {
-  return buildCalendarListRows(events, maxLines).length;
+export function countCalendarListRows(events, maxLines, templates = {}) {
+  return buildCalendarListRows(events, maxLines, templates).length;
 }

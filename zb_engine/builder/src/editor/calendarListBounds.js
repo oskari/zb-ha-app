@@ -16,7 +16,10 @@ export function getCalendarListLayoutMetrics(element, events = null) {
   const eventList = Array.isArray(events) ? events : [];
   const renderedLines = eventList.length === 0
     ? 1
-    : countCalendarListRows(eventList, maxLines);
+    : countCalendarListRows(eventList, maxLines, {
+      dateRowTemplate: element?.dateRowTemplate,
+      detailRowTemplate: element?.detailRowTemplate,
+    });
 
   return {
     lineHeight,

@@ -96,14 +96,30 @@ export interface HaCalendarEvent {
   all_day: boolean;
   start_ts: number;
   end_ts: number;
+  /** Calendar days until start; null when start is today or earlier. */
+  days_until: number | null;
+  /** All-day event spanning more than one calendar day. */
+  multi_day: boolean;
+  /** Compact date for row templates, e.g. `Ma 22.7`. */
+  date_short: string;
+  /** Compact end date for multi-day events, e.g. `10.8.` */
+  until_date_short: string;
+  time_label: string;
+  /** Leading-space time fragment for templates, e.g. ` 13:00`. */
+  time_suffix: string;
+  relative_label: string;
+  /** Leading-space relative fragment for templates, e.g. ` (huomenna)`. */
+  relative_suffix: string;
+  until_label: string;
+  /** Leading-space until fragment for templates, e.g. ` (10.8. asti)`. */
+  until_suffix: string;
+  /** Default date row from templates; override via calendarList.dateRowTemplate. */
   label: string;
   date_line: string;
   detail_label: string;
   subtitle: string;
-  relative_label: string;
   date_heading: string;
   date_label: string;
-  time_label: string;
   weekday_short: string;
 }
 

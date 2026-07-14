@@ -4,9 +4,23 @@
  * Pure functions with no I/O. Used by fetchHaCalendarSource and unit tests.
  * All datetime comparisons use millisecond timestamps in the container's
  * local timezone (inherits HA host TZ in the add-on).
+ *
+ * Events expose structured fields for bindings; display text for calendarList
+ * is composed via row templates (see calendarTemplates.ts).
  */
 
 import type { HaCalendarEvent, HaCalendarResult } from "../data/sourceFetcher";
+import {
+  applyCalendarRowTemplate,
+  DEFAULT_CALENDAR_DATE_ROW_TEMPLATE,
+  DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE,
+} from "../data/calendar/calendarTemplates";
+
+export {
+  applyCalendarRowTemplate,
+  DEFAULT_CALENDAR_DATE_ROW_TEMPLATE,
+  DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE,
+} from "../data/calendar/calendarTemplates";
 
 export interface RawHaCalendarEvent {
   start: string;
@@ -75,8 +89,8 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** Compact calendar date for row 1: `Ma 22.7` / `Mon 22.7` */
-function formatDateShort(ts: number, locale: "en" | "fi"): string {
+/** Compact calendar date: `Ma 22.7` / `Mon 22.7` */
+export function formatDateShort(ts: number, locale: "en" | "fi"): string {
   const d = new Date(ts);
   const wd = locale === "fi"
     ? capitalize(FI_WEEKDAYS[d.getDay()])
@@ -98,24 +112,38 @@ function formatDateLabelEn(ts: number): string {
   return `${d.getDate()} ${EN_MONTHS[d.getMonth()]}`;
 }
 
+/** Compact end date for multi-day events: `10.8.` / `10.8` */
+export function formatUntilDateShort(ts: number, locale: "en" | "fi"): string {
+  const d = new Date(ts);
+  if (locale === "fi") {
+    return `${d.getDate()}.${d.getMonth() + 1}.`;
+  }
+  return `${d.getDate()}.${d.getMonth() + 1}`;
+}
+
 function sameCalendarDay(a: number, b: number): boolean {
   return startOfDay(a) === startOfDay(b);
 }
 
-/** Long relative phrase for row 1 when showDaysUntil is enabled. */
+export function computeDaysUntil(startTs: number, now: number): number | null {
+  const days = Math.round((startOfDay(startTs) - startOfDay(now)) / 86_400_000);
+  return days > 0 ? days : null;
+}
+
+/** Long relative phrase when showDaysUntil is enabled. */
 export function formatRelativeLabel(
   startTs: number,
   now: number,
   locale: "en" | "fi",
 ): string {
-  const days = Math.round((startOfDay(startTs) - startOfDay(now)) / 86_400_000);
-  if (days <= 0) return "";
+  const days = computeDaysUntil(startTs, now);
+  if (days == null) return "";
   if (days === 1) return locale === "fi" ? "(huomenna)" : "(in a day)";
   if (locale === "fi") return `(${days} päivän päästä)`;
   return `(in ${days} days)`;
 }
 
-function formatUntilSuffix(endTs: number, locale: "en" | "fi"): string {
+function formatUntilLabel(endTs: number, locale: "en" | "fi"): string {
   const d = new Date(endTs);
   if (locale === "fi") {
     return `(${d.getDate()}.${d.getMonth() + 1}. asti)`;
@@ -123,6 +151,88 @@ function formatUntilSuffix(endTs: number, locale: "en" | "fi"): string {
   return `(until ${d.getDate()}.${d.getMonth() + 1})`;
 }
 
+function withLeadingSpace(value: string): string {
+  return value ? ` ${value}` : "";
+}
+
+export function buildCalendarEventFields(
+  summary: string,
+  startTs: number,
+  endTs: number,
+  allDay: boolean,
+  locale: "en" | "fi",
+  showDaysUntil: boolean,
+  now?: number,
+): Omit<HaCalendarEvent, "summary" | "start" | "end" | "all_day" | "start_ts" | "end_ts"> {
+  const wd = weekdayShort(startTs, locale);
+  const date_short = formatDateShort(startTs, locale);
+  const date_label = locale === "fi" ? formatDateLabelFi(startTs) : formatDateLabelEn(startTs);
+  const time_label = allDay ? "" : formatTimeLocal(startTs);
+  const date_heading = formatDateHeading(startTs, locale);
+  const multi_day = allDay && !sameCalendarDay(startTs, endTs);
+  const until_date_short = multi_day ? formatUntilDateShort(endTs, locale) : "";
+  const days_until = now != null ? computeDaysUntil(startTs, now) : null;
+
+  const relative_label = showDaysUntil && now != null
+    ? formatRelativeLabel(startTs, now, locale)
+    : "";
+  const relative_suffix = withLeadingSpace(relative_label);
+  const time_suffix = withLeadingSpace(time_label);
+  const until_label = multi_day ? formatUntilLabel(endTs, locale) : "";
+  const until_suffix = withLeadingSpace(until_label);
+
+  const partial: HaCalendarEvent = {
+    summary,
+    start: "",
+    end: "",
+    all_day: allDay,
+    start_ts: startTs,
+    end_ts: endTs,
+    days_until,
+    multi_day,
+    date_short,
+    until_date_short,
+    time_label,
+    time_suffix,
+    relative_label,
+    relative_suffix,
+    until_label,
+    until_suffix,
+    subtitle: "",
+    date_heading,
+    date_label,
+    weekday_short: wd,
+    label: "",
+    date_line: "",
+    detail_label: "",
+  };
+
+  const date_line = applyCalendarRowTemplate(DEFAULT_CALENDAR_DATE_ROW_TEMPLATE, partial);
+  const detail_label = applyCalendarRowTemplate(DEFAULT_CALENDAR_DETAIL_ROW_TEMPLATE, partial);
+  const label = detail_label ? `${date_line}  ${detail_label}` : date_line;
+
+  return {
+    days_until,
+    multi_day,
+    date_short,
+    until_date_short,
+    time_label,
+    time_suffix,
+    relative_label,
+    relative_suffix,
+    until_label,
+    until_suffix,
+    subtitle: "",
+    date_heading,
+    date_label,
+    weekday_short: wd,
+    label,
+    date_line,
+    detail_label,
+  };
+}
+
+/** @deprecated Use buildCalendarEventFields — kept for tests referencing the old name. */
 export function formatCalendarEventLabel(
   summary: string,
   startTs: number,
@@ -131,42 +241,8 @@ export function formatCalendarEventLabel(
   locale: "en" | "fi",
   showDaysUntil: boolean,
   now?: number,
-): Pick<HaCalendarEvent, "label" | "date_line" | "detail_label" | "subtitle" | "relative_label" | "date_heading" | "date_label" | "time_label" | "weekday_short"> {
-  const wd = weekdayShort(startTs, locale);
-  const date_label = locale === "fi" ? formatDateLabelFi(startTs) : formatDateLabelEn(startTs);
-  const time_label = allDay ? "" : formatTimeLocal(startTs);
-  const date_heading = formatDateHeading(startTs, locale);
-  const relative_label = showDaysUntil && now != null
-    ? formatRelativeLabel(startTs, now, locale)
-    : "";
-
-  const multiDayAllDay = allDay && !sameCalendarDay(startTs, endTs);
-
-  let dateLine = formatDateShort(startTs, locale);
-  if (relative_label) {
-    dateLine = `${dateLine} ${relative_label}`;
-  }
-
-  let detail = summary;
-  if (!allDay) {
-    detail = `${summary} ${time_label}`;
-  } else if (multiDayAllDay) {
-    detail = `${summary} ${formatUntilSuffix(endTs, locale)}`;
-  }
-
-  const label = `${dateLine}  ${detail}`;
-
-  return {
-    label,
-    date_line: dateLine,
-    detail_label: detail,
-    subtitle: "",
-    relative_label,
-    date_heading,
-    date_label,
-    time_label,
-    weekday_short: wd,
-  };
+): ReturnType<typeof buildCalendarEventFields> {
+  return buildCalendarEventFields(summary, startTs, endTs, allDay, locale, showDaysUntil, now);
 }
 
 export function normalizeRawCalendarEvent(
@@ -181,7 +257,7 @@ export function normalizeRawCalendarEvent(
   const all_day = isAllDayStart(start);
   const start_ts = parseHaCalendarTimestamp(start, "start", all_day);
   const end_ts = parseHaCalendarTimestamp(end, "end", all_day);
-  const formatted = formatCalendarEventLabel(summary, start_ts, end_ts, all_day, locale, showDaysUntil, now);
+  const fields = buildCalendarEventFields(summary, start_ts, end_ts, all_day, locale, showDaysUntil, now);
 
   return {
     summary,
@@ -190,7 +266,7 @@ export function normalizeRawCalendarEvent(
     all_day,
     start_ts,
     end_ts,
-    ...formatted,
+    ...fields,
   };
 }
 
