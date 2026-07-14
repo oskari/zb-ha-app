@@ -476,7 +476,7 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
 **Label format** (two rows per event in `calendarList`):
 
 - Row 1 (`date_line`): `Ma 22.7` + optional time + optional relative when `showDaysUntil`
-- Row 2 (`detail_label`): event title; multi-day all-day adds `(asti 10.8.)` / `(until 10.8)`
+- Row 2 (`detail_label`): event title; timed events append `HH:MM`; multi-day all-day adds `(10.8. asti)` / `(until 10.8)`
 - Same start day (2+ events): one shared date line, then one detail line per event
 
 **Data context** exposed as `{sourceId.*}`:

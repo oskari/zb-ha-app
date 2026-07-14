@@ -259,7 +259,7 @@ Fetches upcoming events via HA `calendar.get_events` at render time. Each event 
 |---------|---------|
 | `{id}.count` | `5` |
 | `{id}.events.0.date_line` | `Ma 22.7 (huomenna)` |
-| `{id}.events.0.detail_label` | `Riikan kesäloma (asti 10.8.)` |
+| `{id}.events.0.detail_label` | `Riikan kesäloma (10.8. asti)` |
 | `{id}.events.0.summary` | `Riikan kesäloma` |
 | `{id}.events.0.all_day` | `true` |
 

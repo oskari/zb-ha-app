@@ -36,21 +36,21 @@ const sampleSourceData: HaCalendarResult = {
     makeEvent({
       summary: "A",
       start_ts: 1,
-      date_line: "Pe 10.7 13:00",
-      detail_label: "A",
-      label: "Pe 10.7 13:00  A",
+      date_line: "Pe 10.7",
+      detail_label: "A 13:00",
+      label: "Pe 10.7  A 13:00",
     }),
     makeEvent({
       summary: "B",
       start_ts: 86_400_001,
-      date_line: "La 11.7 10:00",
-      detail_label: "B",
+      date_line: "La 11.7",
+      detail_label: "B 10:00",
     }),
     makeEvent({
       summary: "C",
       start_ts: 172_800_001,
-      date_line: "Su 12.7 09:00",
-      detail_label: "C",
+      date_line: "Su 12.7",
+      detail_label: "C 09:00",
     }),
   ],
 };
@@ -77,9 +77,9 @@ describe("expandCalendarListElements", () => {
 
     expect(errors).toEqual([]);
     expect(elements).toHaveLength(6);
-    expect(elements[0]).toMatchObject({ type: "text", text: "Pe 10.7 13:00", fontWeight: 600 });
-    expect(elements[1]).toMatchObject({ type: "text", text: "A", fontWeight: 400 });
-    expect(elements[2]).toMatchObject({ type: "text", text: "La 11.7 10:00", fontWeight: 600 });
+    expect(elements[0]).toMatchObject({ type: "text", text: "Pe 10.7", fontWeight: 600 });
+    expect(elements[1]).toMatchObject({ type: "text", text: "A 13:00", fontWeight: 400 });
+    expect(elements[2]).toMatchObject({ type: "text", text: "La 11.7", fontWeight: 600 });
   });
 
   it("groups same-day events under one date line", () => {
@@ -92,14 +92,14 @@ describe("expandCalendarListElements", () => {
         makeEvent({
           summary: "Team standup",
           start_ts: day + 13 * 3_600_000,
-          date_line: "Pe 10.7 13:00 (huomenna)",
-          detail_label: "Team standup",
+          date_line: "Pe 10.7 (huomenna)",
+          detail_label: "Team standup 13:00",
         }),
         makeEvent({
           summary: "Dentist",
           start_ts: day + 15 * 3_600_000,
-          date_line: "Pe 10.7 15:00 (huomenna)",
-          detail_label: "Dentist",
+          date_line: "Pe 10.7 (huomenna)",
+          detail_label: "Dentist 15:00",
         }),
       ],
     };
@@ -116,9 +116,9 @@ describe("expandCalendarListElements", () => {
     );
 
     expect(elements).toHaveLength(3);
-    expect(elements[0]).toMatchObject({ text: "Pe 10.7 13:00 (huomenna)", fontWeight: 600 });
-    expect(elements[1]).toMatchObject({ text: "Team standup", fontWeight: 400 });
-    expect(elements[2]).toMatchObject({ text: "Dentist", fontWeight: 400 });
+    expect(elements[0]).toMatchObject({ text: "Pe 10.7 (huomenna)", fontWeight: 600 });
+    expect(elements[1]).toMatchObject({ text: "Team standup 13:00", fontWeight: 400 });
+    expect(elements[2]).toMatchObject({ text: "Dentist 15:00", fontWeight: 400 });
   });
 
   it("emits emptyText when count is 0", () => {
@@ -150,7 +150,7 @@ describe("expandCalendarListElements", () => {
           summary: "Holiday",
           start_ts: day,
           date_line: "Pe 10.7 (9 päivän päästä)",
-          detail_label: "Summer holiday (asti 10.8.)",
+          detail_label: "Summer holiday (10.8. asti)",
         }),
         makeEvent({
           summary: "Other",
@@ -174,7 +174,7 @@ describe("expandCalendarListElements", () => {
 
     expect(elements).toHaveLength(2);
     expect(elements[0].text).toBe("Pe 10.7 (9 päivän päästä)");
-    expect(elements[1].text).toBe("Summer holiday (asti 10.8.)");
+    expect(elements[1].text).toBe("Summer holiday (10.8. asti)");
   });
 
   it("passes through non-calendarList elements", () => {

@@ -118,7 +118,7 @@ export function formatRelativeLabel(
 function formatUntilSuffix(endTs: number, locale: "en" | "fi"): string {
   const d = new Date(endTs);
   if (locale === "fi") {
-    return `(asti ${d.getDate()}.${d.getMonth() + 1}.)`;
+    return `(${d.getDate()}.${d.getMonth() + 1}. asti)`;
   }
   return `(until ${d.getDate()}.${d.getMonth() + 1})`;
 }
@@ -143,15 +143,14 @@ export function formatCalendarEventLabel(
   const multiDayAllDay = allDay && !sameCalendarDay(startTs, endTs);
 
   let dateLine = formatDateShort(startTs, locale);
-  if (!allDay) {
-    dateLine = `${dateLine} ${time_label}`;
-  }
   if (relative_label) {
     dateLine = `${dateLine} ${relative_label}`;
   }
 
   let detail = summary;
-  if (multiDayAllDay) {
+  if (!allDay) {
+    detail = `${summary} ${time_label}`;
+  } else if (multiDayAllDay) {
     detail = `${summary} ${formatUntilSuffix(endTs, locale)}`;
   }
 
