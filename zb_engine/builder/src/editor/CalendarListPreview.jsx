@@ -23,7 +23,10 @@ export default function CalendarListPreview({ element, sourceData }) {
 
   const rows = events.length === 0
     ? [{ kind: 'standalone', text: emptyText, fontWeight }]
-    : buildCalendarListRows(events, maxLines);
+    : buildCalendarListRows(events, maxLines, {
+      dateRowTemplate: element.dateRowTemplate,
+      detailRowTemplate: element.detailRowTemplate,
+    });
 
   const previewRows = rows.map((row, index) => {
     const y = index * lineHeight;

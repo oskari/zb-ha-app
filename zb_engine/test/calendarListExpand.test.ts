@@ -14,14 +14,22 @@ function makeEvent(partial: Partial<HaCalendarEvent> & Pick<HaCalendarEvent, "st
     end: partial.end ?? "",
     all_day: partial.all_day ?? false,
     end_ts: partial.end_ts ?? partial.start_ts + 3_600_000,
-    label: partial.label ?? "",
-    date_line: partial.date_line ?? partial.date_heading ?? "Pe 10.7",
-    detail_label: partial.detail_label ?? partial.label ?? "Event",
-    subtitle: "",
-    relative_label: partial.relative_label ?? "",
-    date_heading: partial.date_heading ?? "Pe 10.7",
-    date_label: partial.date_label ?? "10.07.",
+    days_until: partial.days_until ?? null,
+    multi_day: partial.multi_day ?? false,
+    date_short: partial.date_short ?? "Pe 10.7",
+    until_date_short: partial.until_date_short ?? "",
     time_label: partial.time_label ?? "13:00",
+    time_suffix: partial.time_suffix ?? " 13:00",
+    relative_label: partial.relative_label ?? "",
+    relative_suffix: partial.relative_suffix ?? "",
+    until_label: partial.until_label ?? "",
+    until_suffix: partial.until_suffix ?? "",
+    label: partial.label ?? "",
+    date_line: partial.date_line ?? "",
+    detail_label: partial.detail_label ?? "",
+    subtitle: "",
+    date_heading: partial.date_heading ?? partial.date_short ?? "Pe 10.7",
+    date_label: partial.date_label ?? "10.07.",
     weekday_short: partial.weekday_short ?? "pe",
     ...partial,
   };
@@ -36,21 +44,20 @@ const sampleSourceData: HaCalendarResult = {
     makeEvent({
       summary: "A",
       start_ts: 1,
-      date_line: "Pe 10.7",
-      detail_label: "A 13:00",
-      label: "Pe 10.7  A 13:00",
+      date_short: "Pe 10.7",
+      time_suffix: " 13:00",
     }),
     makeEvent({
       summary: "B",
       start_ts: 86_400_001,
-      date_line: "La 11.7",
-      detail_label: "B 10:00",
+      date_short: "La 11.7",
+      time_suffix: " 10:00",
     }),
     makeEvent({
       summary: "C",
       start_ts: 172_800_001,
-      date_line: "Su 12.7",
-      detail_label: "C 09:00",
+      date_short: "Su 12.7",
+      time_suffix: " 09:00",
     }),
   ],
 };
@@ -92,14 +99,16 @@ describe("expandCalendarListElements", () => {
         makeEvent({
           summary: "Team standup",
           start_ts: day + 13 * 3_600_000,
-          date_line: "Pe 10.7 (huomenna)",
-          detail_label: "Team standup 13:00",
+          date_short: "Pe 10.7",
+          relative_suffix: " (huomenna)",
+          time_suffix: " 13:00",
         }),
         makeEvent({
           summary: "Dentist",
           start_ts: day + 15 * 3_600_000,
-          date_line: "Pe 10.7 (huomenna)",
-          detail_label: "Dentist 15:00",
+          date_short: "Pe 10.7",
+          relative_suffix: " (huomenna)",
+          time_suffix: " 15:00",
         }),
       ],
     };
@@ -147,16 +156,18 @@ describe("expandCalendarListElements", () => {
       count: 2,
       events: [
         makeEvent({
-          summary: "Holiday",
+          summary: "Summer holiday",
           start_ts: day,
-          date_line: "Pe 10.7 (9 päivän päästä)",
-          detail_label: "Summer holiday (10.8. asti)",
+          date_short: "Pe 10.7",
+          relative_suffix: " (9 päivän päästä)",
+          until_suffix: " (10.8. asti)",
+          time_suffix: "",
         }),
         makeEvent({
           summary: "Other",
           start_ts: day + 86_400_000,
-          date_line: "La 11.7",
-          detail_label: "Other",
+          date_short: "La 11.7",
+          time_suffix: "",
         }),
       ],
     };
@@ -175,6 +186,39 @@ describe("expandCalendarListElements", () => {
     expect(elements).toHaveLength(2);
     expect(elements[0].text).toBe("Pe 10.7 (9 päivän päästä)");
     expect(elements[1].text).toBe("Summer holiday (10.8. asti)");
+  });
+
+  it("uses element row templates when provided", () => {
+    const ctx = createDataContext();
+    const day = Date.parse("2026-07-10T00:00:00+03:00");
+    ctx.family_cal = {
+      ...sampleSourceData,
+      count: 1,
+      events: [
+        makeEvent({
+          summary: "Team standup",
+          start_ts: day,
+          date_short: "Pe 10.7",
+          days_until: 1,
+          time_suffix: " 13:00",
+        }),
+      ],
+    };
+
+    const { elements } = expandCalendarListElements(
+      [{
+        type: "calendarList",
+        sourceId: "family_cal",
+        pos: { x: 0, y: 0 },
+        maxLines: 4,
+        dateRowTemplate: "{{date_short}} [{{days_until}}]",
+        detailRowTemplate: "{{summary}} @ {{time_label}}",
+      }],
+      ctx,
+    );
+
+    expect(elements[0].text).toBe("Pe 10.7 [1]");
+    expect(elements[1].text).toBe("Team standup @ 13:00");
   });
 
   it("passes through non-calendarList elements", () => {

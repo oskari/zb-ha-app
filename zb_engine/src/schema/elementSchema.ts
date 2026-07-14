@@ -279,6 +279,8 @@ const calendarListSchema = z.object({
   enableFill: z.unknown().default(true),
   fill: z.unknown().default(100),
   emptyText: z.unknown().default("Ei tulevia tapahtumia"),
+  dateRowTemplate: z.unknown().default("{{date_short}}{{relative_suffix}}"),
+  detailRowTemplate: z.unknown().default("{{summary}}{{time_suffix}}{{until_suffix}}"),
 });
 
 // ── Discriminated union (with lazy for group recursion) ────────

@@ -471,21 +471,31 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
 - `includeOngoing` — include events that started but have not ended (default true)
 - `locale` — `"fi"` (default) or `"en"` for label formatting
 - `eventFilter` — `"all"` \| `"timed"` \| `"all_day"`
-- `showDaysUntil` — append relative phrase on the date line, e.g. `(huomenna)` / `(in a day)` (default false)
+- `showDaysUntil` — populate `relative_label` / `relative_suffix` when start is in the future (default false)
 
-**Label format** (two rows per event in `calendarList`):
+**Structured event fields** (for bindings and `calendarList` templates):
 
-- Row 1 (`date_line`): `Ma 22.7` + optional time + optional relative when `showDaysUntil`
-- Row 2 (`detail_label`): event title; timed events append `HH:MM`; multi-day all-day adds `(10.8. asti)` / `(until 10.8)`
-- Same start day (2+ events): one shared date line, then one detail line per event
+- `days_until` — calendar days until start (`null` when today or earlier)
+- `multi_day` — all-day event spanning multiple calendar days
+- `date_short` — compact date, e.g. `Ma 22.7`
+- `until_date_short` — compact end date for multi-day events, e.g. `10.8.`
+- `time_label`, `time_suffix` — `13:00` and ` 13:00` (leading space for templates)
+- `relative_label`, `relative_suffix` — e.g. `(huomenna)` and ` (huomenna)`
+- `until_label`, `until_suffix` — e.g. `(10.8. asti)` and ` (10.8. asti)`
+- Legacy convenience: `label`, `date_line`, `detail_label` (computed from default templates)
+
+**Default row layout** (two lines per event in `calendarList`):
+
+- Date row: `{{date_short}}{{relative_suffix}}`
+- Detail row: `{{summary}}{{time_suffix}}{{until_suffix}}`
+- Same start day (2+ events): one shared date row, then one detail row per event
 
 **Data context** exposed as `{sourceId.*}`:
 
 - `count` — number of events after cap
 - `truncated` — `true` if more events existed than `maxEvents`
 - `events[]` — each with `summary`, `start`, `end`, `all_day`, `start_ts`,
-  `end_ts`, `label`, `date_line`, `detail_label`, `date_heading`,
-  `relative_label`, `date_label`, `time_label`, `weekday_short`
+  `end_ts`, structured fields above, plus `date_heading`, `date_label`, `weekday_short`
 
 **Example:**
 
@@ -494,20 +504,26 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
   "entity_id": "calendar.family", "daysAhead": 14, "maxEvents": 5, "locale": "fi" }
 ```
 
-Binding: `"{{family_cal.events.0.label}}"` or use a `calendarList` element.
+Binding: `"{{family_cal.events.0.summary}}"` or use a `calendarList` element.
 
 ### `calendarList` element
 
 Composite element expanded into `text` primitives before render (never reaches
-the frozen draw engine). Binds to an `haCalendar` source.
+the frozen draw engine). Binds to an `haCalendar` source. Row text is composed
+from per-event structured fields using optional templates.
 
 | Field | Default | Notes |
 |-------|---------|-------|
 | `sourceId` | — | `haCalendar` source id |
+| `dateRowTemplate` | `{{date_short}}{{relative_suffix}}` | Date heading row (`{{field}}` placeholders) |
+| `detailRowTemplate` | `{{summary}}{{time_suffix}}{{until_suffix}}` | Event detail row |
 | `lineHeight` | 20 | Vertical spacing between rendered lines |
 | `maxLines` | 5 | Max rendered rows including date lines (1–20); two rows per event |
-| `fontSize` / `fontWeight` | 12 / 400 | Text styling (date lines render at weight 600) |
+| `fontSize` / `fontWeight` | 12 / 400 | Text styling (date rows render at weight 600) |
 | `emptyText` | `Ei tulevia tapahtumia` | Shown when no upcoming events |
+
+Use numeric `days_until` in templates for language-neutral relative display, e.g.
+`{{date_short}} (+{{days_until}})`.
 
 ### `elements`
 

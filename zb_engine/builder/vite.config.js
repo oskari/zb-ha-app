@@ -45,6 +45,7 @@ export default defineConfig({
       // Shared graph math — single source of truth for both server and builder.
       // The server imports these as TypeScript; Vite transpiles them for the builder.
       '@shared/graph': resolve(__dirname, '../src/data/graph'),
+      '@shared/calendar': resolve(__dirname, '../src/data/calendar'),
       // Shared expression engine — single source of truth for bindings,
       // math, logic, pipe-syntax. Aliased to the package's TypeScript
       // source so the builder build does not depend on the package
