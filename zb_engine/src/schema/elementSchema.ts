@@ -243,6 +243,16 @@ const graphSchema = z.object({
   yMin: z.unknown().default(null),
   yMax: z.unknown().default(null),
 
+  // X-axis time window (null = auto; payload may use "now", "now+6h", etc.)
+  xMin: z.unknown().default(null),
+  xMax: z.unknown().default(null),
+
+  // Now marker (timestamp axes only)
+  showNowMarker: z.unknown().default(false),
+  nowMarkerDither: z.unknown().default(60),
+  nowMarkerDash: z.unknown().default([2, 2]),
+  nowMarkerStrokeWidth: z.unknown().default(1),
+
   // Line chart styling
   lineStrokeWidth: z.unknown().default(2),
   lineStrokeDither: z.unknown().default(100),

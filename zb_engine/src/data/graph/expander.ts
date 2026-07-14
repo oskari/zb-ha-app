@@ -9,11 +9,13 @@
  */
 
 import { resolveValue, type DataContext } from "@zb/expressions";
-import { logError } from "../../core/logger";
+import { logError, logWarn } from "../../core/logger";
 import type { GraphConfig, NormalizedPoint, RawElement } from "./types";
 import { normalizeDataPoints } from "./normalizer";
 import { computeLayout } from "./layout";
 import { buildAxisElements } from "./axisBuilder";
+import { buildNowMarkerElements } from "./nowMarker";
+import { resolveXBound } from "./xBounds";
 import { getChartGenerator } from "./charts/index";
 import {
   MAX_GRAPH_GRID_LINES,
@@ -36,6 +38,27 @@ function bool(v: unknown, fallback: boolean): boolean {
 function str(v: unknown, fallback: string): string {
   if (typeof v === "string") return v;
   return fallback;
+}
+
+function resolveXBoundField(
+  raw: unknown,
+  ctx: DataContext,
+  nowMs: number,
+  fieldName: string,
+): number | null {
+  if (raw === null || raw === undefined) return null;
+  const resolved = resolveValue(raw, ctx);
+  if (resolved === null || resolved === undefined || resolved === "") return null;
+  const bound = resolveXBound(resolved, nowMs);
+  if (
+    bound === null &&
+    typeof resolved === "string" &&
+    resolved.trim() !== "" &&
+    resolved.trim().toLowerCase() !== "auto"
+  ) {
+    logWarn("graph.xBound.invalid", { field: fieldName, value: resolved });
+  }
+  return bound;
 }
 
 function assertGraphPreflight(config: GraphConfig): void {
@@ -73,6 +96,7 @@ function assertXAxisLabelBudget(config: GraphConfig, layout: ReturnType<typeof c
 function resolveGraphConfig(
   raw: Record<string, unknown>,
   ctx: DataContext,
+  nowMs: number,
 ): GraphConfig {
   return {
     type: "graph",
@@ -130,6 +154,22 @@ function resolveGraphConfig(
       ? num(resolveValue(raw.yMax, ctx), 0)
       : null,
 
+    xMin: resolveXBoundField(raw.xMin, ctx, nowMs, "xMin"),
+    xMax: resolveXBoundField(raw.xMax, ctx, nowMs, "xMax"),
+
+    showNowMarker: bool(resolveValue(raw.showNowMarker, ctx), false),
+    nowMarkerDither: num(resolveValue(raw.nowMarkerDither, ctx), 60),
+    nowMarkerStrokeWidth: num(resolveValue(raw.nowMarkerStrokeWidth, ctx), 1),
+    nowMarkerDash: (() => {
+      const resolved = resolveValue(raw.nowMarkerDash, ctx);
+      if (Array.isArray(resolved) && resolved.length === 2) {
+        const a = Number(resolved[0]);
+        const b = Number(resolved[1]);
+        if (Number.isFinite(a) && Number.isFinite(b)) return [a, b] as [number, number];
+      }
+      return [2, 2] as [number, number];
+    })(),
+
     lineStrokeWidth: num(resolveValue(raw.lineStrokeWidth, ctx), 2),
     lineStrokeDither: num(resolveValue(raw.lineStrokeDither, ctx), 100),
     lineStrokeRadius: num(resolveValue(raw.lineStrokeRadius, ctx), 0),
@@ -167,7 +207,8 @@ function expandGraphElement(
   raw: Record<string, unknown>,
   ctx: DataContext,
 ): RawElement[] {
-  const config = resolveGraphConfig(raw, ctx);
+  const nowMs = Date.now();
+  const config = resolveGraphConfig(raw, ctx, nowMs);
 
   assertGraphPreflight(config);
 
@@ -190,6 +231,8 @@ function expandGraphElement(
     config.resolution,
     config.dataRangeStart,
     config.dataRangeEnd,
+    config.xMin,
+    config.xMax,
   );
 
   if (points.length === 0) return [];
@@ -206,10 +249,10 @@ function expandGraphElement(
 
   // Generate axis and label primitives
   const axisElements = buildAxisElements(layout, config);
+  const nowMarkerElements = buildNowMarkerElements(layout, config, nowMs);
 
-  // Combine: axes first (background), then chart data (foreground)
-  // Offset all primitives by the graph element's position
-  const allElements = [...axisElements, ...chartElements];
+  // Axes (background), chart data, then now marker on top
+  const allElements = [...axisElements, ...chartElements, ...nowMarkerElements];
 
   for (const el of allElements) {
     if (el.pos && typeof el.pos === "object") {

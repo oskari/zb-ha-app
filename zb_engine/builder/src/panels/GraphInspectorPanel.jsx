@@ -50,10 +50,22 @@ function resolvePath(data, path) {
   return current;
 }
 
-/**
- * Given an array, inspect the first element and return suggestions for
- * valuePath and timePath based on the keys found.
- */
+/** Format an X-bound field for the inspector text input. */
+function formatXBoundDisplay(val) {
+  if (val === null || val === undefined) return '';
+  return String(val);
+}
+
+/** Parse X-bound inspector input: auto, epoch number, now, or now±N{m|h|d}. */
+function parseXBoundInput(v) {
+  if (v === '') return null;
+  const trimmed = v.trim();
+  if (/^now/i.test(trimmed)) return trimmed;
+  const n = Number(trimmed);
+  if (Number.isFinite(n)) return n;
+  return trimmed;
+}
+
 function suggestPaths(dataArray) {
   if (!Array.isArray(dataArray) || dataArray.length === 0) return null;
   const first = dataArray[0];
@@ -346,6 +358,99 @@ export default function GraphInspectorPanel({ element, updateElement }) {
             />
           </Field>
         </div>
+      </div>
+
+      {/* ── X-Axis time window ─────────────────────────────────── */}
+      <div className="field-group">
+        <div className="field-group-header">X-Axis window</div>
+        <p style={{ fontSize: '0.8em', color: 'var(--c-text-muted, #666)', margin: '0 0 8px' }}>
+          Time-based filter for timestamp series (requires Time Path). Ignored for index-based data.
+        </p>
+        <div className="field-row">
+          <Field label="Min" row>
+            <ValueEditor
+              value={element.xMin}
+              onChange={(val) => updateElement(element.id, { xMin: val })}
+              renderInput={(val, onChange) => (
+                <TextInput
+                  value={formatXBoundDisplay(val)}
+                  onChange={(v) => onChange(parseXBoundInput(v))}
+                  placeholder="auto"
+                />
+              )}
+            />
+          </Field>
+          <Field label="Max" row>
+            <ValueEditor
+              value={element.xMax}
+              onChange={(val) => updateElement(element.id, { xMax: val })}
+              renderInput={(val, onChange) => (
+                <TextInput
+                  value={formatXBoundDisplay(val)}
+                  onChange={(v) => onChange(parseXBoundInput(v))}
+                  placeholder="auto"
+                />
+              )}
+            />
+          </Field>
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ marginBottom: '8px' }}
+          onClick={() => updateElement(element.id, { xMin: 'now', xMax: element.xMax ?? null })}
+        >
+          From now
+        </button>
+      </div>
+
+      {/* ── Now marker ─────────────────────────────────────────── */}
+      <div className="field-group">
+        <div className="field-group-header">Now marker</div>
+        <Field>
+          <ValueEditor
+            value={element.showNowMarker}
+            onChange={(val) => updateElement(element.id, { showNowMarker: val })}
+            renderInput={(val, onChange) => (
+              <Toggle label="Show now line" value={val ?? false} onChange={onChange} />
+            )}
+          />
+        </Field>
+        {element.showNowMarker && (
+          <>
+            <Field label="Marker intensity">
+              <ValueEditor
+                value={element.nowMarkerDither}
+                onChange={(val) => updateElement(element.id, { nowMarkerDither: val })}
+                renderInput={(val, onChange) => (
+                  <Slider value={val ?? 60} onChange={onChange} min={0} max={100} />
+                )}
+              />
+            </Field>
+            <div className="field-row">
+              <Field label="Dash on" row>
+                <NumberInput
+                  value={element.nowMarkerDash?.[0] ?? 2}
+                  onChange={(v) => updateElement(element.id, {
+                    nowMarkerDash: [v, element.nowMarkerDash?.[1] ?? 2],
+                  })}
+                  min={0}
+                  max={20}
+                />
+              </Field>
+              <Field label="Dash off" row>
+                <NumberInput
+                  value={element.nowMarkerDash?.[1] ?? 2}
+                  onChange={(v) => updateElement(element.id, {
+                    nowMarkerDash: [element.nowMarkerDash?.[0] ?? 2, v],
+                  })}
+                  min={0}
+                  max={20}
+                />
+              </Field>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Axes & Grid ───────────────────────────────────────── */}

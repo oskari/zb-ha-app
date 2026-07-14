@@ -175,3 +175,43 @@ describe("string Y values", () => {
     expect(pts[1].y).toBe(10);
   });
 });
+
+// ── X-axis time window ─────────────────────────────────────────
+
+describe("X-axis time window filter", () => {
+  const NOW = Date.UTC(2026, 6, 14, 12, 0, 0);
+  const data = [
+    { val: 1, ts: NOW - 7_200_000 },
+    { val: 2, ts: NOW - 3_600_000 },
+    { val: 3, ts: NOW },
+    { val: 4, ts: NOW + 3_600_000 },
+    { val: 5, ts: NOW + 7_200_000 },
+  ];
+
+  it("keeps future points when xMin is set", () => {
+    const pts = normalizeDataPoints(data, "", "val", "ts", 200, 0, 100, NOW, null);
+    expect(pts.map((p) => p.y)).toEqual([3, 4, 5]);
+  });
+
+  it("keeps past points when xMax is set", () => {
+    const pts = normalizeDataPoints(data, "", "val", "ts", 200, 0, 100, null, NOW);
+    expect(pts.map((p) => p.y)).toEqual([1, 2, 3]);
+  });
+
+  it("ignores x bounds when timePath is empty", () => {
+    const flat = [1, 2, 3, 4, 5];
+    const pts = normalizeDataPoints(flat, "", "", "", 200, 0, 100, NOW, null);
+    expect(pts).toHaveLength(5);
+  });
+
+  it("applies dataRange before xMin filter", () => {
+    const pts = normalizeDataPoints(data, "", "val", "ts", 200, 50, 100, NOW, null);
+    // dataRange 50% keeps last 3 raw points (y=3,4,5), then xMin keeps y>=3
+    expect(pts.map((p) => p.y)).toEqual([3, 4, 5]);
+  });
+
+  it("returns empty when all points are filtered out", () => {
+    const pts = normalizeDataPoints(data, "", "val", "ts", 200, 0, 100, NOW + 9_000_000, null);
+    expect(pts).toEqual([]);
+  });
+});

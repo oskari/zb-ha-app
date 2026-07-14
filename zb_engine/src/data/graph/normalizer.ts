@@ -13,6 +13,10 @@ import type { NormalizedPoint } from "./types";
 import { walkPath } from "../dataFieldExtractor";
 import { downsampleLTTB } from "../downsampling";
 import { DEFAULT_MAX_GRAPH_POINTS } from "../../limits";
+import {
+  filterPointsByXWindow,
+  isTimestampSeries,
+} from "./xBounds";
 
 // ── Time parsing ───────────────────────────────────────────────
 
@@ -68,6 +72,8 @@ function parseNumericValue(raw: unknown): number | null {
  * @param maxPoints       Maximum points after LTTB downsampling (default: 200)
  * @param dataRangeStart  Start of the data window as a percentage 0–100 (default: 0)
  * @param dataRangeEnd    End of the data window as a percentage 0–100 (default: 100)
+ * @param xMinMs          Optional X minimum in epoch ms (timestamp series only)
+ * @param xMaxMs          Optional X maximum in epoch ms (timestamp series only)
  * @returns Sorted, downsampled array of NormalizedPoints
  */
 export function normalizeDataPoints(
@@ -78,6 +84,8 @@ export function normalizeDataPoints(
   maxPoints: number = DEFAULT_MAX_GRAPH_POINTS,
   dataRangeStart: number = 0,
   dataRangeEnd: number = 100,
+  xMinMs: number | null = null,
+  xMaxMs: number | null = null,
 ): NormalizedPoint[] {
   // Step 1: Locate the data array
   let arr: unknown = sourceData;
@@ -128,6 +136,11 @@ export function normalizeDataPoints(
     const lo = Math.floor((rStart / 100) * raw.length);
     const hi = Math.ceil((rEnd / 100) * raw.length);
     raw.splice(0, raw.length, ...raw.slice(lo, hi));
+  }
+
+  // Step 3c: Apply time-based X window (timestamp series only)
+  if (isTimestampSeries(raw, timePath) && (xMinMs !== null || xMaxMs !== null)) {
+    raw.splice(0, raw.length, ...filterPointsByXWindow(raw, xMinMs, xMaxMs));
   }
 
   if (raw.length === 0) return [];
