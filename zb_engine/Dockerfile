@@ -5,8 +5,9 @@ WORKDIR /app/builder
 COPY builder/package.json builder/package-lock.json* ./
 RUN npm ci
 COPY builder/ .
-# Shared graph modules consumed by the builder via @shared/graph Vite alias
+# Shared graph/calendar modules consumed by the builder via @shared/* Vite aliases
 COPY src/data/graph/ /app/src/data/graph/
+COPY src/data/calendar/ /app/src/data/calendar/
 COPY src/data/dataFieldExtractor.ts /app/src/data/dataFieldExtractor.ts
 COPY src/data/downsampling.ts /app/src/data/downsampling.ts
 COPY src/limits.ts /app/src/limits.ts
