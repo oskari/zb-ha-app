@@ -420,7 +420,7 @@ Common fields on all element types:
 
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
-| `type` | `string` | — | `rect` \| `circle` \| `line` \| `text` \| `img` \| `svg` \| `group` |
+| `type` | `string` | — | `rect` \| `circle` \| `line` \| `text` \| `img` \| `svg` \| `graph` \| `group` |
 | `pos` | `{x, y}` | `{0,0}` | Top-left position (or center for circle) |
 | `visible` | `boolean` \| binding | `true` | Hides element if false |
 | `opacity` | `number` \| binding | `100` | 0–100 dither mask |
@@ -435,6 +435,24 @@ Common fields on all element types:
 > **Sparklines / polylines:** `line.points` is a static `[[x,y], ...]` array. The engine cannot expand bindings into a variable-length array. To create a sparkline from `haHistory` data, compute the `[x,y]` coordinates at build/deploy time using the snapshot data and bake them into `line.points`. Re-deploy to refresh (re-compute from fresh data).
 
 > **`strokeCap` vs `strokeRadius`:** These are independent properties. `strokeCap: "round"` rounds only the first and last endpoint of a polyline. `strokeRadius` rounds intermediate joints with bezier curves. Expose them as separate controls in the builder UI.
+
+#### `graph` element — line/bar charts
+
+Expanded into primitives at render time. Requires `sourceId`, `dataPath`, `valuePath`, and `timePath` for timestamp series.
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `chartType` | `"line"` \| `"bar"` | `"line"` | |
+| `sourceId` | `string` | — | Source whose data contains the series array |
+| `dataPath` | `string` | `"points"` | Dot-path to array within source context |
+| `valuePath` | `string` | `"v"` | Y value within each item |
+| `timePath` | `string` | `"t"` | X timestamp within each item; empty = index-based |
+| `dataRangeStart` / `dataRangeEnd` | `number` | `0` / `100` | Index-based % window (applied before time filter) |
+| `xMin` / `xMax` | `null` \| `number` \| string | `null` | Time window: `"now"`, `"now+6h"`, `"now-2h"`, `"now+30m"`, `"now+1d"`, or epoch ms. Timestamp series only. |
+| `yMin` / `yMax` | `number` \| `null` | `null` | Value-axis range (auto when null) |
+| `showNowMarker` | `boolean` | `false` | Vertical line at current time (timestamp axes only) |
+| `nowMarkerDither` | `number` | `60` | 0–100 stroke intensity |
+| `nowMarkerDash` | `[number, number]` | `[2, 2]` | Dash pattern for now line |
 
 The full element schema is defined in `src/schema/elementSchema.ts`.
 

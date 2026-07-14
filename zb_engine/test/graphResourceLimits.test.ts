@@ -82,4 +82,21 @@ describe("graph expansion resource limits", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toContain("xLabelInterval");
   });
+
+  it("expands with xMin now on timestamp data", () => {
+    const now = Date.now();
+    const ctx = createDataContext();
+    ctx.history = {
+      points: [
+        { t: now - 7_200_000, v: 1 },
+        { t: now - 3_600_000, v: 2 },
+        { t: now + 3_600_000, v: 3 },
+      ],
+    };
+    const result = expandGraphElements([
+      baseGraph({ xMin: "now", showNowMarker: true }),
+    ], ctx);
+    expect(result.errors).toEqual([]);
+    expect(result.elements.length).toBeGreaterThan(0);
+  });
 });

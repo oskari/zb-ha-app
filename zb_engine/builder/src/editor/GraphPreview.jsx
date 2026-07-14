@@ -13,6 +13,8 @@ import BitmapText from '../components/BitmapText.jsx';
 import { roundPolyline } from '../utils/polyline.js';
 import { computeLayout, dataXToPixel, dataYToPixel } from '@shared/graph/layout';
 import { normalizeDataPoints } from '@shared/graph/normalizer';
+import { resolveXBound } from '@shared/graph/xBounds';
+import { buildNowMarkerElements } from '@shared/graph/nowMarker';
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -310,6 +312,24 @@ function renderAxes(layout, config) {
   return elements;
 }
 
+function renderNowMarker(layout, config, nowMs) {
+  const primitives = buildNowMarkerElements(layout, config, nowMs);
+  return primitives.map((el, i) => {
+    const pts = el.points;
+    if (!Array.isArray(pts) || pts.length < 2) return null;
+    return (
+      <Line
+        key={`now-marker-${i}`}
+        points={pts.flatMap(([x, y]) => [x, y])}
+        stroke={ditherToGray(el.strokeDither ?? config.nowMarkerDither ?? 60)}
+        strokeWidth={el.strokeWidth ?? 1}
+        dash={el.strokeDash ?? config.nowMarkerDash ?? [2, 2]}
+        listening={false}
+      />
+    );
+  });
+}
+
 function formatYLabel(value) {
   if (Number.isInteger(value)) return String(value);
   return value.toFixed(1);
@@ -393,6 +413,10 @@ function renderPlaceholder(config) {
  * @param {object} props.sourceData  Resolved source data object (or null)
  */
 export default function GraphPreview({ element, sourceData }) {
+  const nowMs = Date.now();
+  const xMinMs = resolveXBound(element.xMin, nowMs);
+  const xMaxMs = resolveXBound(element.xMax, nowMs);
+
   const config = {
     sizeX: element.sizeX ?? 280,
     sizeY: element.sizeY ?? 160,
@@ -409,6 +433,12 @@ export default function GraphPreview({ element, sourceData }) {
     labelFontWeight: element.labelFontWeight ?? 400,
     yMin: element.yMin ?? null,
     yMax: element.yMax ?? null,
+    xMin: xMinMs,
+    xMax: xMaxMs,
+    showNowMarker: element.showNowMarker ?? false,
+    nowMarkerDither: element.nowMarkerDither ?? 60,
+    nowMarkerDash: element.nowMarkerDash ?? [2, 2],
+    nowMarkerStrokeWidth: element.nowMarkerStrokeWidth ?? 1,
     lineStrokeWidth: element.lineStrokeWidth ?? 2,
     lineStrokeDither: element.lineStrokeDither ?? 100,
     lineStrokeRadius: element.lineStrokeRadius ?? 0,
@@ -441,7 +471,17 @@ export default function GraphPreview({ element, sourceData }) {
   }
 
   // Normalize data points
-  const points = normalizeDataPoints(sourceData, config.dataPath, config.valuePath, config.timePath, config.resolution, config.dataRangeStart, config.dataRangeEnd);
+  const points = normalizeDataPoints(
+    sourceData,
+    config.dataPath,
+    config.valuePath,
+    config.timePath,
+    config.resolution,
+    config.dataRangeStart,
+    config.dataRangeEnd,
+    config.xMin,
+    config.xMax,
+  );
 
   if (points.length === 0) {
     return renderPlaceholder(config);
@@ -457,6 +497,7 @@ export default function GraphPreview({ element, sourceData }) {
       : renderLineChart(points, layout, config);
 
   const axisContent = renderAxes(layout, config);
+  const nowMarkerContent = renderNowMarker(layout, config, nowMs);
 
   return (
     <>
@@ -470,6 +511,7 @@ export default function GraphPreview({ element, sourceData }) {
       />
       {axisContent}
       {chartContent}
+      {nowMarkerContent}
     </>
   );
 }

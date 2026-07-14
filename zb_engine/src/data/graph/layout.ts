@@ -8,8 +8,7 @@
  */
 
 import type { GraphConfig, LayoutResult, NormalizedPoint } from "./types";
-
-// ── Margins ────────────────────────────────────────────────────
+import { msBoundToSeriesUnit } from "./xBounds";
 
 /** Default margin in pixels reserved for axis labels and padding. */
 const MARGIN_LEFT_WITH_LABELS = 32;
@@ -128,6 +127,12 @@ export function computeLayout(
   // Single-value range: pad so the chart isn't a flat line at edge
   if (xMin === xMax) { xMin -= 0.5; xMax += 0.5; }
   if (yMin === yMax) { yMin -= 0.5; yMax += 0.5; }
+
+  // Apply manual X overrides if provided (bounds are ms; convert to series unit)
+  const hasManualXMin = config.xMin !== null && config.xMin !== undefined && Number.isFinite(config.xMin);
+  const hasManualXMax = config.xMax !== null && config.xMax !== undefined && Number.isFinite(config.xMax);
+  if (hasManualXMin) xMin = msBoundToSeriesUnit(config.xMin as number, points);
+  if (hasManualXMax) xMax = msBoundToSeriesUnit(config.xMax as number, points);
 
   // Apply manual Y overrides if provided
   const hasManualYMin = config.yMin !== null && config.yMin !== undefined && Number.isFinite(config.yMin);

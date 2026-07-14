@@ -237,6 +237,8 @@ Exposes `{{temp.state}}` and all entity attributes (e.g. `{{temp.unit_of_measure
 
 Exposes bindings like `{{temp_hist.latest}}`, `{{temp_hist.min}}`, `{{temp_hist.max}}`, `{{temp_hist.avg}}`, and `temp_hist.points` (full time-series array for graphs).
 
+Graph elements support an **X-axis time window** (`xMin`/`xMax`) with literals like `"now"`, `"now+6h"`, and `"now-2h"` for timestamp series — useful for spot-price forecasts from `haState` attribute arrays. Set `showNowMarker: true` for a vertical current-time line. See `zb_engine/DOCS.md` for details.
+
 ---
 
 ## Bindings & Expressions

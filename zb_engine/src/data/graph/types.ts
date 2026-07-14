@@ -90,11 +90,27 @@ export interface GraphConfig {
   /** Dither intensity (0–100) for the title text. */
   titleDither: number;
 
+  // ── X-axis time window (resolved ms at render time; null = auto) ──
+  /** Manual X minimum (epoch ms). null = auto-detect from data. */
+  xMin: number | null;
+  /** Manual X maximum (epoch ms). null = auto-detect from data. */
+  xMax: number | null;
+
   // ── Y-axis range ───────────────────────────────────────────
   /** Manual Y minimum. null = auto-detect from data. */
   yMin: number | null;
   /** Manual Y maximum. null = auto-detect from data. */
   yMax: number | null;
+
+  // ── Now marker ─────────────────────────────────────────────
+  /** Show a vertical line at the current time (timestamp axes only). */
+  showNowMarker: boolean;
+  /** Stroke dither for the now marker line (0–100). */
+  nowMarkerDither: number;
+  /** Dash pattern [on, off] for the now marker. */
+  nowMarkerDash: [number, number];
+  /** Stroke width for the now marker line. */
+  nowMarkerStrokeWidth: number;
 
   // ── Line chart styling ─────────────────────────────────────
   /** Stroke width for line chart data series. */

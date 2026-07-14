@@ -453,9 +453,54 @@ Fetches state history directly from the HA Supervisor API at render time using
 
 ### `elements`
 
-- Supported types: `rect`, `circle`, `line`, `text`, `img`, `svg`, `group`
+- Supported types: `rect`, `circle`, `line`, `text`, `img`, `svg`, `graph`, `group`
 - All types support: `pos`, `rotationDeg`, `scale`, `origin`, `opacity`, `visible`
 - Drawn in order — first element is the bottom layer.
+
+#### `graph` element — line/bar charts
+
+Expanded into primitive `line`, `rect`, and `text` elements at render time (never
+reaches the frozen draw engine). Binds to any source that exposes a time-series
+array via `dataPath`, `valuePath`, and `timePath`.
+
+**X-axis time window** (`xMin` / `xMax`) filters timestamp series at render time.
+Ignored when `timePath` is empty (index-based charts). Complements index-based
+`dataRangeStart`/`dataRangeEnd` and source-level `hoursBack`.
+
+| Field | Default | Accepted values |
+|-------|---------|-----------------|
+| `xMin` | `null` (auto) | `null`, epoch ms `number`, `"now"`, `"now+6h"`, `"now-2h"`, `"now+30m"`, `"now+1d"` |
+| `xMax` | `null` (auto) | same as `xMin` |
+| `showNowMarker` | `false` | Vertical dashed line at current time (timestamp axes only) |
+| `yMin` / `yMax` | `null` (auto) | Manual value-axis range |
+
+**Common configurations:**
+
+| Intent | Config |
+|--------|--------|
+| Coming spot prices | `xMin: "now"` |
+| Next 6 hours | `xMin: "now"`, `xMax: "now+6h"` |
+| Last 2h of fetched history | `xMin: "now-2h"` |
+| Full schedule + now line | `showNowMarker: true` (bounds auto) |
+
+**Example (forecast prices from `haState` attribute array):**
+
+```json
+{
+  "type": "graph",
+  "sourceId": "prices",
+  "dataPath": "attributes.data",
+  "timePath": "DateTime",
+  "valuePath": "PriceWithTax",
+  "chartType": "line",
+  "xMin": "now",
+  "xMax": "now+1d",
+  "showNowMarker": true,
+  "pos": { "x": 16, "y": 40 },
+  "sizeX": 450,
+  "sizeY": 180
+}
+```
 
 ---
 

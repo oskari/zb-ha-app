@@ -162,6 +162,14 @@ export function createElement(type, partialOverrides) {
         // Y-axis range (null = auto)
         yMin: null,
         yMax: null,
+        // X-axis time window (null = auto)
+        xMin: null,
+        xMax: null,
+        // Now marker
+        showNowMarker: false,
+        nowMarkerDither: 60,
+        nowMarkerDash: [2, 2],
+        nowMarkerStrokeWidth: 1,
         // Line chart styling
         lineStrokeWidth: 2,
         lineStrokeDither: 100,
