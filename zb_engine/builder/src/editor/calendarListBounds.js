@@ -3,7 +3,8 @@
  * The server expander ignores sizeX/sizeY and lays out lines from pos + lineHeight.
  */
 
-import { countCalendarListRows } from './calendarListLayout.js';
+import { countCalendarListRows } from '@shared/calendar/listLayout.ts';
+import { MAX_CALENDAR_LIST_LINES } from '@shared/limits';
 
 function num(v, fallback) {
   const n = Number(v);
@@ -12,7 +13,7 @@ function num(v, fallback) {
 
 export function getCalendarListLayoutMetrics(element, events = null) {
   const lineHeight = num(element?.lineHeight, 20);
-  const maxLines = Math.min(num(element?.maxLines, 5), 20);
+  const maxLines = Math.min(num(element?.maxLines, 5), MAX_CALENDAR_LIST_LINES);
   const eventList = Array.isArray(events) ? events : [];
   const renderedLines = eventList.length === 0
     ? 1

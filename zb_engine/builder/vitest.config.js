@@ -5,6 +5,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@shared/graph': resolve(__dirname, '../src/data/graph'),
+      '@shared/calendar': resolve(__dirname, '../src/data/calendar'),
+      '@shared/limits': resolve(__dirname, '../src/limits.ts'),
       '@shared/textLayout': resolve(__dirname, '../src/data/textLayout.ts'),
       '@zb/expressions': resolve(__dirname, '../packages/zb-expressions/src/index.ts'),
     },

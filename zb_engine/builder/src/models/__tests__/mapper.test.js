@@ -598,3 +598,31 @@ describe('export → import round-trip stability', () => {
     });
   });
 });
+
+describe('calendarList row templates', () => {
+  it('keeps dateRowTemplate/detailRowTemplate as first-class element keys', () => {
+    const imported = importRuntimeJson({
+      misc: { gridSize: '1x1' },
+      sources: [],
+      elements: [{
+        type: 'calendarList',
+        id: 'cl1',
+        sourceId: 'family_cal',
+        pos: { x: 0, y: 0 },
+        dateRowTemplate: '{{weekday_short}} {{date_label}}',
+        detailRowTemplate: '{{summary}}',
+      }],
+    });
+    expect(imported.elements[0]).toMatchObject({
+      dateRowTemplate: '{{weekday_short}} {{date_label}}',
+      detailRowTemplate: '{{summary}}',
+    });
+    expect(imported.elements[0].extra).toBeUndefined();
+
+    const reExported = exportRuntimeJson(imported);
+    expect(reExported.elements[0]).toMatchObject({
+      dateRowTemplate: '{{weekday_short}} {{date_label}}',
+      detailRowTemplate: '{{summary}}',
+    });
+  });
+});

@@ -46,6 +46,8 @@ export default defineConfig({
       // The server imports these as TypeScript; Vite transpiles them for the builder.
       '@shared/graph': resolve(__dirname, '../src/data/graph'),
       '@shared/calendar': resolve(__dirname, '../src/data/calendar'),
+      // Server limits (import-free), e.g. MAX_CALENDAR_LIST_LINES.
+      '@shared/limits': resolve(__dirname, '../src/limits.ts'),
       // Shared text measurement + word wrapping, same arrangement as the graph
       // math above. Both trees must break lines identically or the preview
       // stops matching the panel.

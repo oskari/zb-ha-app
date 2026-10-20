@@ -5,7 +5,7 @@
 import { Rect, Text } from 'react-konva';
 import BitmapText from '../components/BitmapText.jsx';
 import { getCalendarListLayoutMetrics } from './calendarListBounds.js';
-import { buildCalendarListRows } from './calendarListLayout.js';
+import { buildCalendarListRows } from '@shared/calendar/listLayout.ts';
 
 function num(v, fallback) {
   const n = Number(v);

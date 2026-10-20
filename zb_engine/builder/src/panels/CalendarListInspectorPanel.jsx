@@ -12,6 +12,7 @@ import {
   Toggle,
 } from '../components/InspectorFields.jsx';
 import { useDocStore, selectFocusedSources } from '../store/docStore.js';
+import { MAX_CALENDAR_LIST_LINES } from '@shared/limits';
 
 export default function CalendarListInspectorPanel({ element, updateElement }) {
   const sources = useDocStore((s) => selectFocusedSources(s));
@@ -46,7 +47,7 @@ export default function CalendarListInspectorPanel({ element, updateElement }) {
             });
           }}
           min={1}
-          max={20}
+          max={MAX_CALENDAR_LIST_LINES}
           step={1}
         />
       </Field>

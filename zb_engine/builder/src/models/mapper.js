@@ -238,6 +238,8 @@ const ELEMENT_KNOWN_KEYS = new Set([
   // CalendarList-specific (consumed by calendar expander at render time)
   'maxLines',
   'emptyText',
+  'dateRowTemplate',
+  'detailRowTemplate',
 
   'extra',
 ]);
