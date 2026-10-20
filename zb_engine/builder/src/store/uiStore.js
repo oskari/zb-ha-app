@@ -74,6 +74,11 @@ export const useUiStore = create(
     // Signature: () => Promise<{ ip: string|null, candidates: Array<{ interface, ip, primary }> }>
     hostInfoProvider: null,
 
+    // Platform-injected provider for the engine build label shown in Settings
+    // (version + optional commit, from the add-on's /health endpoint). Null
+    // when running standalone. Signature: () => Promise<string|null>
+    engineVersionProvider: null,
+
     // Platform-injected handler for the guided self-host `/config` push. Set by
     // the platform layer on init; null when running standalone (no add-on
     // backend). The Self-Host setup dialog reads this and only enables "Send"
@@ -437,6 +442,12 @@ export const useUiStore = create(
     setHostInfoProvider(provider) {
       set((state) => {
         state.hostInfoProvider = provider;
+      });
+    },
+
+    setEngineVersionProvider(provider) {
+      set((state) => {
+        state.engineVersionProvider = provider;
       });
     },
 

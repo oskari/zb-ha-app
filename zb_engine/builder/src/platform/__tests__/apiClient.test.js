@@ -10,6 +10,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   assetRawUrl,
+  fetchEngineVersion,
   getPreviewImageUrl,
   listWidgets,
   newWidgetId,
@@ -147,5 +148,27 @@ describe('apiClient HA Ingress path-prefix smoke coverage', () => {
       .toBe('/api/hassio_ingress/abc123/image_fullscreen.png');
     expect(new URL(rawAssetUrl, window.location.href).pathname)
       .toBe('/api/hassio_ingress/abc123/api/assets/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.png/raw');
+  });
+
+  it('fetches the engine version through a relative Ingress-safe URL', async () => {
+    window.history.pushState({}, '', '/api/hassio_ingress/abc123/');
+    fetch.mockResolvedValueOnce(jsonResponse({
+      status: 'ok',
+      version: '0.1.6.dev1',
+      build: { commit: 'abc1234' },
+    }));
+
+    await expect(fetchEngineVersion()).resolves.toBe('0.1.6.dev1 · abc1234');
+    const [url] = fetch.mock.calls[0];
+    expect(url).toBe('./health');
+    expect(new URL(url, window.location.href).pathname)
+      .toBe('/api/hassio_ingress/abc123/health');
+  });
+
+  it('resolves null when the health endpoint fails or is malformed', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({ error: 'down' }, { status: 503 }));
+    await expect(fetchEngineVersion()).resolves.toBeNull();
+    fetch.mockResolvedValueOnce(jsonResponse({ status: 'ok' }));
+    await expect(fetchEngineVersion()).resolves.toBeNull();
   });
 });

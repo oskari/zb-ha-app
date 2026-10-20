@@ -11,7 +11,7 @@ import GridSizeSelector from './components/GridSizeSelector.jsx';
 import SetupModeScreen from './components/SetupModeScreen.jsx';
 import NoticeModal from './components/NoticeModal.jsx';
 import BusyOverlay from './components/BusyOverlay.jsx';
-import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitmapFonts, fetchHostIp, pushDeviceConfig } from './platform/apiClient.js';
+import { testSource, renderPreview, getPreviewImageUrl, expandPayload, loadBitmapFonts, fetchHostIp, fetchEngineVersion, pushDeviceConfig } from './platform/apiClient.js';
 import { useEntityStore } from './platform/entityStore.js';
 import HaStateSourceFields from './platform/HaStateSourceFields.jsx';
 import HaHistorySourceFields from './platform/HaHistorySourceFields.jsx';
@@ -117,6 +117,10 @@ function App() {
     // device endpoint URL. Injected (not imported by core) so the panel stays
     // platform-agnostic — mirrors the source-test / preview handlers above.
     store.setHostInfoProvider(fetchHostIp);
+
+    // Engine build label for the Settings tab, fetched via a relative URL so
+    // it stays inside the HA Ingress mount.
+    store.setEngineVersionProvider(fetchEngineVersion);
 
     // Provide the guided self-host `/config` push proxy so the Self-Host setup
     // dialog can POST to a LAN device through the add-on backend. Injected (not

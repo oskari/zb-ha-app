@@ -14,12 +14,14 @@
 import { useState, useEffect } from 'react';
 import { useDisplayConfigStore, DISPLAY_PRESETS } from '../store/displayConfigStore.js';
 import { useDocStore } from '../store/docStore.js';
+import { useUiStore } from '../store/uiStore.js';
 import DeviceEndpointSettings from './DeviceEndpointSettings.jsx';
 import SetupModeScreen from '../components/SetupModeScreen.jsx';
 
 export default function SettingsPanel() {
   const [showSetup, setShowSetup] = useState(false);
   const [engineVersion, setEngineVersion] = useState(null);
+  const engineVersionProvider = useUiStore((s) => s.engineVersionProvider);
   const displayMode = useDisplayConfigStore((s) => s.displayMode);
   const setDisplayMode = useDisplayConfigStore((s) => s.setDisplayMode);
   const widgetMode = useDisplayConfigStore((s) => s.widgetMode);
@@ -62,18 +64,15 @@ export default function SettingsPanel() {
   };
 
   useEffect(() => {
+    if (!engineVersionProvider) return undefined;
     let cancelled = false;
-    fetch('/health')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.version) return;
-        const parts = [data.version];
-        if (data.build?.commit) parts.push(data.build.commit);
-        setEngineVersion(parts.join(' · '));
+    Promise.resolve(engineVersionProvider())
+      .then((label) => {
+        if (!cancelled && label) setEngineVersion(label);
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [engineVersionProvider]);
 
   return (
     <div className="panel-body">

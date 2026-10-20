@@ -397,6 +397,28 @@ export async function fetchHostIp() {
   return readValidatedJson(res, hostIpResponseSchema, 'host IP');
 }
 
+const healthResponseSchema = z.object({
+  version: z.string(),
+  build: z.object({ commit: z.string().optional() }).passthrough().optional(),
+}).passthrough();
+
+/**
+ * Engine build label from the add-on's `/health` endpoint, e.g.
+ * `0.1.6.dev1 · abc1234`. Resolves null when unavailable (never throws), so
+ * the Settings tab simply omits the label.
+ *
+ * @returns {Promise<string|null>}
+ */
+export async function fetchEngineVersion() {
+  try {
+    const res = await apiFetch('health');
+    const data = await readValidatedJson(res, healthResponseSchema, 'health');
+    return data.build?.commit ? `${data.version} · ${data.build.commit}` : data.version;
+  } catch {
+    return null;
+  }
+}
+
 // ── Device config push API ─────────────────────────────────────
 // Route mounted by the HA platform adapter on the Ingress port only
 // (`src/ha/haDevice.ts`). Proxies the self-host `/config` POST to a LAN
