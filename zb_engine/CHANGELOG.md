@@ -5,6 +5,182 @@ All notable changes to ZerryBit Engine are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.5
+
+### Added
+
+- **QR pairing.** Every widget now carries a permanent pairing ID and a QR code
+  in the builder's top bar. Scan it with the ZerryBit mobile app and the widget
+  is connected — the app asks port 8000 for that widget's frame by ID, rendered
+  from the saved document, with no deploy step. `POST /image.bin` accepts a
+  `{"requestedInstances":[…]}` body of 1–12 IDs and streams one frame per ID.
+  Firmware that sends no such body gets exactly the same single frame as before.
+- **Device telemetry in expressions.** A device that reports `battery`,
+  `charging`, `units`, `tempC`/`tempF`, `humidity` or
+  `pressureHpa`/`pressureInhg` in its POST body can bind them as `device.*`.
+  Each field is validated on its own — a bad one goes empty instead of failing
+  the wake — and nothing is stored: the values apply to that one response only.
+- **Real setup steps** in the builder's "Using the mobile application" guide,
+  replacing the placeholder.
+
+### Fixed
+
+- **A wake is answered with its own readings, not the previous wake's.**
+  Telemetry that differs from the cached frame's bypasses the render cooldown.
+  Repeat wakes reporting unchanged values still dedupe.
+- **An older backend no longer wipes the pixel size** a widget's pairing QR
+  carries when that widget is saved.
+
+### Known limitations
+
+- **`image_port_mode: cache-only` disables pairing entirely.** The port renders
+  nothing in that mode, so every paired request answers "unavailable" and a
+  paired panel never receives a frame. Pick `on-demand` if you use the app.
+- **A panel reports temperature and pressure in one unit system only.** The
+  other field of each pair stays empty forever, so branch on `device.units`.
+- **Bind telemetry with a `default`.** `{{device.tempC|round}}` renders `0` for
+  a device that has never woken — a plausible, wrong reading.
+  `{"$": "device.battery", "default": "--"}` is the safe form.
+
+## 0.1.4
+
+### Added
+
+- **The add-on can now load from addresses on your own network, if you allow
+  them.** A new `allow_private_hosts` option in the Configuration tab takes a
+  list of addresses on your home network — a Pi-hole summary, a NAS endpoint, a
+  camera snapshot, a locally rendered Grafana panel. One entry covers both data
+  sources *and* image/SVG elements. The option ships empty and only an add-on
+  operator can change it, so nothing on your network becomes reachable until you
+  add an entry yourself; with the list empty, private addresses are refused
+  exactly as before.
+
+- **Text now lives in a frame you size yourself, and wraps inside it.** Until now
+  a text box always hugged its content, so a longer live value stretched it
+  sideways and pushed centred text out of place. A new text element starts as a
+  120×60 frame: type into it and lines break at the right edge. The box is locked
+  by default — text that doesn't fit is cut off, and the editor marks the hidden
+  part with a dashed line — so a wild live value can never wreck the layout
+  around it. Tick **"Text overflow"** in the text inspector and the box grows
+  downward instead: its height becomes a minimum (the input is then labelled
+  "Min height"), so a value that gains a line fills the reserve rather than
+  shifting everything below it. Resize handles re-wrap the text live as you drag.
+  Existing widgets are untouched: every already-saved text element keeps hugging
+  its content exactly as before until you touch it — the first resize, size edit,
+  or flip of "Text overflow" turns it into a frame at its current size.
+
+- **Preview, Refresh data and Deploy now show that they are working.** A greyed
+  out button was the only sign anything was happening, which is hard to tell
+  apart from a frozen page. A spinner now names the action, and past a second and
+  a half it counts the seconds, so a slow image fetch looks like a slow image
+  fetch instead of a hang. An action that finishes promptly never shows it, and
+  it never blocks the editor while it is up.
+
+### Changed
+
+- **Remote images hosted far from the add-on no longer fail to load.** An image
+  or SVG element had 0.3 seconds to start replying — enough for a server in the
+  same country, not for one across an ocean, so the picture simply never
+  appeared. The allowance is now 5 seconds. Nearby images are unaffected; they
+  were never waiting. The trade-off: a widget carrying six unreachable images can
+  run out the 30-second render budget and produce no image at all. One to three
+  remote images is comfortable.
+
+### Fixed
+
+- **The "allowed source domains" list now covers images and SVGs too.** That list
+  was only ever applied to data sources — an image or SVG element could still be
+  fetched from anywhere on the web. Both now go through it. Nothing changes if
+  you left the option empty, which is the default. If you do use it, check that
+  the addresses your image elements point at are on the list: one that is not
+  will stop appearing, and the widget renders without that picture and notes it
+  under the Preview tab. The rest of the widget is unaffected.
+
+- **Render warnings are readable again.** When an element failed to draw, the
+  warning under the Preview tab printed the internal record as raw JSON —
+  `{"elementIndex":1,"elementType":"img","message":"…"}` — instead of the
+  sentence inside it. It now shows the sentence.
+
+- **The builder no longer reports "Image load failed" for an image it simply
+  cannot preview.** An image or SVG element pointing at a web address is blocked
+  by the builder page's own security policy, so it never appears on the editor
+  canvas — even though the widget renders it correctly on the device. It now says
+  the preview is unavailable in the editor instead of claiming a failure.
+  Uploaded images and inline SVGs still preview normally, and a genuine failure
+  in one still reports as a failure.
+
+### Security
+
+- **Image-handling dependencies updated.** `sharp` 0.33.5 → 0.35.3 closes four
+  inherited libvips advisories (CVE-2026-33327 / 33328 / 35590 / 35591, all
+  HIGH) on the path that rasterizes uploaded images and SVG, and `body-parser`
+  → 1.20.6 closes an invalid-limit denial-of-service advisory reached through
+  Express. No configuration change is needed. Rendered images are unaffected in
+  content, though the new library compresses PNGs slightly differently, so a
+  device or cache that compares raw image bytes will see one extra refresh
+  after the update.
+
+### Known limitations
+
+- **`allow_private_hosts` takes an IPv4 address, not a hostname.**
+  `192.168.1.50` works; `nas.local` is refused even if it points at that same
+  address — a name can be made to point somewhere else between the safety check
+  and the fetch, and an address cannot. A bare address is the recommended form;
+  `192.168.1.0/24` covers a subnet and is the widest entry accepted, since
+  anything broader would cover the internal network Home Assistant itself runs
+  on. Loopback, link-local, and the internal names `supervisor`,
+  `homeassistant`, `hassio` and `localhost` can never be listed. An entry that
+  isn't a valid address is skipped with a warning in the add-on log rather than
+  stopping the add-on, and grants nothing.
+- **An image loaded from your network is republished on port 8000.** A widget
+  renders to an image, and port 8000 serves that image to anything on your
+  network with no password. Pointing an image element at a camera makes that
+  camera's picture pollable by every device on your network for as long as the
+  widget exists. Prefer `image_port_mode: cache-only` if that matters to you.
+- **With "Text overflow" ticked, a text frame can overlap what sits below it.**
+  Text is never cut off in that mode — a value too long for its reserve pushes
+  past the Min height instead. The editor marks the overrun with a dashed line,
+  but that mark reflects the value being previewed: a longer live value on the
+  device can overflow further than what you saw while designing. Leave slack in
+  the Min height if the layout below must never move, or untick "Text overflow"
+  to lock the box and cut the text instead.
+- **The updated image library needs an x86-64-v2 CPU.** Bare metal and a
+  Raspberry Pi are fine; an x86 VM set to an older vCPU model (`kvm64`) is not
+  — `sharp` fails to load and nothing renders. Check with
+  `grep -m1 -oE 'cx16|lahf_lm|popcnt|pni|ssse3|sse4_1|sse4_2' /proc/cpuinfo | sort -u`
+  (all seven must appear); fix by setting the VM's CPU type to `host` or
+  `x86-64-v2-AES`.
+
+## 0.1.3
+
+### Added
+
+- **Up to 500 data sources per widget** (previously 50). The server payload
+  limit and the builder now agree on the higher cap, so a large dashboard can
+  pull from many more endpoints or Home Assistant entities without being split
+  across several widgets.
+- **A one-time notice when a widget passes 50 data sources.** The builder
+  explains once, per widget, that fetching and refreshing a pool this large can
+  slow down saves and cause stuttering or delayed screen updates on low-power
+  hardware like a Raspberry Pi. It is advisory only — the source is added either
+  way, and the message does not come back for that widget.
+- **`schemaVersion` on the stored widget envelope.** Saved widgets now record
+  the document format version (currently `1`), stamped at the single write
+  point, and loads route through a version-keyed migration chain. This is
+  groundwork: a future format change can migrate older documents instead of
+  breaking them. Existing widgets are unaffected — a file without the field is
+  treated as the pre-versioning baseline, and migration runs in memory only, so
+  opening an old widget never rewrites it on disk.
+
+### Known limitations
+
+- **500 sources is reachable with fast local sources, not slow remote ones.**
+  Sources resolve four at a time inside a 30-second render budget, so several
+  hundred Home Assistant entity reads fit comfortably, while a widget built on
+  external HTTP APIs averaging a few hundred milliseconds each will hit the
+  render timeout well before the cap.
+- **Reaching the 500-source cap gives no on-screen feedback.** The builder
+  refuses the add and logs to the browser console; nothing is surfaced in the UI.
 
 ## 0.1.2
 

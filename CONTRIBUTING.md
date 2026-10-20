@@ -106,6 +106,26 @@ Run `npm audit` regularly against the security-sensitive dependency surface (`ex
 
 ---
 
+## Branching & releases
+
+`origin/main` is the trunk and the source of truth. It is **branch-protected** — no direct pushes, a pull request is required (0 approvals, so a solo maintainer can self-merge), and force-pushes and branch deletion are blocked (admins included). All work lands through a PR:
+
+```bash
+git switch -c feat/my-change main    # branch off main
+# ...commit your work...
+git push origin feat/my-change       # push.default is `nothing` — always name the branch
+gh pr create --base main --fill       # open the PR
+gh pr merge --squash --delete-branch  # squash-merge, then delete the branch
+```
+
+Keep `feat/*` and `fix/*` branches short-lived and delete them on merge.
+
+PRs land as a **squash-merge**: one commit on `main` per PR. That keeps the trunk linear and makes each change revertable with a plain `git revert <sha>` rather than `git revert -m 1`. Commit granularity on the branch is yours to choose — it collapses on merge, so write the squash message to describe the change as a whole.
+
+**Releases** are a single version bump in [`zb_engine/config.yaml`](zb_engine/config.yaml) plus a git tag on `main` (`v0.1.3`, `v0.1.4`, …). Avoid long-lived `release/*` branches unless a shipped version needs a backported hotfix.
+
+---
+
 ## Making Changes
 
 See the **Extension Guides** section in [ARCHITECTURE.md](zb_engine/ARCHITECTURE.md) for step-by-step instructions on common tasks:
@@ -132,7 +152,7 @@ See the **Extension Guides** section in [ARCHITECTURE.md](zb_engine/ARCHITECTURE
 Security requirements are detailed in ENGINEERING_CONSTRAINTS.md. Key points:
 
 - All request bodies are Zod-validated at the API boundary.
-- SSRF protection validates resolved IPs, blocks all private/reserved ranges including decimal and hex representations.
+- SSRF protection validates resolved IPs, blocks private/reserved ranges including decimal and hex representations. The `allow_private_hosts` add-on option lets an operator exempt specific IPv4 literals; the exemption is opt-in per call site, never applies to redirect targets or hostnames, and can never reach loopback, link-local, or the internal HA hostnames.
 - SVG content is sanitized (no `<script>`, `<foreignObject>`, event handlers).
 - Expression evaluation has a recursion depth limit (20) and blocks prototype pollution keys.
 - Source fetches have size limits (1 MB), timeouts (10s connect, 30s total), and redirect re-validation.

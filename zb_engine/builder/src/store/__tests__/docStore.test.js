@@ -7,6 +7,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+import { useNoticeStore } from '../noticeStore.js';
+
 // ── Mock dependencies before importing docStore ──────────────────────
 
 // displayConfigStore — getDisplayConfig returns an object with helpers.
@@ -51,6 +53,8 @@ import {
   getFocusedDoc,
   getDocById,
   PENDING_DOC_ID,
+  MAX_SOURCES,
+  SOURCE_WARN_THRESHOLD,
 } from '../docStore.js';
 
 import { getDisplayConfig } from '../displayConfigStore.js';
@@ -434,6 +438,50 @@ describe('docStore', () => {
       warn.mockRestore();
     });
 
+    it('updateElementDerived drops BOTH sizes on a locked-box (clip) text element', () => {
+      state().updateElement('e2', { textFlow: 'clip', sizeX: 120, sizeY: 60 });
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      state().updateElementDerived('e2', { sizeX: 300, sizeY: 200 });
+
+      const el = state().docs['w1'].doc.elements.find((e) => e.id === 'e2');
+      expect(el.sizeX).toBe(120);
+      expect(el.sizeY).toBe(60);
+      warn.mockRestore();
+    });
+
+    it('updateElementDerived drops BOTH sizes on a fixed-flow text element', () => {
+      // The allowlist is empty for fixed text: both dimensions are authored,
+      // so a leaked derived write would silently eat the user's frame.
+      state().updateElement('e2', { textFlow: 'fixed', sizeX: 40, sizeY: 16 });
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      state().updateElementDerived('e2', { sizeX: 64, sizeY: 18 });
+
+      const el = state().docs['w1'].doc.elements.find((e) => e.id === 'e2');
+      expect(el.sizeX).toBe(40);
+      expect(el.sizeY).toBe(16);
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it('authored sizes + textFlow survive a store round-trip as one undoable write', () => {
+      state().updateElement('e2', { sizeX: 120, sizeY: 40, textFlow: 'fixed' });
+
+      const el = state().docs['w1'].doc.elements.find((e) => e.id === 'e2');
+      expect(el.sizeX).toBe(120);
+      expect(el.sizeY).toBe(40);
+      expect(el.textFlow).toBe('fixed');
+      expect(state().docs['w1'].dirty).toBe(true);
+
+      // One updateElement call = one undo entry: undo reverts the mode flip
+      // and the baked sizes together.
+      state().undo();
+      const reverted = state().docs['w1'].doc.elements.find((e) => e.id === 'e2');
+      expect(reverted.textFlow).toBeUndefined();
+      expect(reverted.sizeX).toBeUndefined();
+    });
+
     it('updateElementDerived rejects all keys for non-text elements', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       state().updateElementDerived('e1', { sizeX: 50 }); // e1 is a rect
@@ -713,6 +761,32 @@ describe('docStore', () => {
       expect(selectSharedSources(state()).map((s) => s.id)).toEqual(['added']);
     });
 
+    it('addSource keeps going past the warn threshold and stops at MAX_SOURCES', () => {
+      expect(SOURCE_WARN_THRESHOLD).toBeLessThan(MAX_SOURCES);
+      openWidget('w1');
+      state().switchFocus('w1');
+
+      // The threshold is advisory (the warning lives in SourcesPanel) — the
+      // store itself must not refuse an add until the hard cap.
+      for (let i = 0; i < SOURCE_WARN_THRESHOLD + 1; i++) {
+        state().addSource({ id: `s${i}`, kind: 'http' });
+      }
+      expect(getDocById('w1').sources).toHaveLength(SOURCE_WARN_THRESHOLD + 1);
+
+      for (let i = SOURCE_WARN_THRESHOLD + 1; i < MAX_SOURCES; i++) {
+        state().addSource({ id: `s${i}`, kind: 'http' });
+      }
+      expect(getDocById('w1').sources).toHaveLength(MAX_SOURCES);
+
+      // At the cap the add is refused, not silently truncated elsewhere.
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      state().addSource({ id: 'over-cap', kind: 'http' });
+      expect(getDocById('w1').sources).toHaveLength(MAX_SOURCES);
+      expect(getDocById('w1').sources.some((s) => s.id === 'over-cap')).toBe(false);
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     it('updateSource from the companion edits the shared pool', () => {
       openPair([{ id: 'temp', kind: 'haState', entity_id: 'sensor.a' }]);
       state().switchFocus(CID);
@@ -736,15 +810,6 @@ describe('docStore', () => {
       expect(selectHasUnsavedChanges(state())).toBe(true);
     });
 
-    it('refuses to add beyond the 50-source cap', () => {
-      openWidget('w1');
-      state().switchFocus('w1');
-      for (let i = 0; i < 50; i += 1) state().addSource({ id: `s${i}`, kind: 'http' });
-      expect(getDocById('w1').sources).toHaveLength(50);
-      state().addSource({ id: 's50', kind: 'http' });
-      expect(getDocById('w1').sources).toHaveLength(50);
-    });
-
     it('replaceDocFromJson on a companion routes its sources to the primary pool', () => {
       openPair([{ id: 'temp', kind: 'haState' }]);
       state().switchFocus(CID);
@@ -760,10 +825,10 @@ describe('docStore', () => {
       expect(getDocById(CID).elements.map((e) => e.id)).toEqual(['c-el']);
     });
 
-    it('rejects a JSON edit that would push the shared pool past the 50-source cap', () => {
+    it('rejects a JSON edit that would push the shared pool past the cap', () => {
       openPair([{ id: 'temp', kind: 'haState' }]);
       state().switchFocus(CID);
-      const tooMany = Array.from({ length: 51 }, (_, i) => ({ id: `s${i}`, kind: 'http' }));
+      const tooMany = Array.from({ length: MAX_SOURCES + 1 }, (_, i) => ({ id: `s${i}`, kind: 'http' }));
       state().replaceDocFromJson({ misc: { gridSize: '3x2' }, elements: [], sources: tooMany });
       // Edit not applied: pool unchanged, companion own still empty.
       expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['temp']);
@@ -836,14 +901,19 @@ describe('docStore', () => {
     });
 
     it('skips the fold (leaving both blobs valid, primary not dirtied) when the pool would exceed the cap', () => {
-      const primarySources = Array.from({ length: 40 }, (_, i) => ({ id: `p${i}`, kind: 'http' }));
-      const companionSources = Array.from({ length: 20 }, (_, i) => ({ id: `c${i}`, kind: 'http' }));
+      // Each blob is individually within the cap, but the two together are not —
+      // the legacy shape a fold has to leave alone.
+      const primaryCount = MAX_SOURCES - 10;
+      const companionCount = 20;
+      const primarySources = Array.from({ length: primaryCount }, (_, i) => ({ id: `p${i}`, kind: 'http' }));
+      const companionSources = Array.from({ length: companionCount }, (_, i) => ({ id: `c${i}`, kind: 'http' }));
       openWidget('w1', { sources: primarySources });
       openWidget(CID, { misc: { gridSize: '3x2' }, sources: companionSources });
       state().mergeCompanionSourcesIntoPrimary('w1');
-      // 40 + 20 = 60 > 50 → no mutation, widget stays in its valid legacy shape.
-      expect(getDocById('w1').sources).toHaveLength(40);
-      expect(getDocById(CID).sources).toHaveLength(20);
+      // Sum exceeds the cap → no mutation, widget stays in its valid legacy shape.
+      expect(primaryCount + companionCount).toBeGreaterThan(MAX_SOURCES);
+      expect(getDocById('w1').sources).toHaveLength(primaryCount);
+      expect(getDocById(CID).sources).toHaveLength(companionCount);
       expect(state().docs['w1'].dirty).toBe(false);
     });
   });
@@ -916,6 +986,102 @@ describe('docStore', () => {
       // gridSize changed → recompute from the mocked global 800×480:
       // round(2/3*800)=533, round(2/2*480)=480.
       expect(state().docs['w1'].doc.misc.size).toEqual({ width: 533, height: 480 });
+    });
+  });
+  // ── Reserved telemetry source id (plan 4, D6) ──────────────────────
+
+  describe('the `device` source id is reserved builder-side only', () => {
+    beforeEach(() => {
+      useNoticeStore.setState({ notice: null });
+    });
+
+    it('refuses to CREATE a source with id `device` and says why', () => {
+      openWidget('w1');
+      state().switchFocus('w1');
+      state().addSource({ id: 'device', kind: 'http' });
+
+      expect(getDocById('w1').sources).toEqual([]);
+      expect(useNoticeStore.getState().notice?.message).toContain('reserved for panel telemetry');
+    });
+
+    it('still adds every other id normally', () => {
+      openWidget('w1');
+      state().switchFocus('w1');
+      state().addSource({ id: 'devices', kind: 'http' });
+      state().addSource({ id: 'my-device', kind: 'http' });
+
+      expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['devices', 'my-device']);
+      expect(useNoticeStore.getState().notice).toBeNull();
+    });
+
+    it('NEVER touches a widget that already carries a `device` source', () => {
+      // The shadow rule's whole promise: stored widgets keep working. The
+      // server accepts this id forever, so loading, editing and re-reading
+      // one must be completely unaffected by the builder-side guard.
+      openWidget('w1', { sources: [{ id: 'device', kind: 'http', url: 'http://x' }] });
+      state().switchFocus('w1');
+
+      expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['device']);
+
+      state().updateSource('device', { url: 'http://y' });
+      expect(getDocById('w1').sources[0].url).toBe('http://y');
+      expect(useNoticeStore.getState().notice).toBeNull();
+    });
+
+    // The JSON tab is the ONLY surface where a source id is typed by hand —
+    // addSource always receives a generated `id_*` — so this is the path the
+    // guard actually has to cover.
+    it('refuses a JSON edit that INTRODUCES a `device` source', () => {
+      openWidget('w1', { sources: [{ id: 'weather', kind: 'http' }] });
+      state().switchFocus('w1');
+
+      state().replaceDocFromJson({
+        misc: { gridSize: '2x2' },
+        elements: [],
+        features: {},
+        sources: [{ id: 'weather', kind: 'http' }, { id: 'device', kind: 'http' }],
+      });
+
+      // Nothing applied at all — not the source, not the sibling edits.
+      expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['weather']);
+    });
+
+    it('ALLOWS a JSON edit on a widget that already carries a `device` source', () => {
+      // The shadow rule's promise. Refusing here would make an existing
+      // widget uneditable, which is worse than the shadow it is guarding.
+      openWidget('w1', { sources: [{ id: 'device', kind: 'http', url: 'http://x' }] });
+      state().switchFocus('w1');
+
+      state().replaceDocFromJson({
+        misc: { gridSize: '2x2' },
+        elements: [{ id: 'e-new', type: 'rect' }],
+        features: {},
+        sources: [{ id: 'device', kind: 'http', url: 'http://y' }],
+      });
+
+      expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['device']);
+      expect(getDocById('w1').elements).toHaveLength(1);
+    });
+
+    it('ALLOWS a COMPANION JSON edit when the PRIMARY owns the `device` source', () => {
+      // The companion JSON tab renders the MERGED pool, so `imported.sources`
+      // carries the primary's `device` entry even though the companion's own
+      // array is empty. Comparing against the companion would refuse every
+      // such edit; the baseline has to be the primary's shared pool.
+      const cid = fullscreenIdFor('w1');
+      openWidget('w1', { sources: [{ id: 'device', kind: 'http', url: 'http://x' }] });
+      openWidget(cid, { misc: { gridSize: '3x2' } });
+      state().switchFocus(cid);
+
+      state().replaceDocFromJson({
+        misc: { gridSize: '3x2' },
+        elements: [{ id: 'c-el', type: 'text' }],
+        features: {},
+        sources: [{ id: 'device', kind: 'http', url: 'http://x' }],
+      });
+
+      expect(getDocById('w1').sources.map((s) => s.id)).toEqual(['device']);
+      expect(getDocById(cid).elements).toHaveLength(1);
     });
   });
 });

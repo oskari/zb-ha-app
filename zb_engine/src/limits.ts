@@ -16,11 +16,11 @@ export const MAX_REQUEST_BODY = "2mb";
 
 /**
  * Maximum body size accepted on the device-facing `POST /image.bin`
- * endpoint (port 8000). The ESP32 self-host contract sends a small JSON
- * telemetry body, but this add-on has no telemetry→render
- * channel — the body is never parsed for meaning, only drained up to this
- * bound to prevent a large POST from exhausting resources on the
- * unauthenticated port.
+ * endpoint (port 8000). The body is parsed ONLY as an optional
+ * Zod-validated render selector (`requestedInstances` — `ha/imageApp.ts`);
+ * anything else — the ESP32 telemetry blob included — is drained up to
+ * this bound and ignored, so a large POST cannot exhaust resources on the
+ * unauthenticated port. There is still no telemetry→render channel.
  */
 export const MAX_DEVICE_REQUEST_BODY_BYTES = 4 * 1024; // 4 KiB
 
@@ -54,6 +54,13 @@ export const MAX_ELEMENT_NESTING_DEPTH = 32;
  */
 export const MAX_TOTAL_ELEMENTS = 10_000;
 
+/**
+ * Maximum `sources[]` entries in one payload. Mirrored in the builder as
+ * `MAX_SOURCES` in `builder/src/store/docStore.js` (the two install trees
+ * don't share code — keep them in sync).
+ */
+export const MAX_SOURCES = 500;
+
 // ── Render pipeline ────────────────────────────────────────────
 
 /** Abort a render if it exceeds this duration (ms). */
@@ -61,6 +68,14 @@ export const RENDER_TIMEOUT_MS = 30_000; // 30 seconds
 
 /** Maximum elements after graph expansion — prevents OOM. */
 export const MAX_EXPANDED_ELEMENTS = 50_000;
+
+/**
+ * Maximum lines one text element may be wrapped into. Far above any real
+ * layout, far below the million-entry array a 200 KB value in a 20 px frame
+ * would otherwise build before the render timeout noticed. On hitting it,
+ * `data/textLayout.ts` stops wrapping and emits the remainder as one line.
+ */
+export const MAX_WRAPPED_LINES = 4096;
 
 // ── Geometry bounds ────────────────────────────────────────────
 
@@ -182,6 +197,31 @@ export const MAX_HA_CALENDAR_DAYS = 60;
 
 /** Maximum lines a calendarList element can expand into. */
 export const MAX_CALENDAR_LIST_LINES = 20;
+
+// ── QR pairing (port 8000 pairing-based instance requests) ─────
+
+/**
+ * Rebuild interval for the image port's pairingId → (widget, slot) index
+ * (`ha/pairingResolver.ts`). Read-path only: a just-saved widget may take
+ * one window to become resolvable. Pairing-ID uniqueness scans never use
+ * this cache.
+ */
+export const PAIRING_RESOLVER_CACHE_TTL_MS = 3_000;
+
+/**
+ * Maximum pairing IDs one `requestedInstances` POST body may carry
+ * (worst case: 6 widgets × primary+fullscreen). Enforced by the Zod body
+ * schema in `ha/imageApp.ts`; larger arrays are a loud 400 — only new
+ * firmware/app code can send them.
+ */
+export const MAX_REQUESTED_INSTANCES = 12;
+
+/**
+ * Cap on cached rendered buffers for pairing-based instance requests
+ * (simple insertion-order eviction in `ha/imageApp.ts`) so hundreds of
+ * paired widgets cannot grow RAM unbounded on a Pi.
+ */
+export const MAX_PAIRING_BUFFER_CACHE = 24;
 
 // ── Widget storage ─────────────────────────────────────────────
 // Bound the number and aggregate size of stored widget documents so an

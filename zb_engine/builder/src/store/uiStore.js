@@ -4,6 +4,10 @@ import { immer } from 'zustand/middleware/immer';
 // ── Infinite canvas viewport defaults ────────────────────────────────
 const DEFAULT_VIEWPORT = Object.freeze({ panX: 0, panY: 0, zoom: 1 });
 
+// Monotonic token source for `beginBusyTask`. Module-level (not store state)
+// so issuing a token never itself triggers a re-render.
+let busyTaskSeq = 0;
+
 // ── Defaults for the preview overlay on the infinite canvas ──
 const DEFAULT_PREVIEW_OVERLAY = {
   enabled: false,
@@ -35,6 +39,13 @@ export const useUiStore = create(
     // Editor-only cache of last tested source responses.
     // Shape: { [sourceId]: { receivedAt: string, responseType: string, data: any } }
     sourceResponsesById: {},
+
+    // Widgets that have already seen the "that's a lot of data sources" notice
+    // this session, keyed by PRIMARY doc ID (the shared source pool's home) so a
+    // companion doesn't get its own entry. Shape: { [primaryDocId]: true }.
+    // Editor-only and flat per Engineering constraint §10 — never serialized
+    // into a payload (§8).
+    sourceWarnAcknowledged: {},
 
     // Transient queue depth for the source-test throttler (Task 6).
     // Sum of pending + in-flight source tests. Surfaced here so a future
@@ -108,6 +119,13 @@ export const useUiStore = create(
     // (PreviewTab ⟳, TopBar ⟳) updates the same source of truth instead of
     // each component holding a fragile local copy.
     lastRenderWarnings: null,
+
+    // User-initiated actions currently in flight that are slow enough to
+    // warrant a centered spinner (preview render, data refresh, deploy).
+    // A list rather than a boolean so overlapping actions each own an entry
+    // and a fast finisher cannot clear a slower sibling's overlay.
+    // Shape: [{ token: number, label: string }].
+    busyTasks: [],
 
     leftPanelTab: 'Widget',
     leftPanelWidth: 280,
@@ -249,6 +267,14 @@ export const useUiStore = create(
       set((state) => {
         if (!sourceId) return;
         delete state.sourceResponsesById[sourceId];
+      });
+    },
+
+    /** Mark a widget as having seen the many-sources notice (by primary doc ID). */
+    acknowledgeSourceWarn(primaryDocId) {
+      set((state) => {
+        if (!primaryDocId) return;
+        state.sourceWarnAcknowledged[primaryDocId] = true;
       });
     },
 
@@ -558,6 +584,28 @@ export const useUiStore = create(
         state.lastRenderAt = Date.now();
         state.lastRenderWarnings =
           Array.isArray(warnings) && warnings.length > 0 ? warnings : null;
+      });
+    },
+
+    /**
+     * Mark a user-initiated action as running and return its token. The
+     * BusyOverlay shows a centered spinner while any task is open. Always
+     * pair with `endBusyTask` from a `finally` so a throwing action cannot
+     * strand the overlay on screen.
+     */
+    beginBusyTask(label) {
+      busyTaskSeq += 1;
+      const token = busyTaskSeq;
+      set((state) => {
+        state.busyTasks.push({ token, label: label || 'Working…' });
+      });
+      return token;
+    },
+
+    /** Clear a task opened by `beginBusyTask`. Unknown tokens are ignored. */
+    endBusyTask(token) {
+      set((state) => {
+        state.busyTasks = state.busyTasks.filter((t) => t.token !== token);
       });
     },
 

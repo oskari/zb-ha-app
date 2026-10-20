@@ -16,10 +16,7 @@ import * as api from './apiClient.js';
 import { deployActiveWidget } from './deploy.js';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import { useWidgetImport } from './useWidgetImport.js';
-
-// Default ESP32 image host port (config.yaml maps container 8000/tcp -> 8000).
-// Used when the Supervisor-reported host-port mapping is unavailable.
-const DEFAULT_IMAGE_HOST_PORT = 8000;
+import QrDropdown, { DEFAULT_IMAGE_HOST_PORT } from './QrDropdown.jsx';
 
 export default function TopBar() {
   const {
@@ -88,6 +85,10 @@ export default function TopBar() {
 
   const handleDeploy = useCallback(async () => {
     setDeploying(true);
+    // Deploy renders both slots server-side, so it waits on the same remote
+    // asset fetches the preview does — show the centered spinner rather than
+    // leave a disabled button as the only sign of life.
+    const busyToken = useUiStore.getState().beginBusyTask('Deploying…');
     try {
       const { activeWidgetId } = useWidgetStore.getState();
       const results = await deployActiveWidget(activeWidgetId);
@@ -103,10 +104,12 @@ export default function TopBar() {
       useWidgetStore.setState({ error: err.message });
     } finally {
       setDeploying(false);
+      useUiStore.getState().endBusyTask(busyToken);
     }
   }, []);
 
   const handlePreviewRefresh = useCallback(async () => {
+    const busyToken = useUiStore.getState().beginBusyTask('Rendering preview…');
     try {
       // Renders the slot the user is currently editing so the cached image
       // for that slot (image.png vs image_fullscreen.png) is refreshed, and
@@ -114,6 +117,8 @@ export default function TopBar() {
       await renderFocusedPreview();
     } catch (err) {
       useWidgetStore.setState({ error: err.message });
+    } finally {
+      useUiStore.getState().endBusyTask(busyToken);
     }
   }, []);
 
@@ -200,16 +205,16 @@ export default function TopBar() {
         )}
       </div>
 
-      {/* Widget name editor */}
-      {activeWidgetId && (
-        <input
-          className="topbar-name-input"
-          value={activeWidgetName}
-          onChange={(e) => setActiveWidgetName(e.target.value)}
-          placeholder="Widget name"
-          disabled={busy}
-        />
-      )}
+      {/* Widget name editor — always mounted so the row never reflows when
+          a widget is selected/deselected (D7 layout lock); merely hidden
+          while no widget is active. */}
+      <input
+        className={`topbar-name-input${activeWidgetId ? '' : ' topbar-name-input--hidden'}`}
+        value={activeWidgetName}
+        onChange={(e) => setActiveWidgetName(e.target.value)}
+        placeholder="Widget name"
+        disabled={busy || !activeWidgetId}
+      />
 
       {/* Device image endpoint — always visible once the HA IP resolves */}
       {hostIp && (
@@ -217,6 +222,10 @@ export default function TopBar() {
           http://{hostIp}:{hostPort || DEFAULT_IMAGE_HOST_PORT}
         </span>
       )}
+
+      {/* Pairing QR dropdown — always mounted; shows inline notices for
+          unresolved-IP / unsaved-widget states (no dialogs). */}
+      <QrDropdown />
 
       {/* Action buttons */}
       <div className="topbar-actions">

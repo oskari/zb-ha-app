@@ -32,6 +32,8 @@ These hold on every platform.
     - Interaction state on `uiStore` (selection, viewport, tool) stays flat at the top level rather than nested under a pane or context key. The fullscreen companion already shares the primary's single canvas and flat viewport (`uiStore.viewport = { panX, panY, zoom }`), with slot switching handled by the toolbox pills; full split-view is a possible direction, not a current feature.
     - Components don't import from `builder/src/platform/`. Platform code injects into the core through `uiStore` callbacks, and new platform-specific UI follows the same pattern — register via a setter, null-check before rendering.
 
+11. **Never break saved widgets.** Persisted widget documents (`/data/widgets/<id>.json`) are sacred — loading, parsing, and rendering of a pre-existing widget must keep working across every change. Any change to the widget document schema (`src/schema/`), the storage layout (`src/ha/haStorage.ts`), the render pipeline (`src/core/renderService.ts`), or the expression engine (`packages/zb-expressions`) is backward-compat-critical. Prefer additive/optional schema fields plus a migration; never make an existing field newly required, tighten a type, or rename/remove an element `type` without one — each hard-fails every saved widget of the old shape. Enforcement is `test/widgetBackwardCompat.test.ts`: a committed corpus of representative saved documents (`test/fixtures/widget-corpus/`) driven through the real load → `payloadSchema` → render path, asserting each still parses, still renders, and matches a committed golden PNG — a passing run is a merge gate. Migrations are version-gated: the stored envelope carries a `schemaVersion` (current: 1) stamped on save at the single write choke point (`core/widgetService.ts:writeWidget`), and loads route through the version-keyed chain in `src/core/widgetMigrations.ts`. A missing `schemaVersion` means 0 — the pre-versioning baseline — and migration is in-memory only, so reading an old file never rewrites it. `schemaVersion` belongs on the envelope, never inside `doc` / `elements` / `sources` / `fullscreen`; the payload schema and renderer stay version-agnostic. A breaking envelope change ships a migration step in that chain and bumps `CURRENT_SCHEMA_VERSION`.
+
 ## Home Assistant platform constraints
 
 These apply to the HA add-on only, not the cloud-hosted or self-hosted builds.
@@ -40,7 +42,7 @@ These apply to the HA add-on only, not the cloud-hosted or self-hosted builds.
 
 2. **Don't write to disk blindly.** Compare the new buffer against the existing file before writing (`writeIfChanged`); it's what keeps SD-card wear down. When several widgets auto-save, each write goes through `writeIfChanged` on its own, and a manual save updates that widget's auto-save baseline so it doesn't immediately re-save.
 
-3. **Keep the ports segregated.** Port 8099 (Ingress) serves the authenticated UI. Port 8000 serves read-only images only (`.bin`, `.png`) and stays unauthenticated and GET/HEAD-only.
+3. **Keep the ports segregated.** Port 8099 (Ingress) serves the authenticated UI. Port 8000 serves images only and stays unauthenticated LAN-trust: `.png` is GET/HEAD-only, `.bin` is POST-only (permanent posture — ESP32 firmware POSTs for its frame). The `.bin` body is size-capped and Zod-validated, and carries exactly two things: an **optional render selector** (`requestedInstances` — pairing IDs to stream frames for) and an **optional `telemetry` object**, per-field validated into a request-scoped `device` expression namespace (plan 4). Neither is EVER persisted — telemetry influences only the frames of that one response, there is no per-device store, `mac` is never exposed or used for lookup, and port 8000 still has zero mutation or state-changing routes. An invalid telemetry field nulls itself and never 4xxes a wake. Pairing IDs live on the widget envelope as additive optional fields.
 
 4. **Auth through HA Ingress.** Use HA Ingress session cookies on 8099; the legacy `X-ZB-Token` path is gone.
 
@@ -53,7 +55,7 @@ These apply everywhere unless a line says otherwise.
 1. Validate every request body with Zod before doing anything with it.
 2. Widget IDs match `/^[a-z0-9_-]+$/i`; reject `/`, `\`, `..`, and null bytes.
 3. Cap request bodies at 2MB via the Express `json()` middleware.
-4. Payload limits: `elements[]` up to 2000 top-level (10,000 counting nested), `sources[]` up to 50, `features{}` up to 1000 keys, expression recursion up to 20.
+4. Payload limits: `elements[]` up to 2000 top-level (10,000 counting nested), `sources[]` up to 500, `features{}` up to 1000 keys, expression recursion up to 20.
 
 ### Network
 
@@ -76,7 +78,7 @@ These apply everywhere unless a line says otherwise.
     - HA Ingress (port 8099) differs: `X-Frame-Options: SAMEORIGIN` so HA can embed the iframe, and the CSP adds `'unsafe-inline'` to `script-src` and `style-src` for the Vite-built React SPA, plus `img-src 'self' data: blob:`, `font-src 'self' data:`, `worker-src 'self' blob:`, and `connect-src 'self'`.
     - Image port (8000) differs too: `Content-Security-Policy: default-src 'none'`, since it loads no resources.
 12. One render at a time, behind the `RenderGuard` mutex — extra requests queue or get rejected.
-13. Image port hardening (HA): port 8000 serves only the read-only image endpoints (`/image.png`, `/image.bin`, `/image_fullscreen.png`, `/image_fullscreen.bin`) — no directory listings, no POST/PUT/DELETE, no leaked error detail, and stale-while-revalidate for concurrent requests.
+13. Image port hardening (HA): port 8000 serves only the image endpoints (`/image.png`, `/image.bin`, `/image_fullscreen.png`, `/image_fullscreen.bin`) — no directory listings, no leaked error detail, and stale-while-revalidate for concurrent requests. `.png` accepts GET/HEAD only; `.bin` accepts POST only, whose body is parsed as the optional Zod-validated `requestedInstances` render selector plus an optional per-field-validated `telemetry` object (request-scoped `device` namespace — never persisted, no other fields read, `wakeReason`/`delta`/`mac` never exposed or logged); no PUT/DELETE, no mutation routes anywhere on the port.
 
 ### Error handling
 

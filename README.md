@@ -1,6 +1,6 @@
 # ZerryBit Engine
 
-**Version 0.1.3.dev6 (Beta)** · Home Assistant Add-on for E-ink Displays
+**Version 0.1.6.dev1 (Beta)** · Home Assistant Add-on for E-ink Displays
 
 > ⚠️ **Beta software.** ZerryBit Engine — including the Widget Builder — is in **beta**. Expect rough edges, breaking changes between releases, and APIs/payload formats that may change without notice. Not yet recommended for unattended production use. Please [report issues](https://github.com/ZerryGit/zb-ha-app/issues) and back up any widgets you create.
 
@@ -52,11 +52,16 @@ A local-first Home Assistant add-on that renders **1-bit dithered images** from 
 
 ## Endpoints
 
-### Port 8000 — ESP32 (unauthenticated, read-only)
+### Port 8000 — ESP32 (unauthenticated, image-only)
 
 > **LAN trust assumption.** Port 8000 has no authentication — it is intended for
 > ESP32 devices that cannot speak HA's auth protocol. The operator is
-> responsible for keeping it on a trusted LAN. The add-on adds three
+> responsible for keeping it on a trusted LAN. It serves images only and has no
+> mutation routes: `.png` is GET/HEAD-only, `.bin` is POST-only (the firmware
+> POSTs for its frame). The POST body is size-capped and read for exactly two
+> optional things — a render selector naming which paired widgets to send back,
+> and a panel-telemetry object usable in expressions for that one response —
+> neither of which is ever persisted. The add-on adds three
 > safeguards: a configurable per-slot cooldown
 > (`image_port_cooldown_ms`), strong-ETag conditional GETs on the PNG preview
 > (`If-None-Match` → `304`), and an `image_port_mode: cache-only` switch that disables on-demand
@@ -110,7 +115,8 @@ Set these in the add-on's **Configuration** tab:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `allowed_source_domains` | `[]` | Optional allowlist for HTTP data source URLs. Empty = all external allowed. |
+| `allowed_source_domains` | `[]` | Optional allowlist for outbound URLs — HTTP data sources **and** `img`/`svg` element sources alike. Empty = all external allowed. Subdomains of a listed host are also allowed. |
+| `allow_private_hosts` | `[]` | Addresses on your own network the add-on may load from, for both data sources and image/SVG elements. Empty = none. Write the IP address, not a hostname (`192.168.1.50`, or `192.168.1.0/24` for a subnet — `/24` is the widest allowed). See the security note below before adding a camera. |
 | `re_render_minutes` | `0` | Auto re-render interval (0 = disabled, 1–60 minutes). Fetches fresh source data and re-renders on a timer. Uses hash-before-write to avoid unnecessary SD card writes. |
 | `image_port_cooldown_ms` | `4000` | Per-slot minimum interval between unauthenticated image-port on-demand renders. |
 | `image_port_mode` | `on-demand` | `on-demand` allows bounded image-port renders; `cache-only` serves only already-rendered in-memory images. |
@@ -124,27 +130,54 @@ operators should know:
 
 - **Port 8000 is unauthenticated (LAN-trust).** Keep it on a trusted LAN — do
   not port-forward or expose it to the internet. See the
-  [Port 8000](#port-8000--esp32-unauthenticated-read-only) note above and
+  [Port 8000](#port-8000--esp32-unauthenticated-image-only) note above and
   [`DOCS.md`](zb_engine/DOCS.md) for the mitigations (cooldown, conditional GETs,
   `cache-only` mode).
 - **Source credentials are stored at rest in plaintext.** Data-source auth
   (bearer tokens, API keys, basic-auth passwords) is saved inside the widget
   JSON under `/data/widgets/` on the HA volume so the add-on can replay the
   fetch at render time. Anyone with host/volume access can read these. The
-  add-on **masks these secrets** when a widget is read back over the panel API
-  (`GET /api/widgets/:id`, `GET /payload`) and restores them on save, so a
-  panel user cannot read another user's stored credentials — but it does not
-  encrypt them on disk. Treat the HA host as the trust boundary, and prefer
-  scoped/read-only API keys for data sources.
+  add-on **masks some of these secrets** when a widget is read back over the
+  panel API (`GET /api/widgets/:id`, `GET /payload`) and restores them on save:
+  the `auth` fields (bearer token, API-key value, basic-auth password) and any
+  custom header whose *name* looks credential-bearing (`authorization`,
+  `proxy-authorization`, `cookie`, or a name containing `token`, `secret`,
+  `password`, `api-key`, `auth`). **Anything else is returned in clear text** —
+  notably credentials placed in a URL query parameter, or in a header with an
+  unrelated name — so in a multi-user Home Assistant another panel user can
+  read those. Put credentials in `auth` or a conventionally-named header.
+  Nothing is encrypted on disk either way. Treat the HA host as the trust
+  boundary, and prefer scoped/read-only API keys for data sources.
 - **Outbound fetches can reach any public host by default.** Out of the box
   (`allowed_source_domains: []`), the add-on will fetch any public URL you
   configure for data sources, images, and SVGs. Private and reserved IP ranges
-  are **always** blocked (SSRF protection, with redirect re-validation), but
-  public egress is open until you list specific hosts in
-  `allowed_source_domains` (subdomains of a listed host are also allowed). For a
-  hardened deployment, set that allowlist. Note a residual DNS-rebinding window
-  exists between hostname validation and the actual fetch; see
-  [SECURITY.md](SECURITY.md).
+  are blocked (SSRF protection, with redirect re-validation) unless you have
+  explicitly listed them in `allow_private_hosts`, but public egress is open
+  until you list specific hosts in `allowed_source_domains` (subdomains of a
+  listed host are also allowed). For a hardened deployment, set that allowlist.
+  Note a residual DNS-rebinding window exists between hostname validation and
+  the actual fetch; see [SECURITY.md](SECURITY.md).
+- **`allow_private_hosts` lets the add-on reach one address on your network.**
+  It ships empty, so nothing on your network is reachable until you add an
+  entry yourself in the add-on's Configuration tab. Add one and the add-on can
+  load from that address for both data sources and image/SVG elements — a
+  Pi-hole summary, a NAS endpoint, a camera snapshot, a locally rendered
+  Grafana panel. Three things to know before you do:
+  - **Anything an image element loads from your network is also visible,
+    without a password, to anything else on your network that can reach port
+    8000.** A widget renders to an image, and that image is what port 8000
+    serves. Pointing an image element at a camera effectively republishes that
+    camera's picture, unauthenticated, for as long as the widget exists — and
+    under `image_port_mode: on-demand` any device on your network can ask for a
+    fresh copy once per cooldown (4 seconds by default). The rendered picture is
+    1-bit and low-resolution, which degrades it but does not make it
+    unrecognizable. Prefer `image_port_mode: cache-only` if that matters to you.
+  - **Write the IP address, not a hostname.** `192.168.1.50` works;
+    `nas.local` does not, even if it points at that same address.
+  - **One address at a time, or one subnet at most.** A bare address is the
+    recommended form. `192.168.1.0/24` covers a whole subnet and is the widest
+    entry accepted. Loopback, link-local, and internal Home Assistant names
+    (`supervisor`, `homeassistant`, `hassio`, `localhost`) can never be listed.
 - **Storage is bounded.** Widgets and uploaded assets are capped (count and
   total bytes) so a misbehaving client cannot exhaust the `/data` volume.
 - **Hardening.** The add-on runs as a non-root user, drops privileges via
@@ -200,7 +233,7 @@ Deploy via the builder or `PUT /payload`. The HA adapter persists the active pri
 | `rect` | Rectangle — fill, stroke, rounded corners, dash |
 | `circle` | Ellipse — arc segment, donut ring |
 | `line` | Polyline — dash, butt/round caps, rounded joints |
-| `text` | Bitmap text — Sora family, 8 sizes × 3 weights |
+| `text` | Bitmap text — Sora family, 8 sizes × 3 weights. Wraps inside a frame you size; `textFlow` picks whether the box cuts the overflow or grows downward past a minimum height |
 | `img` | Fetch & rasterize image → 1-bit |
 | `svg` | Rasterize inline/URL SVG → 1-bit |
 | `graph` | Builder/schema element expanded into primitive shapes before render |
@@ -322,13 +355,19 @@ closest shipped one rather than failing.
 
 ## Error Handling
 
-Errors are collected, not thrown — the image always renders.
+Errors are collected, not thrown — a failed source or element costs that part of
+the widget, not the image. Only the pipeline budget can cost the whole render.
 
 | Failure | Behavior |
 |---------|-----------|
 | Source fetch fails | Fields use `defaultValue`; reported in `X-Source-Errors` header |
 | Element fails | Element skipped; reported in `X-Render-Errors` header |
+| `img`/`svg` host silent for 5s | That element is skipped; the rest of the widget still renders |
 | Pipeline timeout (30s) | Render is aborted and an error response is returned |
+
+Asset fetches are sequential and share the 30s budget, so one to three remote
+images is comfortable — around six unreachable ones exhaust it and the render
+fails outright. Uploaded assets and inline SVGs are not fetched.
 
 ---
 
@@ -374,6 +413,8 @@ curl http://localhost:8099/api/widgets          # List saved widgets
 | Text wrong size | Engine snaps to nearest font. Use 10, 12, 16, 20, 26, 34, 44, or 56 for exact results |
 | `image.bin` unexpected size | The `POST` reply is a 25-byte header + `⌈width/8⌉ × height` image bytes (width padded to a byte boundary). |
 | Deploy returns 403 | Ensure you're accessing via HA Ingress (sidebar). Direct port 8099 access without HA session will fail. |
+| A web image never appears | The host gets 5s to start replying, or the URL is off `allowed_source_domains` / needs `allow_private_hosts`. The Preview tab warning names the reason |
+| Text runs into the element below it | A grow-down frame ("Text overflow" ticked) outgrew its Min height. Raise the reserve, or untick to lock the box and cut instead |
 
 ---
 

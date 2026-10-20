@@ -4,17 +4,43 @@ import { immer } from 'zustand/middleware/immer';
 
 import { createNewDocument, gridSizeToSize, normalizeGridSize, REF_COLS, REF_ROWS } from '../models/document.js';
 import { createElement } from '../models/elementDefaults.js';
+import { isFramedTextFlow } from '@shared/textLayout';
 import { createNameGeneratorFromElements, importRuntimeJson, mergeInheritedSources } from '../models/mapper.js';
 import { getDisplayConfig } from './displayConfigStore.js';
 import { createId } from '../utils/ids.js';
 import { isBinding, isExpression } from '@zb/expressions';
 import { fullscreenIdFor, isFullscreenId, primaryIdOf } from './companionId.js';
+import { useNoticeStore } from './noticeStore.js';
+
+/**
+ * The panel-telemetry context root (plan 4, D6). Builder-side only: the server
+ * deliberately never rejects this source id, so a widget already using it keeps
+ * working forever — the shadow rule means the user's source simply wins.
+ */
+export const RESERVED_TELEMETRY_SOURCE_ID = 'device';
+
+/** True when `sources` declares the reserved telemetry id. */
+export function declaresTelemetrySourceId(sources) {
+  return Array.isArray(sources) && sources.some((s) => s?.id === RESERVED_TELEMETRY_SOURCE_ID);
+}
+
+const RESERVED_TELEMETRY_NOTICE = {
+  title: 'Reserved source ID',
+  message: '"device" is reserved for panel telemetry.',
+};
 
 const HISTORY_LIMIT = 100;
 
-// Max sources per widget. Mirrors the payload schema's cap (payloadSchema.ts)
-// so the shared pool can never grow past what either slot's export accepts.
-const MAX_SOURCES = 50;
+// Max sources per widget. Mirrors MAX_SOURCES in the server's `src/limits.ts`
+// (surfaced through payloadSchema.ts) so the shared pool can never grow past
+// what either slot's export accepts. The two install trees share no code —
+// change both together.
+export const MAX_SOURCES = 500;
+
+// Above this many sources the builder warns the user once per widget that
+// fetching this many on low-power hardware can slow saves and refreshes. It is
+// advisory only — adding past it is allowed, all the way to MAX_SOURCES.
+export const SOURCE_WARN_THRESHOLD = 50;
 
 // ── Fallback constants (stable references for unfocused state) ───────
 // Module-level singletons so Zustand's === equality check returns the
@@ -358,11 +384,12 @@ export const useDocStore = create(
         const merged = mergeInheritedSources(primaryPlain, ownPlain);
 
         if (merged.length > MAX_SOURCES) {
-          // Legacy widgets could store up to 50 sources on EACH blob independently,
-          // so the fold may exceed the per-payload cap. Folding anyway would dirty
-          // the primary, auto-save, and 400 on every save while the companion's
-          // own sources are already gone from memory. Leave the widget in its
-          // valid legacy shape (each blob ≤ 50) and surface the problem instead.
+          // Legacy widgets could store a full cap's worth of sources on EACH blob
+          // independently, so the fold may exceed the per-payload cap. Folding
+          // anyway would dirty the primary, auto-save, and 400 on every save while
+          // the companion's own sources are already gone from memory. Leave the
+          // widget in its valid legacy shape (each blob within the cap) and
+          // surface the problem instead.
           console.error(
             `[docStore] Widget "${primaryId}" would have ${merged.length} sources after merging its `
             + `fullscreen companion (cap ${MAX_SOURCES}). Skipping consolidation — reduce sources to unify.`,
@@ -398,6 +425,27 @@ export const useDocStore = create(
           console.error(
             `[docStore] JSON edit would set ${imported.sources.length} sources `
             + `(cap ${MAX_SOURCES}); edit not applied.`,
+          );
+          return;
+        }
+        // `device` is the panel-telemetry context root (plan 4, D6). The JSON
+        // tab is the ONLY place a source id is typed by hand — addSource always
+        // receives a generated `id_*` — so this is where the guard has to live.
+        //
+        // Refuse only an edit that INTRODUCES the id. A widget that already
+        // carries a `device` source must stay fully editable (shadow rule: the
+        // server accepts the id forever), so the baseline is the primary's
+        // shared pool — never `entry.doc.sources`, which is empty for a
+        // companion whose JSON tab renders the MERGED pool and would therefore
+        // refuse every companion edit on such a widget.
+        const primaryPool = getPrimaryEntryFor(state)?.doc.sources;
+        if (
+          declaresTelemetrySourceId(imported.sources)
+          && !declaresTelemetrySourceId(primaryPool)
+        ) {
+          console.warn(
+            `[docStore] JSON edit would add a source with the reserved id `
+            + `"${RESERVED_TELEMETRY_SOURCE_ID}"; edit not applied.`,
           );
           return;
         }
@@ -630,8 +678,11 @@ export const useDocStore = create(
      * other key is dropped with a dev-time warning so this mutation
      * cannot become a back-door for arbitrary writes.
      *
-     * Allowlist (per Task 7):
-     *   - text elements: `sizeX`, `sizeY`
+     * Allowlist (per Task 7; narrowed by the text-frame work):
+     *   - auto-flow text elements: `sizeX`, `sizeY`
+     *   - framed (fixed/clip) text elements: nothing — both sizes are
+     *     authored, so the renderer owns no field on them; the display box
+     *     is computed where the element renders and never stored
      *
      * Auto-driven hooks (e.g. `useAutoSizeText`) MUST use this mutation.
      * Treating measured bounds as authored content corrupts undo and
@@ -645,7 +696,7 @@ export const useDocStore = create(
         const element = entry.doc.elements.find((e) => e?.id === id);
         if (!element) return;
 
-        const allowed = element.type === 'text'
+        const allowed = element.type === 'text' && !isFramedTextFlow(element.textFlow)
           ? new Set(['sizeX', 'sizeY'])
           : new Set();
 
@@ -862,8 +913,17 @@ export const useDocStore = create(
       set((state) => {
         const entry = getPrimaryEntryFor(state);
         if (!entry) return;
+        // `device` is the panel-telemetry context root (plan 4, D6). Refuse to
+        // CREATE one here so an author cannot shadow it by accident. This is a
+        // builder-side guard ONLY: the server still accepts the id forever, and
+        // a widget already carrying it keeps loading, rendering and saving
+        // untouched — adding server-side rejection would break stored widgets.
+        if (source?.id === RESERVED_TELEMETRY_SOURCE_ID) {
+          useNoticeStore.getState().showNotice(RESERVED_TELEMETRY_NOTICE);
+          return;
+        }
         if (entry.doc.sources.length >= MAX_SOURCES) {
-          // Refuse rather than build a pool the export schema (max 50) rejects.
+          // Refuse rather than build a pool the export schema rejects.
           // Surfaced via console so it is not a silent no-op.
           console.warn(`[docStore] Source pool is at the ${MAX_SOURCES}-source limit; not adding.`);
           return;

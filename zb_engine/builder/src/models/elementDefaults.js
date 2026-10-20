@@ -56,8 +56,12 @@ export function createElement(type, partialOverrides) {
 
     case 'text':
       typedDefaults = {
-        sizeX: 60,
-        sizeY: 30,
+        // New text elements are a sized, locked frame: typing wraps at the
+        // right edge and the box never grows on its own. The "Text overflow"
+        // toggle switches to grow-down ('fixed'); the Sizing control reaches
+        // the legacy hugging behaviour ('auto').
+        sizeX: 120,
+        sizeY: 60,
         text: 'Text',
         fallbackText: '(no data)',
         enableFill: true,
@@ -67,6 +71,7 @@ export function createElement(type, partialOverrides) {
         fontWeight: 400,
         textAlign: 'left',
         lineHeight: 1.2,
+        textFlow: 'clip',
       };
       break;
 

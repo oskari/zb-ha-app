@@ -11,6 +11,16 @@ import { ASSET_TOKEN_PREFIX } from './assetSrc.js';
 export const EXPORT_VERSION = 1;
 
 /**
+ * Stored widget envelope format version this builder produces. Mirrors
+ * `CURRENT_SCHEMA_VERSION` in the server's `src/core/widgetMigrations.ts`
+ * (bump both together). Exported files carry it so a file written by a newer
+ * add-on is refused instead of being saved under an older schema; files
+ * without it (pre-versioning exports, bare payloads) are version 0, which the
+ * server's migration chain accepts as-is.
+ */
+export const WIDGET_SCHEMA_VERSION = 1;
+
+/**
  * @param {string} name
  * @returns {string}
  */
@@ -42,6 +52,7 @@ export function buildExportEnvelope(savePayload, widgetName) {
 
   return {
     exportVersion: EXPORT_VERSION,
+    schemaVersion: WIDGET_SCHEMA_VERSION,
     exportedAt: Date.now(),
     name: widgetName,
     doc: savePayload.runtimeJson,
@@ -84,7 +95,43 @@ function isRuntimePayload(obj) {
 }
 
 /**
- * Parse a widget import file. Accepts export envelope v1 or a bare runtime payload.
+ * Refuse files whose widget `schemaVersion` is newer than this builder knows.
+ * Missing / older versions pass: the server stamps the current version on save
+ * and every older envelope is valid under the current schema (see
+ * `widgetMigrations.ts`).
+ *
+ * @param {object} parsed
+ */
+function assertSupportedSchemaVersion(parsed) {
+  const v = parsed.schemaVersion;
+  if (v === undefined || v === null) return;
+  if (typeof v !== 'number' || !Number.isInteger(v) || v < 0) {
+    throw new Error('Invalid widget file: schemaVersion must be a non-negative integer.');
+  }
+  if (v > WIDGET_SCHEMA_VERSION) {
+    throw new Error(
+      `This widget file uses schema version ${v}, but this add-on supports up to `
+      + `version ${WIDGET_SCHEMA_VERSION}. Update the add-on to import it.`,
+    );
+  }
+}
+
+/**
+ * @param {unknown} obj
+ * @returns {boolean}
+ */
+function isStoredWidgetEnvelope(obj) {
+  return Boolean(
+    obj &&
+    typeof obj === 'object' &&
+    !Array.isArray(obj) &&
+    isRuntimePayload(obj.doc),
+  );
+}
+
+/**
+ * Parse a widget import file. Accepts export envelope v1, a stored widget
+ * envelope (`/data/widgets/<id>.json`), or a bare runtime payload.
  *
  * @param {string} text
  * @returns {{ name: string, doc: object, fullscreen: object | null }}
@@ -102,12 +149,40 @@ export function parseWidgetImportFile(text) {
   }
 
   if (parsed.exportVersion === EXPORT_VERSION) {
+    assertSupportedSchemaVersion(parsed);
     validateRuntimePayload(parsed.doc, 'doc');
     if (parsed.fullscreen != null) {
       validateRuntimePayload(parsed.fullscreen, 'fullscreen');
     }
     return {
       name: typeof parsed.name === 'string' ? parsed.name.trim() : '',
+      doc: parsed.doc,
+      fullscreen: parsed.fullscreen ?? null,
+    };
+  }
+
+  if (parsed.exportVersion !== undefined) {
+    throw new Error(
+      `Unsupported widget export version ${String(parsed.exportVersion)}; `
+      + `this add-on reads version ${EXPORT_VERSION}.`,
+    );
+  }
+
+  // Stored envelope copied straight from /data/widgets — same shape as an
+  // export minus exportVersion. Server-managed fields (id, updatedAt, pairing
+  // IDs) are dropped; the save assigns fresh ones.
+  if (isStoredWidgetEnvelope(parsed)) {
+    assertSupportedSchemaVersion(parsed);
+    validateRuntimePayload(parsed.doc, 'doc');
+    if (parsed.fullscreen != null) {
+      validateRuntimePayload(parsed.fullscreen, 'fullscreen');
+    }
+    const miscName = parsed.doc.misc?.name;
+    const name = typeof parsed.name === 'string' && parsed.name.trim()
+      ? parsed.name.trim()
+      : (typeof miscName === 'string' ? miscName.trim() : '');
+    return {
+      name,
       doc: parsed.doc,
       fullscreen: parsed.fullscreen ?? null,
     };
