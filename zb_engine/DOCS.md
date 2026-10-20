@@ -685,6 +685,9 @@ Fetches upcoming events from a `calendar.*` entity via the HA Supervisor
 - `time_label`, `time_suffix` — `13:00` and ` 13:00` (leading space for templates)
 - `relative_label`, `relative_suffix` — e.g. `(huomenna)` and ` (huomenna)`
 - `until_label`, `until_suffix` — e.g. `(10.8. asti)` and ` (10.8. asti)`
+- `utc_offset_minutes` — timezone offset used for the event's dates and times
+  (timed events: the offset HA sent; all-day events: the calendar's offset,
+  taken from its first timed event, else the add-on's local timezone)
 - Legacy convenience: `label`, `date_line`, `detail_label` (computed from default templates)
 
 **Default row layout** (two lines per event in `calendarList`):

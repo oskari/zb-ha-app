@@ -121,6 +121,8 @@ export interface HaCalendarEvent {
   date_heading: string;
   date_label: string;
   weekday_short: string;
+  /** UTC offset (minutes east of UTC) used for this event's dates and times. */
+  utc_offset_minutes?: number;
 }
 
 export interface HaCalendarResult {

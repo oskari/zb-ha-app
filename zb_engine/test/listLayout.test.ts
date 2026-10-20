@@ -2,7 +2,7 @@
  * listLayout.test.ts — calendarList row grouping tests
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { buildCalendarListRows } from "../src/data/calendar/listLayout";
 import type { HaCalendarEvent } from "../src/data/sourceFetcher";
 
@@ -107,5 +107,34 @@ describe("buildCalendarListRows", () => {
       }),
     ], 1);
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe("buildCalendarListRows: timezone-explicit day grouping", () => {
+  const originalTz = process.env.TZ;
+  afterEach(() => {
+    if (originalTz === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTz;
+  });
+
+  it("groups by the event's own UTC offset, not the process timezone", () => {
+    process.env.TZ = "UTC";
+    const rows = buildCalendarListRows([
+      ev({
+        start_ts: Date.parse("2026-07-10T02:30:00+03:00"),
+        summary: "Early",
+        date_short: "Pe 10.7",
+        time_suffix: " 02:30",
+        utc_offset_minutes: 180,
+      }),
+      ev({
+        start_ts: Date.parse("2026-07-10T03:30:00+03:00"),
+        summary: "Later",
+        date_short: "Pe 10.7",
+        time_suffix: " 03:30",
+        utc_offset_minutes: 180,
+      }),
+    ], 5);
+    expect(rows.map((r) => r.text)).toEqual(["Pe 10.7", "Early 02:30", "Later 03:30"]);
   });
 });

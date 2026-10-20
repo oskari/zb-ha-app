@@ -9,6 +9,7 @@ import {
   extractCalendarEventsFromServiceResponse,
   normalizeRawCalendarEvent,
   parseHaCalendarTimestamp,
+  parseIsoOffsetMinutes,
 } from "../src/ha/calendarEvent";
 import { haSourceHandler } from "../src/ha/haSources";
 import { createDataContext } from "@zb/expressions";
@@ -284,5 +285,66 @@ describe("haSourceHandler: haCalendar", () => {
     );
 
     expect(result).toMatchObject({ count: 0, events: [], truncated: false });
+  });
+});
+
+describe("calendarEvent timezone handling", () => {
+  const originalTz = process.env.TZ;
+  afterEach(() => {
+    if (originalTz === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTz;
+  });
+
+  it("parses ISO offsets", () => {
+    expect(parseIsoOffsetMinutes("2026-07-10T13:00:00+03:00")).toBe(180);
+    expect(parseIsoOffsetMinutes("2026-07-10T13:00:00-0530")).toBe(-330);
+    expect(parseIsoOffsetMinutes("2026-07-10T13:00:00Z")).toBe(0);
+    expect(parseIsoOffsetMinutes("2026-07-10T13:00:00")).toBeNull();
+    expect(parseIsoOffsetMinutes("2026-07-10")).toBeNull();
+  });
+
+  for (const tz of ["UTC", "America/Los_Angeles", "Pacific/Kiritimati", "Europe/Helsinki"]) {
+    it(`formats identically when the process runs in ${tz}`, () => {
+      process.env.TZ = tz;
+      const now = Date.parse("2026-07-09T23:30:00+03:00");
+      const result = buildHaCalendarResult(
+        [
+          { start: "2026-07-10", end: "2026-07-11", summary: "Holiday" },
+          { start: "2026-07-10T00:30:00+03:00", end: "2026-07-10T01:00:00+03:00", summary: "Late" },
+        ],
+        {
+          entity_id: "calendar.family",
+          daysAhead: 7,
+          maxEvents: 10,
+          includeOngoing: true,
+          locale: "fi",
+          eventFilter: "all",
+          showDaysUntil: true,
+          now,
+        },
+      );
+      const [holiday, late] = result.events;
+      expect(holiday.date_short).toBe("Pe 10.7");
+      expect(holiday.days_until).toBe(1);
+      expect(holiday.start_ts).toBe(Date.parse("2026-07-10T00:00:00+03:00"));
+      expect(holiday.utc_offset_minutes).toBe(180);
+      expect(late.date_short).toBe("Pe 10.7");
+      expect(late.time_label).toBe("00:30");
+      expect(late.days_until).toBe(1);
+      expect(late.relative_label).toBe("(huomenna)");
+    });
+  }
+
+  it("uses an explicit reference offset for all-day-only calendars", () => {
+    process.env.TZ = "UTC";
+    const event = normalizeRawCalendarEvent(
+      { start: "2026-07-10", end: "2026-07-11", summary: "Holiday" },
+      "en",
+      false,
+      undefined,
+      -300,
+    );
+    expect(event.start_ts).toBe(Date.parse("2026-07-10T00:00:00-05:00"));
+    expect(event.date_short).toBe("Fri 10.7");
   });
 });

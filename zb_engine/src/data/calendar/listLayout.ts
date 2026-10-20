@@ -2,7 +2,7 @@
  * listLayout.ts — Shared row layout for calendarList expansion and builder preview
  */
 
-import { startOfDay } from "../../ha/calendarEvent";
+import { startOfDay } from "./startOfDay";
 import type { HaCalendarEvent } from "../sourceFetcher";
 import {
   applyCalendarRowTemplate,
@@ -37,9 +37,12 @@ export function buildCalendarListRows(
 
   let i = 0;
   while (i < events.length && lineCount < maxLines) {
-    const dayKey = startOfDay(events[i].start_ts);
+    const dayKey = startOfDay(events[i].start_ts, events[i].utc_offset_minutes);
     let j = i + 1;
-    while (j < events.length && startOfDay(events[j].start_ts) === dayKey) {
+    while (
+      j < events.length &&
+      startOfDay(events[j].start_ts, events[j].utc_offset_minutes) === dayKey
+    ) {
       j++;
     }
     const group = events.slice(i, j);
