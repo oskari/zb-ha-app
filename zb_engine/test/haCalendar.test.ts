@@ -209,7 +209,7 @@ describe("calendarEvent normalization", () => {
   });
 
   it("handles date-only end for all-day events", () => {
-    const endTs = parseHaCalendarTimestamp("2026-08-10", "end", true);
+    const endTs = parseHaCalendarTimestamp("2026-08-11", "end", true);
     const startTs = parseHaCalendarTimestamp("2026-06-22", "start", true);
     expect(endTs).toBeGreaterThan(startTs);
     const now = Date.parse("2026-07-01T12:00:00+03:00");
@@ -346,5 +346,64 @@ describe("calendarEvent timezone handling", () => {
     );
     expect(event.start_ts).toBe(Date.parse("2026-07-10T00:00:00-05:00"));
     expect(event.date_short).toBe("Fri 10.7");
+  });
+});
+
+describe("calendarEvent all-day exclusive end", () => {
+  const opts = {
+    entity_id: "calendar.family",
+    daysAhead: 7,
+    maxEvents: 10,
+    includeOngoing: true,
+    locale: "fi" as const,
+    eventFilter: "all" as const,
+    utcOffsetMinutes: 180,
+  };
+
+  it("treats a one-day all-day event (end = next date) as single-day", () => {
+    const event = normalizeRawCalendarEvent(
+      { start: "2026-07-10", end: "2026-07-11", summary: "Name day" },
+      "fi",
+      false,
+      undefined,
+      180,
+    );
+    expect(event.multi_day).toBe(false);
+    expect(event.until_label).toBe("");
+    expect(event.detail_label).toBe("Name day");
+    expect(event.end_ts).toBe(Date.parse("2026-07-11T00:00:00+03:00"));
+  });
+
+  it("labels the last inclusive day of a multi-day all-day event", () => {
+    const event = normalizeRawCalendarEvent(
+      { start: "2026-07-10", end: "2026-07-13", summary: "Trip" },
+      "fi",
+      false,
+      undefined,
+      180,
+    );
+    expect(event.multi_day).toBe(true);
+    expect(event.until_date_short).toBe("12.7.");
+    expect(event.detail_label).toBe("Trip (12.7. asti)");
+  });
+
+  it("drops a one-day all-day event once its day is over", () => {
+    const raw = [{ start: "2026-07-10", end: "2026-07-11", summary: "Name day" }];
+    const during = buildHaCalendarResult(raw, { ...opts, now: Date.parse("2026-07-10T23:00:00+03:00") });
+    expect(during.count).toBe(1);
+    const nextDay = buildHaCalendarResult(raw, { ...opts, now: Date.parse("2026-07-11T08:00:00+03:00") });
+    expect(nextDay.count).toBe(0);
+  });
+
+  it("covers the start day when end is missing or not after start", () => {
+    const event = normalizeRawCalendarEvent(
+      { start: "2026-07-10", end: "2026-07-10", summary: "Odd" },
+      "fi",
+      false,
+      undefined,
+      180,
+    );
+    expect(event.end_ts).toBe(Date.parse("2026-07-11T00:00:00+03:00"));
+    expect(event.multi_day).toBe(false);
   });
 });

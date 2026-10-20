@@ -76,12 +76,13 @@ export function parseIsoOffsetMinutes(value: string): number | null {
 /**
  * Parse an HA calendar start/end into unix ms.
  * Date-only strings are calendar dates in a timezone `offsetMinutes` east of
- * UTC (midnight start, end-of-day end); without an offset the process local
- * timezone is used.
+ * UTC; without an offset the process local timezone is used. Both roles map
+ * to midnight starting that date: HA's all-day `end` is EXCLUSIVE (a one-day
+ * event on 10.7 ends "2026-07-11"), so its midnight is the instant it ends.
  */
 export function parseHaCalendarTimestamp(
   value: string,
-  role: "start" | "end",
+  _role: "start" | "end",
   allDay: boolean,
   offsetMinutes?: number,
 ): number {
@@ -92,11 +93,7 @@ export function parseHaCalendarTimestamp(
     const day = parts[2];
     const utcMidnight = Date.UTC(year, month, day);
     const offset = offsetMinutes ?? (utcMidnight - new Date(year, month, day).getTime()) / 60_000;
-    const dayStart = utcMidnight - offset * 60_000;
-    if (role === "start") {
-      return dayStart;
-    }
-    return dayStart + 86_400_000 - 1;
+    return utcMidnight - offset * 60_000;
   }
   return new Date(value).getTime();
 }
@@ -225,8 +222,10 @@ export function buildCalendarEventFields(
   const date_label = locale === "fi" ? formatDateLabelFi(startTs, off) : formatDateLabelEn(startTs, off);
   const time_label = allDay ? "" : formatTime(startTs, off);
   const date_heading = date_short;
-  const multi_day = allDay && !sameCalendarDay(startTs, endTs, off);
-  const until_date_short = multi_day ? formatUntilDateShort(endTs, locale, off) : "";
+  // All-day end is exclusive (midnight after the last day); label the last day.
+  const lastDayTs = allDay ? Math.max(startTs, endTs - 1) : endTs;
+  const multi_day = allDay && !sameCalendarDay(startTs, lastDayTs, off);
+  const until_date_short = multi_day ? formatUntilDateShort(lastDayTs, locale, off) : "";
   const days_until = now != null ? computeDaysUntil(startTs, now, off) : null;
 
   const relative_label = showDaysUntil && now != null
@@ -234,7 +233,7 @@ export function buildCalendarEventFields(
     : "";
   const relative_suffix = withLeadingSpace(relative_label);
   const time_suffix = withLeadingSpace(time_label);
-  const until_label = multi_day ? formatUntilLabel(endTs, locale, off) : "";
+  const until_label = multi_day ? formatUntilLabel(lastDayTs, locale, off) : "";
   const until_suffix = withLeadingSpace(until_label);
 
   const partial: HaCalendarEvent = {
@@ -318,7 +317,9 @@ export function normalizeRawCalendarEvent(
   const all_day = isAllDayStart(start);
   const eventOffset = all_day ? offsetMinutes : (parseIsoOffsetMinutes(start) ?? offsetMinutes);
   const start_ts = parseHaCalendarTimestamp(start, "start", all_day, eventOffset);
-  const end_ts = parseHaCalendarTimestamp(end, "end", all_day, eventOffset);
+  const parsedEnd = parseHaCalendarTimestamp(end, "end", all_day, eventOffset);
+  // A missing or non-advancing all-day end still covers the start day.
+  const end_ts = all_day && !(parsedEnd > start_ts) ? start_ts + 86_400_000 : parsedEnd;
   const offset = eventOffset ?? localOffsetMinutes(start_ts);
   const fields = buildCalendarEventFields(summary, start_ts, end_ts, all_day, locale, showDaysUntil, now, offset);
 
