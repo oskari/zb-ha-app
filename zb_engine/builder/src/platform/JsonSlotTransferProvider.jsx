@@ -9,11 +9,15 @@
 import { useEffect, useRef } from 'react';
 import { exportRuntimeJson } from '../models/mapper.js';
 import { useUiStore } from '../store/uiStore.js';
+import { useNoticeStore } from '../store/noticeStore.js';
 import {
+  countSourcesNeedingCredentials,
+  credentialsNotice,
   downloadJsonFile,
   parseWidgetImportFile,
   readFileAsText,
   sanitizeFilename,
+  stripSecretSentinels,
 } from '../utils/widgetTransfer.js';
 
 export default function JsonSlotTransferProvider() {
@@ -29,7 +33,7 @@ export default function JsonSlotTransferProvider() {
         });
         const suffix = slot === 'fullscreen' ? 'fullscreen' : 'primary';
         const baseName = sanitizeFilename(widgetName || 'widget');
-        downloadJsonFile(`zerrybit-widget-${baseName}-${suffix}.json`, exported);
+        downloadJsonFile(`zerrybit-widget-${baseName}-${suffix}.json`, stripSecretSentinels(exported));
       },
     );
 
@@ -59,6 +63,8 @@ export default function JsonSlotTransferProvider() {
         ? parsed.fullscreen
         : parsed.doc;
       pending.onLoaded({ payload });
+      const notice = credentialsNotice(countSourcesNeedingCredentials(payload));
+      if (notice) useNoticeStore.getState().showNotice(notice);
     } catch (err) {
       pending.onLoaded({ error: err.message || 'Upload failed' });
     }

@@ -21,6 +21,110 @@ export const EXPORT_VERSION = 1;
 export const WIDGET_SCHEMA_VERSION = 1;
 
 /**
+ * Placeholder the server substitutes for stored source secrets when a widget
+ * is read back (mask-on-read). Mirrors `SECRET_SENTINEL` and
+ * `SENSITIVE_HEADER_NAME_RE` in the server's `src/core/sourceSecrets.ts`.
+ * The sentinel only means "keep the stored secret" for the widget it came
+ * from, so it must never travel in an exported file: an import into a new
+ * widget has nothing to restore it from and would save it literally.
+ */
+export const SECRET_SENTINEL = '__stored__';
+export const SENSITIVE_HEADER_NAME_RE =
+  /^(?:authorization|proxy-authorization|cookie)$|token|secret|password|api[-_]?key|auth/i;
+
+function isPlainObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Secret-bearing string slots of a source as [container, key] pairs.
+ *
+ * @param {object} source
+ * @returns {Array<[object, string]>}
+ */
+function secretSlots(source) {
+  const slots = [];
+  const auth = source.auth;
+  if (isPlainObject(auth)) {
+    if ('bearer' in auth) slots.push([auth, 'bearer']);
+    if (isPlainObject(auth.apiKey)) slots.push([auth.apiKey, 'value']);
+    if (isPlainObject(auth.basic)) slots.push([auth.basic, 'password']);
+  }
+  if (isPlainObject(source.headers)) {
+    for (const name of Object.keys(source.headers)) {
+      if (SENSITIVE_HEADER_NAME_RE.test(name)) slots.push([source.headers, name]);
+    }
+  }
+  return slots;
+}
+
+/**
+ * Deep-clone a runtime payload with every masked secret (`__stored__`)
+ * blanked to `''` (the schema requires the fields to stay strings).
+ *
+ * @param {object | null | undefined} payload
+ * @returns {object | null | undefined}
+ */
+export function stripSecretSentinels(payload) {
+  if (!isPlainObject(payload)) return payload;
+  const clone = structuredClone(payload);
+  if (!Array.isArray(clone.sources)) return clone;
+  for (const source of clone.sources) {
+    if (!isPlainObject(source)) continue;
+    for (const [obj, key] of secretSlots(source)) {
+      if (obj[key] === SECRET_SENTINEL) obj[key] = '';
+    }
+  }
+  return clone;
+}
+
+/**
+ * Count sources whose configured credentials are blank (or still masked) and
+ * must be re-entered after an import: an auth type other than `none` without
+ * its secret, or a sensitive header without a value.
+ *
+ * @param {object | null | undefined} payload
+ * @returns {number}
+ */
+export function countSourcesNeedingCredentials(payload) {
+  if (!isPlainObject(payload) || !Array.isArray(payload.sources)) return 0;
+  const missing = (v) => typeof v !== 'string' || v === '' || v === SECRET_SENTINEL;
+  let count = 0;
+  for (const source of payload.sources) {
+    if (!isPlainObject(source)) continue;
+    const auth = isPlainObject(source.auth) ? source.auth : null;
+    let needs = false;
+    if (auth?.type === 'bearer') needs = missing(auth.bearer);
+    else if (auth?.type === 'apiKey') needs = missing(auth.apiKey?.value);
+    else if (auth?.type === 'basic') needs = missing(auth.basic?.password);
+    if (!needs && isPlainObject(source.headers)) {
+      needs = Object.keys(source.headers).some(
+        (name) => SENSITIVE_HEADER_NAME_RE.test(name) && missing(source.headers[name]),
+      );
+    }
+    if (needs) count++;
+  }
+  return count;
+}
+
+/**
+ * Notice for `useNoticeStore.showNotice` after importing a file whose sources
+ * need their credentials re-entered, or null when none do.
+ *
+ * @param {number} count
+ * @returns {{ title: string, message: string } | null}
+ */
+export function credentialsNotice(count) {
+  if (!count) return null;
+  const sources = count === 1 ? '1 data source needs its' : `${count} data sources need their`;
+  return {
+    title: 'Re-enter credentials',
+    message: `${sources} credentials re-entered. Secrets are never included in `
+      + 'exported widget files — open Sources and fill them in.',
+  };
+}
+
+/**
  * @param {string} name
  * @returns {string}
  */
@@ -55,8 +159,8 @@ export function buildExportEnvelope(savePayload, widgetName) {
     schemaVersion: WIDGET_SCHEMA_VERSION,
     exportedAt: Date.now(),
     name: widgetName,
-    doc: savePayload.runtimeJson,
-    fullscreen: savePayload.fullscreenJson ?? null,
+    doc: stripSecretSentinels(savePayload.runtimeJson),
+    fullscreen: stripSecretSentinels(savePayload.fullscreenJson ?? null),
   };
 }
 
@@ -130,11 +234,30 @@ function isStoredWidgetEnvelope(obj) {
 }
 
 /**
+ * @param {{ name: string, doc: object, fullscreen: object | null }} result
+ */
+function finalizeImport(result) {
+  const doc = stripSecretSentinels(result.doc);
+  const fullscreen = stripSecretSentinels(result.fullscreen);
+  return {
+    ...result,
+    doc,
+    fullscreen,
+    credentialSourceCount:
+      countSourcesNeedingCredentials(doc) + countSourcesNeedingCredentials(fullscreen),
+  };
+}
+
+/**
  * Parse a widget import file. Accepts export envelope v1, a stored widget
  * envelope (`/data/widgets/<id>.json`), or a bare runtime payload.
  *
  * @param {string} text
- * @returns {{ name: string, doc: object, fullscreen: object | null }}
+ * Masked secrets (`__stored__`, from older exports or copied stored files)
+ * are blanked, and `credentialSourceCount` reports how many sources need
+ * their credentials re-entered (see `credentialsNotice`).
+ *
+ * @returns {{ name: string, doc: object, fullscreen: object | null, credentialSourceCount: number }}
  */
 export function parseWidgetImportFile(text) {
   let parsed;
@@ -154,11 +277,11 @@ export function parseWidgetImportFile(text) {
     if (parsed.fullscreen != null) {
       validateRuntimePayload(parsed.fullscreen, 'fullscreen');
     }
-    return {
+    return finalizeImport({
       name: typeof parsed.name === 'string' ? parsed.name.trim() : '',
       doc: parsed.doc,
       fullscreen: parsed.fullscreen ?? null,
-    };
+    });
   }
 
   if (parsed.exportVersion !== undefined) {
@@ -181,21 +304,21 @@ export function parseWidgetImportFile(text) {
     const name = typeof parsed.name === 'string' && parsed.name.trim()
       ? parsed.name.trim()
       : (typeof miscName === 'string' ? miscName.trim() : '');
-    return {
+    return finalizeImport({
       name,
       doc: parsed.doc,
       fullscreen: parsed.fullscreen ?? null,
-    };
+    });
   }
 
   if (isRuntimePayload(parsed)) {
     validateRuntimePayload(parsed);
     const miscName = parsed.misc?.name;
-    return {
+    return finalizeImport({
       name: typeof miscName === 'string' ? miscName.trim() : '',
       doc: parsed,
       fullscreen: null,
-    };
+    });
   }
 
   throw new Error('Unrecognized widget file format.');

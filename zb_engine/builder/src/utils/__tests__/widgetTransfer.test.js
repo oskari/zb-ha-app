@@ -6,7 +6,11 @@ import { describe, it, expect } from 'vitest';
 import {
   EXPORT_VERSION,
   WIDGET_SCHEMA_VERSION,
+  SECRET_SENTINEL,
+  SENSITIVE_HEADER_NAME_RE,
   buildExportEnvelope,
+  countSourcesNeedingCredentials,
+  credentialsNotice,
   collectAssetRefs,
   collectAssetRefsFromImport,
   exportFilename,
@@ -15,6 +19,10 @@ import {
   sanitizeFilename,
 } from '../widgetTransfer.js';
 import { CURRENT_SCHEMA_VERSION } from '../../../../src/core/widgetMigrations.ts';
+import {
+  SECRET_SENTINEL as SERVER_SECRET_SENTINEL,
+  SENSITIVE_HEADER_NAME_RE as SERVER_SENSITIVE_HEADER_NAME_RE,
+} from '../../../../src/core/sourceSecrets.ts';
 
 const runtimePayload = {
   misc: { name: 'Kitchen', gridSize: '1x1', size: { width: 240, height: 240 } },
@@ -83,6 +91,7 @@ describe('widgetTransfer', () => {
         name: 'Imported',
         doc: runtimePayload,
         fullscreen: null,
+        credentialSourceCount: 0,
       });
     });
 
@@ -91,6 +100,7 @@ describe('widgetTransfer', () => {
         name: 'Kitchen',
         doc: runtimePayload,
         fullscreen: null,
+        credentialSourceCount: 0,
       });
     });
 
@@ -134,6 +144,7 @@ describe('widgetTransfer', () => {
         name: 'Stored',
         doc: runtimePayload,
         fullscreen: runtimePayload,
+        credentialSourceCount: 0,
       });
     });
 
@@ -181,5 +192,79 @@ describe('widgetTransfer', () => {
     it('returns filenames not present on the server', () => {
       expect(findMissingAssets(['a.png', 'b.png'], ['a.png'])).toEqual(['b.png']);
     });
+  });
+});
+
+describe('source secret sentinels', () => {
+  const securedPayload = () => ({
+    misc: { name: 'Secure', gridSize: '1x1', size: { width: 240, height: 240 } },
+    features: {},
+    elements: [],
+    sources: [
+      { id: 'bearer_src', kind: 'http', auth: { type: 'bearer', bearer: SECRET_SENTINEL } },
+      {
+        id: 'key_src',
+        kind: 'http',
+        auth: { type: 'apiKey', apiKey: { in: 'header', name: 'X-Key', value: SECRET_SENTINEL } },
+      },
+      {
+        id: 'basic_src',
+        kind: 'http',
+        auth: { type: 'basic', basic: { username: 'me', password: SECRET_SENTINEL } },
+        headers: { 'X-Api-Token': SECRET_SENTINEL, Accept: 'application/json' },
+      },
+      { id: 'open_src', kind: 'http', auth: { type: 'none' } },
+    ],
+  });
+
+  it('mirrors the server sentinel and header pattern', () => {
+    expect(SECRET_SENTINEL).toBe(SERVER_SECRET_SENTINEL);
+    expect(SENSITIVE_HEADER_NAME_RE.source).toBe(SERVER_SENSITIVE_HEADER_NAME_RE.source);
+  });
+
+  it('blanks sentinels on export without mutating the editor payload', () => {
+    const payload = securedPayload();
+    const envelope = buildExportEnvelope(
+      { runtimeJson: payload, fullscreenJson: securedPayload() },
+      'Secure',
+    );
+    const json = JSON.stringify(envelope);
+    expect(json).not.toContain(SECRET_SENTINEL);
+    const [bearer, key, basic] = envelope.doc.sources;
+    expect(bearer.auth.bearer).toBe('');
+    expect(key.auth.apiKey).toEqual({ in: 'header', name: 'X-Key', value: '' });
+    expect(basic.auth.basic).toEqual({ username: 'me', password: '' });
+    expect(basic.headers).toEqual({ 'X-Api-Token': '', Accept: 'application/json' });
+    expect(payload.sources[0].auth.bearer).toBe(SECRET_SENTINEL);
+  });
+
+  it('strips sentinels from imported files and counts sources needing credentials', () => {
+    const legacyExport = {
+      exportVersion: EXPORT_VERSION,
+      name: 'Secure',
+      doc: securedPayload(),
+      fullscreen: null,
+    };
+    const parsed = parseWidgetImportFile(JSON.stringify(legacyExport));
+    expect(JSON.stringify(parsed.doc)).not.toContain(SECRET_SENTINEL);
+    expect(parsed.credentialSourceCount).toBe(3);
+  });
+
+  it('counts blanked credentials in files exported after the fix', () => {
+    const envelope = buildExportEnvelope({ runtimeJson: securedPayload(), fullscreenJson: null }, 'S');
+    const parsed = parseWidgetImportFile(JSON.stringify(envelope));
+    expect(parsed.credentialSourceCount).toBe(3);
+  });
+
+  it('reports zero for payloads without credentials', () => {
+    const parsed = parseWidgetImportFile(JSON.stringify(runtimePayload));
+    expect(parsed.credentialSourceCount).toBe(0);
+    expect(credentialsNotice(0)).toBeNull();
+  });
+
+  it('builds a notice naming the number of sources', () => {
+    expect(credentialsNotice(1).message).toMatch(/^1 data source needs its credentials/);
+    expect(credentialsNotice(3).message).toMatch(/^3 data sources need their credentials/);
+    expect(countSourcesNeedingCredentials(securedPayload())).toBe(3);
   });
 });

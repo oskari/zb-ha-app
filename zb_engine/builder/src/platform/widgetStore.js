@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import * as api from './apiClient.js';
 import { useDocStore, getFocusedDoc, getDocById, PENDING_DOC_ID } from '../store/docStore.js';
 import { useUiStore } from '../store/uiStore.js';
+import { useNoticeStore } from '../store/noticeStore.js';
 import { useAutoSaveStore } from './autoSaveStore.js';
 import { fullscreenIdFor } from '../store/companionId.js';
 import { exportRuntimeJson } from '../models/mapper.js';
@@ -16,6 +17,7 @@ import { nextAvailableName } from '../utils/names.js';
 import {
   buildExportEnvelope,
   collectAssetRefsFromImport,
+  credentialsNotice,
   downloadJsonFile,
   exportFilename,
   findMissingAssets,
@@ -444,6 +446,8 @@ export const useWidgetStore = create((set, get) => ({
       });
 
       await get().openWidget(id);
+      const notice = credentialsNotice(parsed.credentialSourceCount);
+      if (notice) useNoticeStore.getState().showNotice(notice);
       return id;
     } catch (err) {
       set({ error: err.message, loading: false });
